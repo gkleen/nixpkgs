@@ -8,15 +8,6 @@ in {
   options.services.infinoted = {
     enable = mkEnableOption "infinoted";
 
-    package = mkOption {
-      type = types.package;
-      default = pkgs.libinfinity.override { daemon = true; };
-      defaultText = "pkgs.libinfinity.override { daemon = true; }";
-      description = ''
-        Package providing infinoted
-      '';
-    };
-
     keyFile = mkOption {
       type = types.nullOr types.path;
       default = null;
@@ -83,7 +74,7 @@ in {
     };
 
     extraConfig = mkOption {
-      type = types.lines;
+      type = types.str;
       default = ''
         [autosave]
         interval=10
@@ -110,7 +101,9 @@ in {
     };
   };
 
-  config = mkIf (cfg.enable) {
+  config = mkIf (cfg.enable) (let
+    infinoted = pkgs.libinfinity.override { daemon = true; };
+  in {
     users.extraUsers = optional (cfg.user == "infinoted")
       { name = "infinoted";
         description = "Infinoted user";
@@ -125,15 +118,14 @@ in {
 
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
+        path = [ infinoted ];
 
         serviceConfig = {
           Type = "simple";
           Restart = "always";
-          ExecStart = "${cfg.package}/bin/infinoted-0.6 --config-file=/var/lib/infinoted/infinoted.conf";
-          User = cfg.user;
-          Group = cfg.group;
-          PermissionsStartOnly = true;
+          ExecStart = "${infinoted}/bin/infinoted-0.6 --config-file=/var/lib/infinoted/infinoted.conf";
         };
+
         preStart = ''
           mkdir -p /var/lib/infinoted
           install -o ${cfg.user} -g ${cfg.group} -m 0600 /dev/null /var/lib/infinoted/infinoted.conf
@@ -151,8 +143,8 @@ in {
           ${cfg.extraConfig}
           EOF
 
-          install -o ${cfg.user} -g ${cfg.group} -m 0750 -d ${cfg.rootDirectory}
+          install -o ${cfg.user} -g ${cfg.group} -m -0750 -d ${cfg.rootDirectory}
         '';
       };
-  };
+  });
 }
