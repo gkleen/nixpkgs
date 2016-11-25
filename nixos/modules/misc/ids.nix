@@ -281,31 +281,6 @@
       stanchion = 262;
       riak-cs = 263;
       infinoted = 264;
-      # keystone = 265; # unused, removed 2017-12-13
-      # glance = 266; # unused, removed 2017-12-13
-      couchpotato = 267;
-      gogs = 268;
-      pdns-recursor = 269;
-      kresd = 270;
-      rpc = 271;
-      geoip = 272;
-      fcron = 273;
-      sonarr = 274;
-      radarr = 275;
-      jackett = 276;
-      aria2 = 277;
-      clickhouse = 278;
-      rslsync = 279;
-      minio = 280;
-      kanboard = 281;
-      pykms = 282;
-      kodi = 283;
-      restya-board = 284;
-      mighttpd2 = 285;
-      hass = 286;
-      monero = 287;
-      ceph = 288;
-      duplicati = 289;
 
       # When adding a uid, make sure it doesn't match an existing gid. And don't use uids above 399!
 
@@ -556,30 +531,6 @@
       stanchion = 262;
       riak-cs = 263;
       infinoted = 264;
-      # keystone = 265; # unused, removed 2017-12-13
-      # glance = 266; # unused, removed 2017-12-13
-      couchpotato = 267;
-      gogs = 268;
-      kresd = 270;
-      #rpc = 271; # unused
-      #geoip = 272; # unused
-      fcron = 273;
-      sonarr = 274;
-      radarr = 275;
-      jackett = 276;
-      aria2 = 277;
-      clickhouse = 278;
-      rslsync = 279;
-      minio = 280;
-      kanboard = 281;
-      pykms = 282;
-      kodi = 283;
-      restya-board = 284;
-      mighttpd2 = 285;
-      hass = 286;
-      monero = 287;
-      ceph = 288;
-      duplicati = 289;
 
       # When adding a gid, make sure it doesn't match an existing
       # uid. Users and groups with the same name should have equal
