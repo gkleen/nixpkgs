@@ -8,8 +8,8 @@ let
   gcs = fetchFromGitHub {
     owner = "richardwilkes";
     repo = "gcs";
-    rev = "gcs-4.8.0";
-    sha256 = "0k8am8vfwls5s2z4zj1p1aqy8gapn5vbr9zy66s5g048ch8ah1hm";
+    rev = "gcs-4.10.0";
+    sha256 = "1larn85s1imqja0mh3igb5ljk8a8aky1caypm672s1n6ps4pfa6q";
   };
   appleStubs = fetchFromGitHub {
     owner = "richardwilkes";
@@ -20,18 +20,18 @@ let
   toolkit = fetchFromGitHub {
     owner = "richardwilkes";
     repo = "toolkit";
-    rev = "gcs-4.8.0";
-    sha256 = "1ciwwh0wxk3pzsj6rbggsbg3l2f741qy7yx1ca4v7vflsma84f1n";
+    rev = "gcs-4.10.0";
+    sha256 = "0mx5sjwzmpr0vry254l6mz3m7zkkwcac60qaz31cgi3k5pbk04xw";
   };
   library = fetchFromGitHub {
     owner = "richardwilkes";
     repo = "gcs_library";
-    rev = "gcs-4.8.0";
-    sha256 = "085jpp9mpv5kw00zds9sywmfq31mrlbrgahnwcjkx0z9i22amz4g";
+    rev = "gcs-4.10.0";
+    sha256 = "1fgpz0p21f5m28m4kgn9sa82w9d3zxvjx31dk10sqi8hy58ry04p";
   };
 in stdenv.mkDerivation rec {
   name = "gcs-${version}";
-  version = "4.8.0";
+  version = "4.10.0";
 
   src = runCommand "${name}-src" { preferLocalBuild = true; } ''
     mkdir -p $out
