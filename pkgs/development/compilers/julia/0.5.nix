@@ -1,7 +1,8 @@
-{ stdenv, fetchgit, fetchurl
+{ stdenv, fetchgit, fetchurl, fetchzip
 # build tools
 , gfortran, m4, makeWrapper, patchelf, perl, which, python2
 , runCommand
+, paxctl
 # libjulia dependencies
 , libunwind, readline, utf8proc, zlib
 , llvm, libffi, ncurses
@@ -53,12 +54,12 @@ in
 
 stdenv.mkDerivation rec {
   pname = "julia";
-  version = "0.5.0";
+  version = "0.5.2";
   name = "${pname}-${version}";
 
-  src = fetchurl {
+  src = fetchzip {
     url = "https://github.com/JuliaLang/${pname}/releases/download/v${version}/${name}.tar.gz";
-    sha256 = "0bhickil88lalp9jdj1kmf4is70zinhx8ha9rng0g3z50r4a2qmv";
+    sha256 = "1616f53dj7xc0g2iys8qfbzal6dx55nswnws5g5r44dlbf4hcl0h";
   };
   prePatch = ''
     mkdir deps/srccache
@@ -71,7 +72,7 @@ stdenv.mkDerivation rec {
   patches = [
     ./0001.1-use-system-utf8proc.patch
     ./0002-use-system-suitesparse.patch
-  ];
+  ] ++ stdenv.lib.optional stdenv.needsPax ./0004-hardened.patch;
 
   postPatch = ''
     patchShebangs . contrib
@@ -89,7 +90,8 @@ stdenv.mkDerivation rec {
   ++ stdenv.lib.optionals stdenv.isDarwin [CoreServices ApplicationServices]
   ;
 
-  nativeBuildInputs = [ curl gfortran m4 makeWrapper patchelf perl python2 which ];
+  nativeBuildInputs = [ curl gfortran m4 makeWrapper patchelf perl python2 which ]
+    ++ stdenv.lib.optional stdenv.needsPax paxctl;
 
   makeFlags =
     let
@@ -153,17 +155,17 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  doCheck = true;
+  doCheck = !stdenv.isDarwin;
   checkTarget = "testall";
   # Julia's tests require read/write access to $HOME
   preCheck = ''
     export HOME="$NIX_BUILD_TOP"
-    set
   '';
 
   preBuild = ''
     sed -e '/^install:/s@[^ ]*/doc/[^ ]*@@' -i Makefile
     sed -e '/[$](DESTDIR)[$](docdir)/d' -i Makefile
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
   '';
 
   postInstall = ''
@@ -176,7 +178,7 @@ stdenv.mkDerivation rec {
 
   meta = {
     description = "High-level performance-oriented dynamical language for technical computing";
-    homepage = "http://julialang.org/";
+    homepage = https://julialang.org/;
     license = stdenv.lib.licenses.mit;
     maintainers = with stdenv.lib.maintainers; [ raskin ];
     platforms = [ "i686-linux" "x86_64-linux" "x86_64-darwin" ];

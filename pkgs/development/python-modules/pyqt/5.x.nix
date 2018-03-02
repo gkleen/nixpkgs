@@ -1,11 +1,18 @@
-{ lib, fetchurl, pythonPackages, pkgconfig, qtbase, qtsvg, qtwebkit, dbus_libs
-, lndir, makeWrapper, qmakeHook }:
+{ lib, fetchurl, pythonPackages, pkgconfig, makeWrapper, qmake
+, lndir, qtbase, qtsvg, qtwebkit, qtwebengine, dbus_libs
+, withWebSockets ? false, qtwebsockets
+, withConnectivity ? false, qtconnectivity
+}:
 
 let
-  version = "5.6";
-  inherit (pythonPackages) mkPythonDerivation python dbus-python sip;
-in mkPythonDerivation {
-  name = "PyQt-${version}";
+  pname = "PyQt";
+  version = "5.10";
+
+  inherit (pythonPackages) buildPythonPackage python dbus-python sip;
+in buildPythonPackage {
+  pname = pname;
+  version = version;
+  format = "other";
 
   meta = with lib; {
     description = "Python bindings for Qt5";
@@ -17,13 +24,14 @@ in mkPythonDerivation {
 
   src = fetchurl {
     url = "mirror://sourceforge/pyqt/PyQt5/PyQt-${version}/PyQt5_gpl-${version}.tar.gz";
-    sha256 = "1qgh42zsr9jppl9k7fcdbhxcd1wrb7wyaj9lng9nxfa19in1lj1f";
+    sha256 = "0l2zy6b7bfjxmg4bb8yikg6i8iy2xdwmvk7knfmrzfpqbmkycbrl";
   };
 
+  nativeBuildInputs = [ pkgconfig qmake ];
+
   buildInputs = [
-    pkgconfig makeWrapper lndir
-    qtbase qtsvg qtwebkit dbus_libs qmakeHook
-  ];
+    lndir qtbase qtsvg qtwebkit qtwebengine dbus_libs
+  ] ++ lib.optional withWebSockets qtwebsockets ++ lib.optional withConnectivity qtconnectivity;
 
   propagatedBuildInputs = [ sip ];
 
@@ -34,16 +42,15 @@ in mkPythonDerivation {
     lndir ${dbus-python} $out
     rm -rf "$out/nix-support"
 
-    export PYTHONPATH=$PYTHONPATH:$out/lib/${python.libPrefix}/site-packages
+    export PYTHONPATH=$PYTHONPATH:$out/${python.sitePackages}
 
     substituteInPlace configure.py \
-      --replace 'install_dir=pydbusmoddir' "install_dir='$out/lib/${python.libPrefix}/site-packages/dbus/mainloop'" \
+      --replace 'install_dir=pydbusmoddir' "install_dir='$out/${python.sitePackages}/dbus/mainloop'" \
       --replace "ModuleMetadata(qmake_QT=['webkitwidgets'])" "ModuleMetadata(qmake_QT=['webkitwidgets', 'printsupport'])"
 
     ${python.executable} configure.py  -w \
       --confirm-license \
       --dbus=${dbus_libs.dev}/include/dbus-1.0 \
-      --qmake=$QMAKE \
       --no-qml-plugin \
       --bindir=$out/bin \
       --destdir=$out/${python.sitePackages} \

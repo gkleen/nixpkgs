@@ -29,6 +29,8 @@ stdenv.mkDerivation rec {
     "REG_BIN=${wireless-regdb}/lib/crda/regulatory.bin"
   ];
 
+  NIX_CFLAGS_COMPILE = "-Wno-error=unused-const-variable";
+
   buildFlags = [ "all_noverify" ];
   enableParallelBuilding = true;
 
@@ -40,11 +42,16 @@ stdenv.mkDerivation rec {
     longDescription = ''
       CRDA acts as the udev helper for communication between the kernel and
       userspace for regulatory compliance. It relies on nl80211 for communication.
+
       CRDA is intended to be run only through udev communication from the kernel.
+      To use it under NixOS, add
+
+        services.udev.packages = [ pkgs.crda ];
+
+      to the system configuration.
     '';
     homepage = http://drvbp1.linux-foundation.org/~mcgrof/rel-html/crda/;
     license = licenses.free; # "copyleft-next 0.3.0", as yet without a web site
     platforms = platforms.linux;
-    maintainers = with maintainers; [ nckx ];
   };
 }

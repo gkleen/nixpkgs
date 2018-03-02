@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   name = "shaarli-${version}";
-  version = "0.8.1";
+  version = "0.9.5";
 
   src = fetchurl {
     url = "https://github.com/shaarli/Shaarli/releases/download/v${version}/shaarli-v${version}-full.tar.gz";
-    sha256 = "17p8bmkgmlan6vbvh955idddckr5kyf00gp8apjfcnm4b2awma8x";
+    sha256 = "133ffxyw9bf61rky01d3rkkm34np5z4kwmgwx6ygshl83y0ylnwf";
   };
 
   outputs = [ "out" "doc" ];
@@ -45,7 +45,8 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     rm -r {cache,pagecache,tmp,data}/
-    mv doc/ $doc/
+    mkdir -p $doc/share/doc
+    mv doc/ $doc/share/doc/shaarli
     mkdir $out/
     cp -R ./* $out
   '';

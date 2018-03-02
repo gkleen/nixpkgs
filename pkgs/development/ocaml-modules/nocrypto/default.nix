@@ -1,33 +1,32 @@
-{ stdenv, buildOcaml, fetchFromGitHub, ocaml, findlib
-, cstruct, zarith, ounit, ocaml_oasis, ppx_sexp_conv, sexplib
-, lwt ? null}:
+{ stdenv, fetchFromGitHub, ocaml, findlib, ocamlbuild, topkg
+, cpuid, ocb-stubblr
+, cstruct, zarith, ppx_sexp_conv, sexplib
+, cstruct-lwt ? null
+}:
 
 with stdenv.lib;
-let withLwt = lwt != null; in
+let withLwt = cstruct-lwt != null; in
 
-buildOcaml rec {
-  name = "nocrypto";
-  version = "0.5.3";
-
-  minimumSupportedOcamlVersion = "4.02";
+stdenv.mkDerivation rec {
+  name = "ocaml${ocaml.version}-nocrypto-${version}";
+  version = "0.5.4";
 
   src = fetchFromGitHub {
     owner  = "mirleft";
     repo   = "ocaml-nocrypto";
     rev    = "v${version}";
-    sha256 = "0m3yvqpgfffqp15mcl08b78cv8zw25rnp6z1pkj5aimz6xg3gqbl";
+    sha256 = "0nhnlpbqh3mf9y2cxivlvfb70yfbdpvg6jslzq64xblpgjyg443p";
   };
 
-  buildInputs = [ ocaml ocaml_oasis findlib ounit ppx_sexp_conv ];
-  propagatedBuildInputs = [ cstruct zarith sexplib ] ++ optional withLwt lwt;
+  buildInputs = [ ocaml findlib ocamlbuild topkg cpuid ocb-stubblr
+    ppx_sexp_conv ];
+  propagatedBuildInputs = [ cstruct zarith sexplib ] ++ optional withLwt cstruct-lwt;
 
-  configureFlags = [ "--enable-tests" ] ++ optional withLwt ["--enable-lwt"];
-
-  configurePhase = "./configure --prefix $out $configureFlags";
-
-  doCheck = true;
-  checkTarget = "test";
-  createFindlibDestdir = true;
+  buildPhase = ''
+    LD_LIBRARY_PATH=${cpuid}/lib/ocaml/${ocaml.version}/site-lib/stubslibs/ \
+    ${topkg.buildPhase} --with-lwt ${boolToString withLwt}
+  '';
+  inherit (topkg) installPhase;
 
   meta = {
     homepage = https://github.com/mirleft/ocaml-nocrypto;

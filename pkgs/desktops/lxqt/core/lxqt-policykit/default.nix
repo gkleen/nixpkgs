@@ -1,37 +1,51 @@
-{ stdenv, fetchFromGitHub, cmake, pkgconfig, qt5, kde5, lxqt }:
+{
+  stdenv, fetchFromGitHub, cmake, pkgconfig, lxqt-build-tools,
+  qtbase, qttools, qtx11extras, qtsvg, polkit-qt, kwindowsystem, liblxqt,
+  libqtxdg, pcre
+}:
 
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
   pname = "lxqt-policykit";
-  version = "0.11.0";
+  version = "0.12.0";
 
-  srcs = fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "lxde";
     repo = pname;
     rev = version;
-    sha256 = "0rbqzh8r259cc44f1cb236p9c3lp195zjdsw3w1nz7j7gzv9yjnd";
+    sha256 = "1hxz5bxxi118g255aqb3da767va0wd25y671lk2w9r1641j8zf2d";
   };
 
-  nativeBuildInputs = [ cmake pkgconfig ];
+  nativeBuildInputs = [
+    cmake
+    pkgconfig
+    lxqt-build-tools
+  ];
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qttools
-    qt5.qtx11extras
-    qt5.qtsvg
-    qt5.polkit-qt
-    kde5.kwindowsystem
-    lxqt.liblxqt
-    lxqt.libqtxdg
+    qtbase
+    qttools
+    qtx11extras
+    qtsvg
+    polkit-qt
+    kwindowsystem
+    liblxqt
+    libqtxdg
+    pcre
   ];
 
   cmakeFlags = [ "-DPULL_TRANSLATIONS=NO" ];
+
+  postPatch = ''
+    substituteInPlace autostart/CMakeLists.txt \
+      --replace "DESTINATION \"\''${LXQT_ETC_XDG_DIR}" "DESTINATION \"etc/xdg"
+  '';
 
   meta = with stdenv.lib; {
     description = "The LXQt PolicyKit agent";
     homepage = https://github.com/lxde/lxqt-policykit;
     license = licenses.lgpl21;
-    maintainers = with maintainers; [ romildo ];
     platforms = with platforms; unix;
+    maintainers = with maintainers; [ romildo ];
   };
 }

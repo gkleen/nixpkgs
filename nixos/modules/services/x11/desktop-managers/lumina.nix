@@ -32,8 +32,7 @@ in
 
     environment.systemPackages = [
       pkgs.fluxbox
-      pkgs.kde5.kwindowsystem
-      pkgs.kde5.oxygen-icons5
+      pkgs.libsForQt5.kwindowsystem
       pkgs.lumina
       pkgs.numlockx
       pkgs.qt5.qtsvg

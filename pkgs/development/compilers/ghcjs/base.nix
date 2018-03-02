@@ -1,4 +1,6 @@
 { mkDerivation
+, lib
+, broken ? false
 , test-framework
 , test-framework-hunit
 , test-framework-quickcheck2
@@ -17,7 +19,6 @@
 , executable-path
 , transformers-compat
 , haddock-api
-, ghcjs-prim
 , regex-posix
 , callPackage
 
@@ -88,6 +89,11 @@
   ]
 
 , stage2 ? import ./stage2.nix
+
+, patches ? [ ./ghcjs.patch ]
+
+# used for resolving compiler plugins
+, ghcLibdir ? null
 }:
 let
   inherit (bootPkgs) ghc;
@@ -110,13 +116,13 @@ in mkDerivation (rec {
     alex happy git gnumake autoconf automake libtool patch gmp
     base16-bytestring cryptohash executable-path haddock-api
     transformers-compat QuickCheck haddock hspec xhtml
-    ghcjs-prim regex-posix libiconv
+    regex-posix libiconv
   ];
   buildTools = [ nodejs git ];
   testDepends = [
     HUnit test-framework test-framework-hunit
   ];
-  patches = [ ./ghcjs.patch ];
+  inherit patches;
   postPatch = ''
     substituteInPlace Setup.hs \
       --replace "/usr/bin/env" "${coreutils}/bin/env"
@@ -159,18 +165,19 @@ in mkDerivation (rec {
         --with-cabal ${cabal-install}/bin/cabal \
         --with-gmp-includes ${gmp.dev}/include \
         --with-gmp-libraries ${gmp.out}/lib
+  '' + lib.optionalString (ghcLibdir != null) ''
+    printf '%s' '${ghcLibdir}' > "$out/lib/ghcjs-${version}/ghc_libdir"
   '';
-  passthru = let
-    ghcjsNodePkgs = callPackage ../../../top-level/node-packages.nix {
-      generated = ./node-packages-generated.nix;
-      self = ghcjsNodePkgs;
-    };
-  in {
+  passthru = {
     inherit bootPkgs;
     isCross = true;
     isGhcjs = true;
     inherit nodejs ghcjsBoot;
-    inherit (ghcjsNodePkgs) "socket.io";
+    socket-io = pkgs.nodePackages."socket.io";
+    haskellCompilerName = "ghcjs";
+
+    # let us assume ghcjs is never actually cross compiled
+    targetPrefix = "";
 
     inherit stage1Packages;
     mkStage2 = stage2 {
@@ -178,10 +185,10 @@ in mkDerivation (rec {
     };
   };
 
-  homepage = "https://github.com/ghcjs/ghcjs";
+  homepage = https://github.com/ghcjs/ghcjs;
   description = "A Haskell to JavaScript compiler that uses the GHC API";
   license = stdenv.lib.licenses.bsd3;
   platforms = ghc.meta.platforms;
-  maintainers = with stdenv.lib.maintainers; [ jwiegley cstrahan ];
-  broken = true;  # http://hydra.nixos.org/build/45110274
+  maintainers = with stdenv.lib.maintainers; [ jwiegley cstrahan dmjio ];
+  inherit broken;
 })

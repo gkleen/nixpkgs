@@ -1,4 +1,5 @@
-{ stdenv, fetchurl, qt4, qwt6_qt4, mesa, glew, gdal_1_11, cgal, proj, boost, cmake, python2, doxygen, graphviz, gmp }:
+{ stdenv, fetchurl, qt4, qwt6_qt4, mesa, glew, gdal_1_11, cgal
+, proj, boost, cmake, python2, doxygen, graphviz, gmp }:
 
 stdenv.mkDerivation rec {
   name = "gplates-${version}";
@@ -13,12 +14,16 @@ stdenv.mkDerivation rec {
     ./boostfix.patch
   ];
 
-  buildInputs = [ qt4 qwt6_qt4 mesa glew gdal_1_11 cgal proj boost cmake python2 doxygen graphviz gmp ];
+  buildInputs = [
+    qt4 qwt6_qt4 mesa glew gdal_1_11 cgal proj boost cmake python2
+    doxygen graphviz gmp
+  ];
 
   meta = with stdenv.lib; {
     description = "Desktop software for the interactive visualisation of plate-tectonics";
     homepage = https://www.gplates.org;
     license = licenses.gpl2;
     platforms = platforms.all;
+    broken = true;
   };
 }

@@ -1,11 +1,13 @@
-{ stdenv, fetchurl, openssl, curl, coreutils, gawk, bash, which }:
+{ stdenv, fetchFromGitHub, openssl, curl, coreutils, gawk, bash, which }:
 
-stdenv.mkDerivation {
-  name = "esniper-2.32.0";
+stdenv.mkDerivation rec {
+  name = "esniper-2.33.0.2017-11-06";
 
-  src = fetchurl {
-    url    = "mirror://sourceforge/esniper/esniper-2-32-0.tgz";
-    sha256 = "04lka4d0mnrwc369yzvq28n8qi1qbm8810ykx6d0a4kaghiybqsy";
+  src = fetchFromGitHub {
+    owner = "yhfudev";
+    repo = "esniper";
+    rev = "c95140d376db3c991300a7462e6c172b0ccf3eb5";
+    sha256 = "1dfb5hmcrvm3yg9ask362c6s5ylxs21szw23dm737a94br37j890";
   };
 
   buildInputs = [ openssl curl ];

@@ -1,6 +1,6 @@
 { stdenv, fetchurl, unzip
 , qt4 ? null, qmake4Hook ? null
-, withQt5 ? false, qtbase ? null, qmakeHook ? null
+, withQt5 ? false, qtbase ? null, qmake ? null
 }:
 
 stdenv.mkDerivation rec {
@@ -15,17 +15,29 @@ stdenv.mkDerivation rec {
   };
 
   buildInputs = if withQt5 then [ qtbase ] else [ qt4 ];
-  nativeBuildInputs = [ unzip ] ++ (if withQt5 then [ qmakeHook ] else [ qmake4Hook ]);
+  nativeBuildInputs = [ unzip ] ++ (if withQt5 then [ qmake ] else [ qmake4Hook ]);
 
   enableParallelBuilding = true;
 
   preConfigure = ''
     cd Qt4Qt5
+    ${if withQt5
+      then ''
+    sed -i -e "s,\$\$\\[QT_INSTALL_LIBS\\],$out/lib," \
+           -e "s,\$\$\\[QT_INSTALL_HEADERS\\],$out/include/," \
+           -e "s,\$\$\\[QT_INSTALL_TRANSLATIONS\\],$out/translations," \
+           -e "s,\$\$\\[QT_HOST_DATA\\]/mkspecs,$out/mkspecs," \
+           -e "s,\$\$\\[QT_INSTALL_DATA\\]/mkspecs,$out/mkspecs," \
+           -e "s,\$\$\\[QT_INSTALL_DATA\\],$out/share," \
+           qscintilla.pro
+    ''
+      else ''
     sed -i -e "s,\$\$\\[QT_INSTALL_LIBS\\],$out/lib," \
            -e "s,\$\$\\[QT_INSTALL_HEADERS\\],$out/include/," \
            -e "s,\$\$\\[QT_INSTALL_TRANSLATIONS\\],$out/share/qt/translations," \
            -e "s,\$\$\\[QT_INSTALL_DATA\\],$out/share/qt," \
            qscintilla.pro
+    ''}
   '';
 
   meta = with stdenv.lib; {

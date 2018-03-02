@@ -39,17 +39,31 @@ let
     DEFAULT boot
 
     LABEL boot
-    MENU LABEL NixOS ${config.system.nixosLabel}${config.isoImage.appendToMenuLabel}
-    LINUX /boot/bzImage
+    MENU LABEL NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel}
+    LINUX /boot/${config.system.boot.loader.kernelFile}
     APPEND init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams}
-    INITRD /boot/initrd
+    INITRD /boot/${config.system.boot.loader.initrdFile}
 
     # A variant to boot with 'nomodeset'
     LABEL boot-nomodeset
-    MENU LABEL NixOS ${config.system.nixosVersion}${config.isoImage.appendToMenuLabel} (with nomodeset)
-    LINUX /boot/bzImage
+    MENU LABEL NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel} (nomodeset)
+    LINUX /boot/${config.system.boot.loader.kernelFile}
     APPEND init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} nomodeset
-    INITRD /boot/initrd
+    INITRD /boot/${config.system.boot.loader.initrdFile}
+
+    # A variant to boot with 'copytoram'
+    LABEL boot-copytoram
+    MENU LABEL NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel} (copytoram)
+    LINUX /boot/${config.system.boot.loader.kernelFile}
+    APPEND init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} copytoram
+    INITRD /boot/${config.system.boot.loader.initrdFile}
+
+    # A variant to boot with verbose logging to the console
+    LABEL boot-nomodeset
+    MENU LABEL NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel} (debug)
+    LINUX /boot/${config.system.boot.loader.kernelFile}
+    APPEND init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} loglevel=7
+    INITRD /boot/${config.system.boot.loader.initrdFile}
   '';
 
   isolinuxMemtest86Entry = ''
@@ -67,19 +81,43 @@ let
     cp -v ${pkgs.systemd}/lib/systemd/boot/efi/systemd-boot${targetArch}.efi $out/EFI/boot/boot${targetArch}.efi
     mkdir -p $out/loader/entries
 
-    echo "title NixOS Live CD" > $out/loader/entries/nixos-livecd.conf
-    echo "linux /boot/bzImage" >> $out/loader/entries/nixos-livecd.conf
-    echo "initrd /boot/initrd" >> $out/loader/entries/nixos-livecd.conf
-    echo "options init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams}" >> $out/loader/entries/nixos-livecd.conf
+    cat << EOF > $out/loader/entries/nixos-iso.conf
+    title NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel}
+    linux /boot/${config.system.boot.loader.kernelFile}
+    initrd /boot/${config.system.boot.loader.initrdFile}
+    options init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams}
+    EOF
 
     # A variant to boot with 'nomodeset'
-    echo "title NixOS Live CD (with nomodeset)" > $out/loader/entries/nixos-livecd-nomodeset.conf
-    echo "linux /boot/bzImage" >> $out/loader/entries/nixos-livecd-nomodeset.conf
-    echo "initrd /boot/initrd" >> $out/loader/entries/nixos-livecd-nomodeset.conf
-    echo "options init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} nomodeset" >> $out/loader/entries/nixos-livecd-nomodeset.conf
+    cat << EOF > $out/loader/entries/nixos-iso-nomodeset.conf
+    title NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel}
+    version nomodeset
+    linux /boot/${config.system.boot.loader.kernelFile}
+    initrd /boot/${config.system.boot.loader.initrdFile}
+    options init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} nomodeset
+    EOF
 
-    echo "default nixos-livecd" > $out/loader/loader.conf
-    echo "timeout ${builtins.toString config.boot.loader.timeout}" >> $out/loader/loader.conf
+    # A variant to boot with 'copytoram'
+    cat << EOF > $out/loader/entries/nixos-iso-copytoram.conf
+    title NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel}
+    version copytoram
+    linux /boot/${config.system.boot.loader.kernelFile}
+    initrd /boot/${config.system.boot.loader.initrdFile}
+    options init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} copytoram
+    EOF
+
+    # A variant to boot with verbose logging to the console
+    cat << EOF > $out/loader/entries/nixos-iso-debug.conf
+    title NixOS ${config.system.nixos.label}${config.isoImage.appendToMenuLabel} (debug)
+    linux /boot/${config.system.boot.loader.kernelFile}
+    initrd /boot/${config.system.boot.loader.initrdFile}
+    options init=${config.system.build.toplevel}/init ${toString config.boot.kernelParams} loglevel=7
+    EOF
+
+    cat << EOF > $out/loader/loader.conf
+    default nixos-iso
+    timeout ${builtins.toString config.boot.loader.timeout}
+    EOF
   '';
 
   efiImg = pkgs.runCommand "efi-image_eltorito" { buildInputs = [ pkgs.mtools pkgs.libfaketime ]; }
@@ -89,8 +127,8 @@ let
       mkdir ./contents && cd ./contents
       cp -rp "${efiDir}"/* .
       mkdir ./boot
-      cp -p "${config.boot.kernelPackages.kernel}/bzImage" \
-        "${config.system.build.initialRamdisk}/initrd" ./boot/
+      cp -p "${config.boot.kernelPackages.kernel}/${config.system.boot.loader.kernelFile}" \
+        "${config.system.build.initialRamdisk}/${config.system.boot.loader.initrdFile}" ./boot/
       touch --date=@0 ./*
 
       usage_size=$(du -sb --apparent-size . | tr -cd '[:digit:]')
@@ -172,7 +210,6 @@ in
 
     isoImage.includeSystemBuildDependencies = mkOption {
       default = false;
-      example = true;
       description = ''
         Set this option to include all the needed sources etc in the
         image. It significantly increases image size. Use that when
@@ -280,7 +317,7 @@ in
         options = [ "allow_other" "cow" "nonempty" "chroot=/mnt-root" "max_files=32768" "hide_meta_files" "dirs=/nix/.rw-store=rw:/nix/.ro-store=ro" ];
       };
 
-    boot.initrd.availableKernelModules = [ "squashfs" "iso9660" "usb-storage" ];
+    boot.initrd.availableKernelModules = [ "squashfs" "iso9660" "usb-storage" "uas" ];
 
     boot.blacklistedKernelModules = [ "nouveau" ];
 
@@ -309,11 +346,11 @@ in
           };
           target = "/isolinux/isolinux.cfg";
         }
-        { source = config.boot.kernelPackages.kernel + "/bzImage";
-          target = "/boot/bzImage";
+        { source = config.boot.kernelPackages.kernel + "/" + config.system.boot.loader.kernelFile;
+          target = "/boot/" + config.system.boot.loader.kernelFile;
         }
-        { source = config.system.build.initialRamdisk + "/initrd";
-          target = "/boot/initrd";
+        { source = config.system.build.initialRamdisk + "/" + config.system.boot.loader.initrdFile;
+          target = "/boot/" + config.system.boot.loader.initrdFile;
         }
         { source = config.system.build.squashfsStore;
           target = "/nix-store.squashfs";
@@ -323,6 +360,9 @@ in
         }
         { source = config.isoImage.splashImage;
           target = "/isolinux/background.png";
+        }
+        { source = pkgs.writeText "version" config.system.nixos.label;
+          target = "/version.txt";
         }
       ] ++ optionals config.isoImage.makeEfiBootable [
         { source = efiImg;

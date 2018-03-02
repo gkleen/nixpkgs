@@ -1,11 +1,6 @@
-{ fetchFromGitHub }:
+{ fetchurl }:
 
-# Use builtins.fetchTarball "https://github.com/commercialhaskell/all-cabal-hashes/archive/hackage.tar.gz"
-# instead if you want the latest Hackage automatically at the price of frequent re-downloads.
-
-fetchFromGitHub {
-  owner = "commercialhaskell";
-  repo = "all-cabal-hashes";
-  rev = "5c5b04af472eb6c2854b21cb52ee6324252280de";
-  sha256 = "1cnr350044yrlg7wa09fmdarl7y9gkydh25lv94wcqg3w9cdv0fb";
+fetchurl {
+  url = "https://github.com/commercialhaskell/all-cabal-hashes/archive/9f6344416728bff8b5279e0c45941fd8da361eb9.tar.gz";
+  sha256 = "0zm53wxvm7z72605qvgv0dzsfq91lyffpr850cks23r979pjvkv8";
 }

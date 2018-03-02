@@ -1,36 +1,30 @@
-{ stdenv, fetchFromGitHub, scons, pkgconfig, gnome3, gmime, webkitgtk24x
-  , libsass, notmuch, boost, makeWrapper }:
+{ stdenv, fetchFromGitHub, scons, pkgconfig, gnome3, gmime3, webkitgtk24x-gtk3
+, libsass, notmuch, boost, wrapGAppsHook }:
 
 stdenv.mkDerivation rec {
   name = "astroid-${version}";
-  version = "0.6";
+  version = "0.10.2";
 
   src = fetchFromGitHub {
     owner = "astroidmail";
     repo = "astroid";
     rev = "v${version}";
-    sha256 = "0zashjmqv8ips9q8ckyhgm9hfyf01wpgs6g21cwl05q5iklc5x7r";
+    sha256 = "0y1i40xbjjvnylqpdkvj0m9fl6f5k9zk1z4pqg3vhj8x1ys8am1c";
   };
 
-  patches = [ ./propagate-environment.patch ];
+  nativeBuildInputs = [ scons pkgconfig wrapGAppsHook ];
 
-  buildInputs = [ scons pkgconfig gnome3.gtkmm gmime webkitgtk24x libsass
-                  gnome3.libpeas notmuch boost gnome3.gsettings_desktop_schemas
-                  makeWrapper ];
+  buildInputs = [ gnome3.gtkmm gmime3 webkitgtk24x-gtk3 libsass gnome3.libpeas
+                  notmuch boost gnome3.gsettings-desktop-schemas ];
 
-  buildPhase = "scons --prefix=$out build";
-  installPhase = "scons --prefix=$out install";
+  buildPhase = "scons --propagate-environment --prefix=$out build";
+  installPhase = "scons --propagate-environment --prefix=$out install";
 
-  preFixup = ''
-    wrapProgram "$out/bin/astroid" \
-      --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
-  '';
-
-  meta = {
-    homepage = "https://astroidmail.github.io/";
+  meta = with stdenv.lib; {
+    homepage = https://astroidmail.github.io/;
     description = "GTK+ frontend to the notmuch mail system";
-    maintainers = [ stdenv.lib.maintainers.bdimcheff ];
-    license = stdenv.lib.licenses.gpl3Plus;
-    platforms = stdenv.lib.platforms.linux;
+    maintainers = with maintainers; [ bdimcheff SuprDewd ];
+    license = licenses.gpl3Plus;
+    platforms = platforms.linux;
   };
 }

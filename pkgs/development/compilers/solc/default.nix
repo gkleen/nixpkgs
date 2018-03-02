@@ -1,27 +1,43 @@
-{ stdenv, fetchgit, boost, cmake, jsoncpp }:
+{ stdenv, fetchzip, fetchurl, boost, cmake, z3 }:
 
-stdenv.mkDerivation rec {
-  version = "0.4.8";
+let
+  version = "0.4.20";
+  jsoncppURL = https://github.com/open-source-parsers/jsoncpp/archive/1.7.7.tar.gz;
+  jsoncpp = fetchzip {
+    url = jsoncppURL;
+    sha256 = "0jz93zv17ir7lbxb3dv8ph2n916rajs8i96immwx9vb45pqid3n0";
+  };
+in
+
+stdenv.mkDerivation {
   name = "solc-${version}";
 
   # Cannot use `fetchFromGitHub' because of submodules
-  src = fetchgit {
-    url = "https://github.com/ethereum/solidity";
-    rev = "60cc1668517f56ce6ca8225555472e7a27eab8b0";
-    sha256 = "09mwah7c5ca1bgnqp5qgghsi6mbsi7p16z8yxm0aylsn2cjk23na";
+  src = fetchurl {
+    url = "https://github.com/ethereum/solidity/releases/download/v${version}/solidity_${version}.tar.gz";
+    sha256 = "0jyqnykj537ksfsf2m6ww9vganmpa6yd5fmlfpa5qm1076kq7zd6";
   };
 
   patchPhase = ''
-    echo >commit_hash.txt 2dabbdf06f414750ef0425c664f861aeb3e470b8
+    substituteInPlace cmake/jsoncpp.cmake \
+      --replace '${jsoncppURL}' ${jsoncpp}
+    substituteInPlace cmake/EthCompilerSettings.cmake \
+      --replace 'add_compile_options(-Werror)' ""
   '';
 
-  buildInputs = [ boost cmake jsoncpp ];
+  cmakeFlags = [
+    "-DBoost_USE_STATIC_LIBS=OFF"
+  ];
+
+  nativeBuildInputs = [ cmake ];
+  buildInputs = [ boost z3 ];
 
   meta = {
     description = "Compiler for Ethereum smart contract language Solidity";
     longDescription = "This package also includes `lllc', the LLL compiler.";
     homepage = https://github.com/ethereum/solidity;
     license = stdenv.lib.licenses.gpl3;
+    platforms = with stdenv.lib.platforms; linux ++ darwin;
     maintainers = [ stdenv.lib.maintainers.dbrock ];
     inherit version;
   };

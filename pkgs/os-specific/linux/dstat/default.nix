@@ -1,7 +1,8 @@
 { stdenv, fetchurl, python2Packages }:
 
-python2Packages.mkPythonDerivation rec {
+python2Packages.buildPythonApplication rec {
   name = "dstat-${version}";
+  format = "other";
   version = "0.7.3";
 
   src = fetchurl {
@@ -18,6 +19,6 @@ python2Packages.mkPythonDerivation rec {
     description = "Versatile resource statistics tool";
     license = licenses.gpl2;
     platforms = platforms.linux;
-    maintainers = with maintainers; [ jgeerds nckx ];
+    maintainers = with maintainers; [ jgeerds ];
   };
 }

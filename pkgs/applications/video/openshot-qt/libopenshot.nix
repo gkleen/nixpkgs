@@ -1,48 +1,51 @@
-{stdenv, fetchurl, fetchFromGitHub, callPackage, cmake, doxygen
-, imagemagick, ffmpeg, qt55, swig, python3, ruby, unittest-cpp
-, cppzmq, czmqpp
-}:
+{ stdenv, fetchFromGitHub, fetchpatch
+, pkgconfig, cmake, doxygen
+, libopenshot-audio, imagemagick, ffmpeg
+, swig, python3
+, unittest-cpp, cppzmq, czmqpp
+, qtbase, qtmultimedia }:
 
 with stdenv.lib;
-
-let
-  libopenshot_audio = callPackage ./libopenshot-audio.nix {};
-in
 stdenv.mkDerivation rec {
   name = "libopenshot-${version}";
-  version = "0.1.2";
+  version = "0.1.7";
 
   src = fetchFromGitHub {
     owner = "OpenShot";
     repo = "libopenshot";
     rev = "v${version}";
-    sha256 = "00051ipb8y4z9j5m5smwm1ahv755k0glarwic8fv5b9fzryfbrdm";
+    sha256 = "1dk40qild8d3s99p2kkm0mjvxfxrz2wns7ij1brzqmcdnaxqdhlp";
   };
 
   patchPhase = ''
     sed -i 's/{UNITTEST++_INCLUDE_DIR}/ENV{UNITTEST++_INCLUDE_DIR}/g' tests/CMakeLists.txt
     sed -i 's/{_REL_PYTHON_MODULE_PATH}/ENV{_REL_PYTHON_MODULE_PATH}/g' src/bindings/python/CMakeLists.txt
-    sed -i 's/{RUBY_VENDOR_ARCH_DIR}/ENV{RUBY_VENDOR_ARCH_DIR}/g' src/bindings/ruby/CMakeLists.txt
     export _REL_PYTHON_MODULE_PATH=$(toPythonPath $out)
-    export RUBY_VENDOR_ARCH_DIR=$out/lib/ruby/site-packages
   '';
 
-  buildInputs = [
-    cmake doxygen
-    imagemagick ffmpeg qt55.qtbase qt55.qtmultimedia swig python3 ruby
-    unittest-cpp cppzmq czmqpp
-  ];
+  nativeBuildInputs = [ pkgconfig cmake doxygen ];
 
-  LIBOPENSHOT_AUDIO_DIR = "${libopenshot_audio}";
+  buildInputs =
+  [ imagemagick ffmpeg swig python3 unittest-cpp
+    cppzmq czmqpp qtbase qtmultimedia ];
+
+  LIBOPENSHOT_AUDIO_DIR = "${libopenshot-audio}";
   "UNITTEST++_INCLUDE_DIR" = "${unittest-cpp}/include/UnitTest++";
 
   doCheck = false;
 
+  cmakeFlags = [ "-DENABLE_RUBY=OFF" ];
+
   meta = {
-    homepage = "http://openshot.org/";
-    description = "Free, open-source video editor";
-    license = licenses.gpl3Plus;
-    maintainers = [maintainers.tohl];
-    platforms = platforms.linux;
+    homepage = http://openshot.org/;
+    description = "Free, open-source video editor library";
+    longDescription = ''
+      OpenShot Library (libopenshot) is an open-source project dedicated to
+      delivering high quality video editing, animation, and playback solutions
+      to the world. API currently supports C++, Python, and Ruby.
+    '';
+    license = with licenses; gpl3Plus;
+    maintainers = with maintainers; [ AndersonTorres ];
+    platforms = with platforms; linux;
   };
 }

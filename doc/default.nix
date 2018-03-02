@@ -23,11 +23,12 @@ pkgs.stdenv.mkDerivation {
 
   buildCommand = let toDocbook = { useChapters ? false, inputFile, outputFile }:
     let
-      extraHeader = ''xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" '';
+      extraHeader = lib.optionalString (!useChapters)
+        ''xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" '';
     in ''
       {
-        pandoc '${inputFile}' -w docbook ${lib.optionalString useChapters "--chapters"} \
-          --smart \
+        pandoc '${inputFile}' -w docbook+smart ${lib.optionalString useChapters "--top-level-division=chapter"} \
+          -f markdown+smart \
           | sed -e 's|<ulink url=|<link xlink:href=|' \
               -e 's|</ulink>|</link>|' \
               -e 's|<sect. id=|<section xml:id=|' \
@@ -49,6 +50,10 @@ pkgs.stdenv.mkDerivation {
       useChapters = true;
     }
   + toDocbook {
+      inputFile = ./shell.md;
+      outputFile = "shell.xml";
+    }
+  + toDocbook {
       inputFile = ./languages-frameworks/python.md;
       outputFile = "./languages-frameworks/python.xml";
     }
@@ -67,6 +72,14 @@ pkgs.stdenv.mkDerivation {
   + toDocbook {
       inputFile = ../pkgs/development/r-modules/README.md;
       outputFile = "languages-frameworks/r.xml";
+    }
+  + toDocbook {
+      inputFile = ./languages-frameworks/rust.md;
+      outputFile = "./languages-frameworks/rust.xml";
+    }
+  + toDocbook {
+      inputFile = ./languages-frameworks/vim.md;
+      outputFile = "./languages-frameworks/vim.xml";
     }
   + ''
     echo ${lib.nixpkgsVersion} > .version

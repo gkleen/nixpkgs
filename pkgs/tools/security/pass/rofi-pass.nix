@@ -4,13 +4,13 @@
 
 stdenv.mkDerivation rec {
   name = "rofi-pass-${version}";
-  version = "1.4.3";
+  version = "1.5.3";
 
   src = fetchFromGitHub {
     owner = "carnager";
     repo = "rofi-pass";
     rev = version;
-    sha256 = "09wpkxg5b7xicdisgbhlfr8vs1iv7z9sc58pjl0p198yap57khq5";
+    sha256 = "1fn1j2rf3abc5qb44zfc8z8ffw6rva4xfp7597hwr1g3szacazpq";
   };
 
   buildInputs = [ makeWrapper ];
@@ -50,7 +50,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "A script to make rofi work with password-store";
     homepage = https://github.com/carnager/rofi-pass;
-    maintainers = with stdenv.lib.maintainers; [ the-kenny ];
+    maintainers = with stdenv.lib.maintainers; [ the-kenny garbas ];
     license = stdenv.lib.licenses.gpl3;
     platforms = with stdenv.lib.platforms; linux;
   };

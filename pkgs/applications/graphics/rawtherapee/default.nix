@@ -1,27 +1,29 @@
-{ stdenv, fetchFromGitHub, pkgconfig, cmake, pixman, libpthreadstubs, gtkmm2, libXau
-, libXdmcp, lcms2, libiptcdata, libcanberra_gtk2, fftw, expat, pcre, libsigcxx
+{ stdenv, fetchFromGitHub, pkgconfig, cmake, pixman, libpthreadstubs, gtkmm3, libXau
+, libXdmcp, lcms2, libiptcdata, libcanberra-gtk3, fftw, expat, pcre, libsigcxx, wrapGAppsHook
+, lensfun
 }:
 
 stdenv.mkDerivation rec {
-  version = "4.2.1025";
+  version = "5.3";
   name = "rawtherapee-" + version;
 
   src = fetchFromGitHub {
     owner = "Beep6581";
     repo = "RawTherapee";
-    rev = "dc4bbe906ba92ddc66f98a3c26ce19822bfb99ab";
-    sha256 = "0c5za9s8533fiyl32378dq9rgd5044xi8y0wm2gkr7krbdnx74l3";
+    rev = version;
+    sha256 = "1r6sx9zl1wkykgfx6k26268xadair6hzl15v5hmiri9sdhrn33q7";
   };
 
-  buildInputs = [ pkgconfig cmake pixman libpthreadstubs gtkmm2 libXau libXdmcp
-    lcms2 libiptcdata libcanberra_gtk2 fftw expat pcre libsigcxx ];
+  nativeBuildInputs = [ cmake pkgconfig wrapGAppsHook ];
 
-  patches = [
-    ./fix-glibmm-output.patch
+  buildInputs = [
+    pixman libpthreadstubs gtkmm3 libXau libXdmcp
+    lcms2 libiptcdata libcanberra-gtk3 fftw expat pcre libsigcxx lensfun
   ];
 
   cmakeFlags = [
     "-DPROC_TARGET_NUMBER=2"
+    "-DCACHE_NAME_SUFFIX=\"\""
   ];
 
   CMAKE_CXX_FLAGS = "-std=c++11 -Wno-deprecated-declarations -Wno-unused-result";

@@ -1,16 +1,20 @@
-{ stdenv, fetchurl, gettext, libidn, pkgconfig
-, perl, perlPackages, LWP, python3
-, libiconv, libpsl ? null, openssl ? null }:
+{ stdenv, fetchurl, gettext, pkgconfig, perl
+, libidn2, zlib, pcre, libuuid, libiconv
+, IOSocketSSL, LWP, python3, lzip
+, libpsl ? null
+, openssl ? null }:
 
 stdenv.mkDerivation rec {
-  name = "wget-1.18";
+  name = "wget-1.19.4";
 
   src = fetchurl {
-    url = "mirror://gnu/wget/${name}.tar.xz";
-    sha256 = "1hcwx8ww3sxzdskkx3l7q70a7wd6569yrnjkw9pw013cf9smpddm";
+    url = "mirror://gnu/wget/${name}.tar.lz";
+    sha256 = "16jmcqcasx3q9k4azssryli9qyxfq0sfijw998g8zp58cnwzzh1g";
   };
 
-  patches = [ ./remove-runtime-dep-on-openssl-headers.patch ];
+  patches = [
+    ./remove-runtime-dep-on-openssl-headers.patch
+  ];
 
   preConfigure = ''
     patchShebangs doc
@@ -25,10 +29,11 @@ stdenv.mkDerivation rec {
     export LIBS="-liconv -lintl"
   '';
 
-  nativeBuildInputs = [ gettext pkgconfig perl ];
-  buildInputs = [ libidn libiconv libpsl ]
-    ++ stdenv.lib.optionals doCheck [ perlPackages.IOSocketSSL LWP python3 ]
+  nativeBuildInputs = [ gettext pkgconfig perl lzip ];
+  buildInputs = [ libidn2 libiconv zlib pcre libuuid ]
+    ++ stdenv.lib.optionals doCheck [ IOSocketSSL LWP python3 ]
     ++ stdenv.lib.optional (openssl != null) openssl
+    ++ stdenv.lib.optional (libpsl != null) libpsl
     ++ stdenv.lib.optional stdenv.isDarwin perl;
 
   configureFlags =

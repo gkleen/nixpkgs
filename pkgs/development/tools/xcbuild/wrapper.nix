@@ -30,7 +30,7 @@ let
 in
 
 stdenv.mkDerivation {
-  name = "xcbuild-wrapper";
+  name = "xcbuild-wrapper-${xcbuild.version}";
 
   buildInputs = [ xcbuild makeWrapper ];
 
@@ -50,19 +50,22 @@ stdenv.mkDerivation {
     ln -s ${xcbuild}/Library/Xcode/Specifications $out/Library/Xcode/Specifications
 
     mkdir -p $out/Platforms/
-    ln -s ${platform} $out/Platforms/
+    ln -s ${platform} $out/Platforms/nixpkgs.platform
 
     mkdir -p $out/Toolchains/
-    ln -s ${toolchain} $out/Toolchains/
+    ln -s ${toolchain} $out/Toolchains/nixpkgs.xctoolchain
 
     wrapProgram $out/bin/xcodebuild \
       --add-flags "-xcconfig ${xcconfig}" \
       --add-flags "DERIVED_DATA_DIR=." \
-      --set DEVELOPER_DIR "$out"
+      --set DEVELOPER_DIR "$out" \
+      --set SDKROOT ${sdkName}
     wrapProgram $out/bin/xcrun \
-      --set DEVELOPER_DIR "$out"
+      --set DEVELOPER_DIR "$out" \
+      --set SDKROOT ${sdkName}
     wrapProgram $out/bin/xcode-select \
-      --set DEVELOPER_DIR "$out"
+      --set DEVELOPER_DIR "$out" \
+      --set SDKROOT ${sdkName}
   '';
 
   inherit (xcbuild) meta;

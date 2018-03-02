@@ -1,29 +1,25 @@
-{ stdenv, fetchurl, zsh }:
+{ stdenv, fetchFromGitHub, zsh }:
 
 # To make use of this derivation, use the `programs.zsh.enableSyntaxHighlighting` option
 
-let
-
-  pkgName = "zsh-syntax-highlighting";
-  version = "0.4.1";
-
-in
-
 stdenv.mkDerivation rec {
-  name = "${pkgName}-${version}";
+  version = "0.6.0";
+  name = "zsh-syntax-highlighting-${version}";
 
-  src = fetchurl {
-    url = "https://github.com/zsh-users/${pkgName}/archive/${version}.tar.gz";
-    sha256 = "15sih7blqz11d8wdybx38d91vgcq9jg3q0205r26138si0g9q6wp";
+  src = fetchFromGitHub {
+    owner = "zsh-users";
+    repo = "zsh-syntax-highlighting";
+    rev = version;
+    sha256 = "0zmq66dzasmr5pwribyh4kbkk23jxbpdw4rjxx0i7dx8jjp2lzl4";
   };
 
   buildInputs = [ zsh ];
 
-  installFlags="PREFIX=$(out)";
+  installFlags = "PREFIX=$(out)";
 
   meta = with stdenv.lib; {
     description = "Fish shell like syntax highlighting for Zsh";
-    homepage = "https://github.com/zsh-users/zsh-syntax-highlighting";
+    homepage = https://github.com/zsh-users/zsh-syntax-highlighting;
     license = licenses.bsd3;
     platforms = platforms.unix;
     maintainers = [ maintainers.loskutov ];

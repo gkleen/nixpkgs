@@ -1,21 +1,28 @@
-{ stdenv, fetchurl, pythonPackages }:
+{ stdenv, fetchFromGitHub, python3Packages }:
 
-pythonPackages.buildPythonApplication rec {
+let
+  version = "2.1.8";
+  sha256 = "0fnsk61s328dg16iv0chqxayni8ahkbcb84z012w0d9417i806lc";
+in
+
+python3Packages.buildPythonApplication {
   name = "radicale-${version}";
-  version = "1.1.1";
+  inherit version;
 
-  src = fetchurl {
-    url = "mirror://pypi/R/Radicale/Radicale-${version}.tar.gz";
-    sha256 = "1c5lv8qca21mndkx350wxv34qypqh6gb4rhzms4anr642clq3jg2";
+  src = fetchFromGitHub {
+    owner = "Kozea";
+    repo = "Radicale";
+    rev = version;
+    inherit sha256;
   };
 
-  propagatedBuildInputs = [
-    pythonPackages.flup
-    pythonPackages.ldap
-    pythonPackages.sqlalchemy
-  ];
+  doCheck = false;
 
-  doCheck = true;
+  propagatedBuildInputs = with python3Packages; [
+    vobject
+    passlib
+    pytz
+  ];
 
   meta = with stdenv.lib; {
     homepage = http://www.radicale.org/;
@@ -28,7 +35,7 @@ pythonPackages.buildPythonApplication rec {
       on mobile phones or computers.
     '';
     license = licenses.gpl3Plus;
-    platform = platforms.all;
-    maintainers = with maintainers; [ edwtjo pSub ];
+    platforms = platforms.all;
+    maintainers = with maintainers; [ edwtjo pSub aneeshusa infinisil ];
   };
 }

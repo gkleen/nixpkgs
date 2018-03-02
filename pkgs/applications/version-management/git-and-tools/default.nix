@@ -22,13 +22,19 @@ in
 rec {
   # Try to keep this generally alphabetized
 
+  bfg-repo-cleaner = callPackage ./bfg-repo-cleaner { };
+
   bitbucket-server-cli = callPackage ./bitbucket-server-cli { };
 
   darcsToGit = callPackage ./darcs-to-git { };
 
   diff-so-fancy = callPackage ./diff-so-fancy { };
 
+  ghq = callPackage ./ghq { };
+
   git = appendToName "minimal" gitBase;
+
+  git-fame = callPackage ./git-fame {};
 
   # The full-featured Git.
   gitFull = gitBase.override {
@@ -45,6 +51,10 @@ rec {
   git-annex = pkgs.haskellPackages.git-annex;
   gitAnnex = git-annex;
 
+  git-annex-metadata-gui = libsForQt5.callPackage ./git-annex-metadata-gui {
+    inherit (python3Packages) buildPythonApplication pyqt5 git-annex-adapter;
+  };
+
   git-annex-remote-b2 = callPackage ./git-annex-remote-b2 { };
 
   git-annex-remote-rclone = callPackage ./git-annex-remote-rclone { };
@@ -52,9 +62,13 @@ rec {
   # support for bugzilla
   git-bz = callPackage ./git-bz { };
 
+  git-codeowners = callPackage ./git-codeowners { };
+
   git-cola = callPackage ./git-cola { };
 
   git-crypt = callPackage ./git-crypt { };
+
+  git-dit = callPackage ./git-dit { };
 
   git-extras = callPackage ./git-extras { };
 
@@ -62,9 +76,19 @@ rec {
 
   git-imerge = callPackage ./git-imerge { };
 
+  git-octopus = callPackage ./git-octopus { };
+
+  git-open = callPackage ./git-open { };
+
   git-radar = callPackage ./git-radar { };
 
+  git-recent = callPackage ./git-recent {
+    utillinux = if stdenv.isLinux then utillinuxMinimal else null;
+  };
+
   git-remote-hg = callPackage ./git-remote-hg { };
+
+  git-secret = callPackage ./git-secret { };
 
   git-stree = callPackage ./git-stree { };
 
@@ -76,11 +100,13 @@ rec {
 
   gitflow = callPackage ./gitflow { };
 
+  grv = callPackage ./grv { };
+
   hub = callPackage ./hub {
     inherit (darwin) Security;
   };
 
-  qgit = callPackage ./qgit { };
+  qgit = qt5.callPackage ./qgit { };
 
   stgit = callPackage ./stgit {
   };
@@ -91,7 +117,7 @@ rec {
     git = gitSVN;
   };
 
-  svn2git_kde = callPackage ./svn2git-kde { };
+  svn_all_fast_export = libsForQt5.callPackage ./svn-all-fast-export { };
 
   tig = callPackage ./tig { };
 

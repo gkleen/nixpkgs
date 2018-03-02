@@ -2,18 +2,16 @@
 
 stdenv.mkDerivation rec {
   name = "glslang-git-${version}";
-  version = "2016-08-26";
+  version = "2017-08-31";
 
   # `vulkan-loader` requires a specific version of `glslang` as specified in
-  # `<vulkan-loader-repo>/glslang_revision`.
+  # `<vulkan-loader-repo>/external_revisions/glslang_revision`.
   src = fetchFromGitHub {
     owner = "KhronosGroup";
     repo = "glslang";
-    rev = "81cd764b5ffc475bc73f1fb35f75fd1171bb2343";
-    sha256 = "1vfwl6lzkjh9nh29q32b7zca4q1abf3q4nqkahskijgznw5lr59g";
+    rev = "3a21c880500eac21cdf79bef5b80f970a55ac6af";
+    sha256 = "1i15m17r0acmzjrkybris2rgw15il05a4w5h7vhhsiyngcvajcyn";
   };
-
-  patches = [ ./install-headers.patch ];
 
   buildInputs = [ cmake bison ];
   enableParallelBuilding = true;
@@ -23,5 +21,6 @@ stdenv.mkDerivation rec {
     description = "Khronos reference front-end for GLSL and ESSL";
     license = licenses.asl20;
     platforms = platforms.linux;
+    maintainers = [ maintainers.ralith ];
   };
 }

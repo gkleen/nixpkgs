@@ -1,6 +1,7 @@
 { stdenv, fetchurl
 , cxxSupport ? true
 , compat185 ? true
+, dbmSupport ? false
 
 # Options from inherited versions
 , version, sha256
@@ -19,12 +20,13 @@ stdenv.mkDerivation (rec {
 
   patches = extraPatches;
 
-  configureFlags = [
-    (if cxxSupport then "--enable-cxx" else "--disable-cxx")
-    (if compat185 then "--enable-compat185" else "--disable-compat185")
-    "--enable-dbm"
-    (stdenv.lib.optionalString stdenv.isFreeBSD "--with-pic")
-  ];
+  configureFlags =
+    [
+      (if cxxSupport then "--enable-cxx" else "--disable-cxx")
+      (if compat185 then "--enable-compat185" else "--disable-compat185")
+    ]
+    ++ stdenv.lib.optional dbmSupport "--enable-dbm"
+    ++ stdenv.lib.optional stdenv.isFreeBSD "--with-pic";
 
   preConfigure = ''
     cd build_unix
@@ -42,7 +44,7 @@ stdenv.mkDerivation (rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = "http://www.oracle.com/technetwork/database/database-technologies/berkeleydb/index.html";
+    homepage = http://www.oracle.com/technetwork/database/database-technologies/berkeleydb/index.html;
     description = "Berkeley DB";
     license = license;
     platforms = platforms.unix;

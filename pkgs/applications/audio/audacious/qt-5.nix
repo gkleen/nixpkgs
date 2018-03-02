@@ -1,39 +1,44 @@
 {
-  stdenv, lib, fetchurl,
-  gettext, makeQtWrapper, pkgconfig,
+  mkDerivation, lib, fetchurl, fetchpatch,
+  gettext, pkgconfig,
   qtbase,
   alsaLib, curl, faad2, ffmpeg, flac, fluidsynth, gdk_pixbuf, lame, libbs2b,
-  libcddb, libcdio082, libcue, libjack2, libmad, libmcs, libmms, libmodplug,
+  libcddb, libcdio, libcue, libjack2, libmad, libmms, libmodplug,
   libmowgli, libnotify, libogg, libpulseaudio, libsamplerate, libsidplayfp,
   libsndfile, libvorbis, libxml2, lirc, mpg123, neon, qtmultimedia, soxr,
   wavpack
 }:
 
 let
-  version = "3.8.1";
+  version = "3.9";
   sources = {
     "audacious-${version}" = fetchurl {
       url = "http://distfiles.audacious-media-player.org/audacious-${version}.tar.bz2";
-      sha256 = "1k9blmgqia0df18l39bd2bbcwmjfxak6bd286vcd9zzmjhqs4qdc";
+      sha256 = "0pmhrhsjhqnrq3zh4rhfys5jas53ph5ijkq010dxg1n779kl901d";
     };
 
     "audacious-plugins-${version}" = fetchurl {
       url = "http://distfiles.audacious-media-player.org/audacious-plugins-${version}.tar.bz2";
-      sha256 = "0f16ivcp8nd83r781hnw1qgbs9hi2b2v22zwv7c3sw3jq1chb70h";
+      sha256 = "1f17r7ar0mngcf7z41s6xh073vjafw3i7iy9ijb0cd6bi48g5xwb";
     };
+  };
+
+  qt510_plugins_patch = fetchpatch {
+    url = "https://github.com/audacious-media-player/audacious-plugins/commit/971f7ff7c3d8a0b9b420bf4fd19ab97755607637.patch";
+    sha256 = "15fy37syj9ygl2ibkkz3g3b9wd22vk9bjfmvqhhkpxphry2zwb17";
   };
 in
 
-stdenv.mkDerivation {
+mkDerivation {
   inherit version;
-  name = "audacious-${version}";
+  name = "audacious-qt5-${version}";
 
   sourceFiles = lib.attrValues sources;
   sourceRoots = lib.attrNames sources;
 
-  nativeBuildInputs = [
-    gettext makeQtWrapper pkgconfig
-  ];
+  nativeBuildInputs = [ gettext pkgconfig ];
+
+  inherit qt510_plugins_patch;
 
   buildInputs = [
     # Core dependencies
@@ -41,7 +46,7 @@ stdenv.mkDerivation {
 
     # Plugin dependencies
     alsaLib curl faad2 ffmpeg flac fluidsynth gdk_pixbuf lame libbs2b libcddb
-    libcdio082 libcue libjack2 libmad libmcs libmms libmodplug libmowgli
+    libcdio libcue libjack2 libmad libmms libmodplug libmowgli
     libnotify libogg libpulseaudio libsamplerate libsidplayfp libsndfile
     libvorbis libxml2 lirc mpg123 neon qtmultimedia soxr wavpack
   ];
@@ -57,6 +62,10 @@ stdenv.mkDerivation {
     for (( i=0 ; i < ''${#sourceFiles[*]} ; i++ )); do
 
       (
+        # only patch the plugins
+        if [ "$i" -eq "1" ]; then
+          patches=( $qt510_plugins_patch )
+        fi
         src=''${sourceFiles[$i]}
         sourceRoot=''${sourceRoots[$i]}
         source $stdenv/setup
@@ -68,15 +77,9 @@ stdenv.mkDerivation {
       fi
 
     done
-
-    source $stdenv/setup
-    wrapQtProgram $out/bin/audacious
-    wrapQtProgram $out/bin/audtool
   '';
 
-  enableParallelBuilding = true;
-
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Audio player";
     homepage = http://audacious-media-player.org/;
     maintainers = with maintainers; [ ttuegel ];

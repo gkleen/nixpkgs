@@ -8,12 +8,13 @@ in
 
 {
   imports = [
+    ./2bwm.nix
     ./afterstep.nix
     ./bspwm.nix
-    ./compiz.nix
     ./dwm.nix
     ./exwm.nix
     ./fluxbox.nix
+    ./fvwm.nix
     ./herbstluftwm.nix
     ./i3.nix
     ./jwm.nix
@@ -60,7 +61,9 @@ in
         example = "wmii";
         description = "Default window manager loaded if none have been chosen.";
         apply = defaultWM:
-          if any (w: w.name == defaultWM) cfg.session then
+          if defaultWM == "none" && cfg.session != []  then
+            (head cfg.session).name
+          else if any (w: w.name == defaultWM) cfg.session then
             defaultWM
           else
             throw "Default window manager (${defaultWM}) not found.";

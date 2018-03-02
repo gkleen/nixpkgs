@@ -44,6 +44,8 @@ stdenv.mkDerivation rec {
   '';
 
   hardeningDisable = [ "pic" ];
+  
+  nativeBuildInputs = kernel.moduleBuildDependencies;
 
   makeFlags = [
     "KDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
@@ -54,6 +56,6 @@ stdenv.mkDerivation rec {
     description = "Linux driver for the Facetime HD (Broadcom 1570) PCIe webcam";
     license = licenses.gpl2;
     maintainers = with maintainers; [ womfoo grahamc ];
-    platforms = platforms.linux;
+    platforms = [ "i686-linux" "x86_64-linux" ];
   };
 }

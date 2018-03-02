@@ -1,31 +1,49 @@
-{ stdenv, fetchFromGitHub, autoreconfHook, parallel, sassc, inkscape, libxml2, glib, gdk_pixbuf, librsvg, gtk-engine-murrine }:
+{ stdenv, fetchFromGitHub, autoreconfHook, pkgconfig, parallel, sassc, inkscape, libxml2, glib, gdk_pixbuf, librsvg, gtk-engine-murrine, gnome3 }:
 
 stdenv.mkDerivation rec {
   name = "adapta-gtk-theme-${version}";
-  version = "3.89.1.66";
-
-  meta = with stdenv.lib; {
-    description = "An adaptive GTK+ theme based on Material Design";
-    homepage = "https://github.com/tista500/Adapta";
-    license = with licenses; [ gpl2 cc-by-sa-30 ];
-    platforms = platforms.linux;
-    maintainers = [ maintainers.SShrike ];
-  };
+  version = "3.93.0.1";
 
   src = fetchFromGitHub {
-    owner = "tista500";
-    repo = "Adapta";
+    owner = "adapta-project";
+    repo = "adapta-gtk-theme";
     rev = version;
-    sha256 = "08g941xgxg7i8g1srn3zdxz1nxm24bkrg5cx9ipjqk5cwsck7470";
+    sha256 = "0l662l66ja8dsakcgwg6ab69lkl0va0r5h74dr6yjdsy0q4h2m7h";
   };
 
   preferLocalBuild = true;
 
-  nativeBuildInputs = [ autoreconfHook parallel sassc inkscape libxml2 glib.dev ];
+  nativeBuildInputs = [
+    autoreconfHook
+    pkgconfig
+    parallel
+    sassc
+    inkscape
+    libxml2
+    glib.dev
+    gnome3.gnome-shell
+  ];
 
-  buildInputs = [ gdk_pixbuf librsvg gtk-engine-murrine ];
+  buildInputs = [
+    gdk_pixbuf
+    librsvg
+  ];
+
+  propagatedUserEnvPkgs = [ gtk-engine-murrine ];
 
   postPatch = "patchShebangs .";
 
-  configureFlags = "--disable-unity";
+  configureFlags = [
+    "--disable-gtk_legacy"
+    "--disable-gtk_next"
+    "--disable-unity"
+  ];
+
+  meta = with stdenv.lib; {
+    description = "An adaptive Gtk+ theme based on Material Design Guidelines";
+    homepage = https://github.com/adapta-project/adapta-gtk-theme;
+    license = with licenses; [ gpl2 cc-by-sa-30 ];
+    platforms = platforms.linux;
+    maintainers = [ maintainers.romildo ];
+  };
 }

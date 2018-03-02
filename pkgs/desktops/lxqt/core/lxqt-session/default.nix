@@ -1,26 +1,31 @@
-{ stdenv, fetchFromGitHub, cmake, pkgconfig, qt5, kde5, lxqt, xorg, xdg-user-dirs }:
+{ stdenv, fetchFromGitHub, cmake, pkgconfig, lxqt-build-tools, qtbase, qttools, qtsvg, qtx11extras, kwindowsystem, liblxqt, libqtxdg, xorg, xdg-user-dirs }:
 
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
   pname = "lxqt-session";
-  version = "0.11.0";
+  version = "0.12.0";
 
-  srcs = fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "lxde";
     repo = pname;
     rev = version;
-    sha256 = "1vb8mcy6z1irnd977x5425mbp4c7yc9dhk5552isqss1qb44hpn4";
+    sha256 = "03gi9svxqsfjhk5ifbaalq9i44ggx8afwms1hb312czqn82wrszb";
   };
 
-  nativeBuildInputs = [ cmake pkgconfig ];
+  nativeBuildInputs = [
+    cmake
+    pkgconfig
+    lxqt-build-tools
+  ];
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qttools
-    qt5.qtsvg
-    kde5.kwindowsystem
-    lxqt.liblxqt
-    lxqt.libqtxdg
+    qtbase
+    qttools
+    qtsvg
+    qtx11extras
+    kwindowsystem
+    liblxqt
+    libqtxdg
     xorg.libpthreadstubs
     xorg.libXdmcp
     xdg-user-dirs
@@ -28,11 +33,18 @@ stdenv.mkDerivation rec {
 
   cmakeFlags = [ "-DPULL_TRANSLATIONS=NO" ];
 
+  postPatch = ''
+    for dir in autostart config; do
+      substituteInPlace $dir/CMakeLists.txt \
+        --replace "DESTINATION \"\''${LXQT_ETC_XDG_DIR}" "DESTINATION \"etc/xdg"
+    done
+  '';
+
   meta = with stdenv.lib; {
     description = "An alternative session manager ported from the original razor-session";
     homepage = https://github.com/lxde/lxqt-session;
     license = licenses.lgpl21;
-    maintainers = with maintainers; [ romildo ];
     platforms = with platforms; unix;
+    maintainers = with maintainers; [ romildo ];
   };
 }

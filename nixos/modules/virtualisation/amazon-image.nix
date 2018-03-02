@@ -11,11 +11,17 @@ with lib;
 let cfg = config.ec2; in
 
 {
-  imports = [ ../profiles/headless.nix ./ec2-data.nix ./grow-partition.nix ./amazon-init.nix ];
+  imports = [ ../profiles/headless.nix ./ec2-data.nix ./amazon-init.nix ];
 
   config = {
 
-    virtualisation.growPartition = cfg.hvm;
+    assertions = [
+      { assertion = cfg.hvm;
+        message = "Paravirtualized EC2 instances are no longer supported.";
+      }
+    ];
+
+    boot.growPartition = cfg.hvm;
 
     fileSystems."/" = {
       device = "/dev/disk/by-label/nixos";
@@ -27,7 +33,7 @@ let cfg = config.ec2; in
         config.boot.kernelPackages.ena
       ];
     boot.initrd.kernelModules = [ "xen-blkfront" "xen-netfront" ];
-    boot.initrd.availableKernelModules = [ "ixgbevf" "ena" ];
+    boot.initrd.availableKernelModules = [ "ixgbevf" "ena" "nvme" ];
     boot.kernelParams = mkIf cfg.hvm [ "console=ttyS0" ];
 
     # Prevent the nouveau kernel module from being loaded, as it
@@ -146,5 +152,8 @@ let cfg = config.ec2; in
     environment.systemPackages = [ pkgs.cryptsetup ];
 
     boot.initrd.supportedFilesystems = [ "unionfs-fuse" ];
+    
+    # EC2 has its own NTP server provided by the hypervisor
+    networking.timeServers = [ "169.254.169.123" ];
   };
 }

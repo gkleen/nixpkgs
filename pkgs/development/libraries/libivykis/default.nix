@@ -3,18 +3,18 @@
 stdenv.mkDerivation rec {
   name = "libivykis-${version}";
 
-  version = "0.40";
+  version = "0.42.1";
 
   src = fetchurl {
     url = "mirror://sourceforge/libivykis/${version}/ivykis-${version}.tar.gz";
-    sha256 = "1rn32dijv0pn9y2mbdg1n7al4h4i5pwwhhihr9pyakwyb6qgmqxj";
+    sha256 = "0c90cfpxipw2m8i3ajr7vy7lb8gvcz2kh5n8sd542zphr4na8whq";
   };
 
   nativeBuildInputs = [ autoreconfHook pkgconfig ];
   buildInputs = [ file protobufc ];
 
   meta = with stdenv.lib; {
-    homepage = "http://libivykis.sourceforge.net/";
+    homepage = http://libivykis.sourceforge.net/;
     description = ''
       A thin wrapper over various OS'es implementation of I/O readiness
       notification facilities

@@ -1,5 +1,5 @@
 { lib, stdenv, fetchurl, fetchpatch, pkgconfig, intltool, autoreconfHook
-, json_c, libsndfile, libtool
+, libsndfile, libtool
 , xorg, libcap, alsaLib, glib
 , avahi, libjack2, libasyncns, lirc, dbus
 , sbc, bluez5, udev, openssl, fftwFloat
@@ -36,18 +36,19 @@
 
 stdenv.mkDerivation rec {
   name = "${if libOnly then "lib" else ""}pulseaudio-${version}";
-  version = "9.0";
+  version = "11.1";
 
   src = fetchurl {
     url = "http://freedesktop.org/software/pulseaudio/releases/pulseaudio-${version}.tar.xz";
-    sha256 = "11j682g2mn723sz3bh4i44ggq29z053zcggy0glzn63zh9mxdly3";
+    sha256 = "17ndr6kc7hpv4ih4gygwlcpviqifbkvnk4fbwf4n25kpb991qlpj";
   };
 
   patches = [ ./caps-fix.patch ]
-            ++ stdenv.lib.optional stdenv.isDarwin (fetchpatch {
-              url = "https://bugs.freedesktop.org/attachment.cgi?id=127889";
-              sha256 = "063h5vmh4ykgxjbxyxjlj6qhyyxhazbh3p18p1ik69kq24nkny9m";
-            });
+    ++ stdenv.lib.optional stdenv.hostPlatform.isMusl (fetchpatch {
+      name = "padsp-fix.patch";
+      url = "https://git.alpinelinux.org/cgit/aports/plain/testing/pulseaudio/0001-padsp-Make-it-compile-on-musl.patch?id=167be02bf4618a90328e2b234f6a63a5dc05f244";
+      sha256 = "0gf4w25zi123ghk0njapysvrlljkc3hyanacgiswfnnm1i8sab1q";
+    });
 
   outputs = [ "out" "dev" ];
 
@@ -57,7 +58,7 @@ stdenv.mkDerivation rec {
     lib.optionals stdenv.isLinux [ libcap ];
 
   buildInputs =
-    [ json_c libsndfile speexdsp fftwFloat ]
+    [ libtool libsndfile speexdsp fftwFloat ]
     ++ lib.optionals stdenv.isLinux [ glib dbus ]
     ++ lib.optionals stdenv.isDarwin [ CoreServices AudioUnit Cocoa ]
     ++ lib.optionals (!libOnly) (
@@ -126,7 +127,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "Sound server for POSIX and Win32 systems";
     homepage    = http://www.pulseaudio.org/;
-    licenses    = lib.licenses.lgpl2Plus;
+    license     = lib.licenses.lgpl2Plus;
     maintainers = with lib.maintainers; [ lovek323 wkennington ];
     platforms   = lib.platforms.unix;
 

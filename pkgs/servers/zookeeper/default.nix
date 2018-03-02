@@ -1,11 +1,12 @@
-{ stdenv, fetchurl, jre, makeWrapper, bash }:
+{ stdenv, fetchurl, jre, makeWrapper, bash, coreutils }:
 
 stdenv.mkDerivation rec {
-  name = "zookeeper-3.4.6";
+  name = "zookeeper-${version}";
+  version = "3.4.11";
 
   src = fetchurl {
     url = "mirror://apache/zookeeper/${name}/${name}.tar.gz";
-    sha256 = "01b3938547cd620dc4c93efe07c0360411f4a66962a70500b163b59014046994";
+    sha256 = "110fs5manyaq6rxbzwzs9x3aqw8d5l4177y9qaj3xhgpr2hniggn";
   };
 
   buildInputs = [ makeWrapper jre ];
@@ -16,12 +17,15 @@ stdenv.mkDerivation rec {
     mkdir -p $out
     cp -R conf docs lib ${name}.jar $out
     mkdir -p $out/bin
-    cp -R bin/{zkCli,zkCleanup,zkEnv}.sh $out/bin
+    cp -R bin/{zkCli,zkCleanup,zkEnv,zkServer}.sh $out/bin
     for i in $out/bin/{zkCli,zkCleanup}.sh; do
       wrapProgram $i \
         --set JAVA_HOME "${jre}" \
         --prefix PATH : "${bash}/bin"
     done
+    substituteInPlace $out/bin/zkServer.sh \
+        --replace /bin/echo ${coreutils}/bin/echo \
+        --replace "/usr/bin/env bash" ${bash}/bin/bash
     chmod -x $out/bin/zkEnv.sh
 
     mkdir -p $out/share/zooinspector
@@ -41,10 +45,10 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with stdenv.lib; {
-    homepage = "http://zookeeper.apache.org";
+    homepage = http://zookeeper.apache.org;
     description = "Apache Zookeeper";
     license = licenses.asl20;
-    maintainers = with maintainers; [ nathan-gs cstrahan ];
+    maintainers = with maintainers; [ nathan-gs cstrahan pradeepchhetri ];
     platforms = platforms.unix;
   };
 }

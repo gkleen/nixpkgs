@@ -3,20 +3,20 @@
 
 buildGoPackage rec {
   name = "gcsfuse-${version}";
-  version = "v0.19.0";
-  rev = "81281027c0093e3f916a6e611a128ec5c3a12ece";
+  version = "0.23.0";
+  rev = "v${version}";
 
   goPackagePath = "github.com/googlecloudplatform/gcsfuse";
 
   src = fetchgit {
     inherit rev;
     url = "https://github.com/googlecloudplatform/gcsfuse";
-    sha256 = "1lj9czippsgkhr8y3r7vwxgc8i952v76v1shdv10p43gsxwyyi9a";
+    sha256 = "1qxbpsmz22l5w4b7wbgfdq4v85cfc9ka9i8h4c56nals1x5lcsnx";
   };
 
-  # TODO: add metadata https://nixos.org/nixpkgs/manual/#sec-standard-meta-attributes
   meta = {
     license = lib.licenses.asl20;
+    platforms = lib.platforms.linux;
     maintainers = [];
     homepage = https://cloud.google.com/storage/docs/gcs-fuse;
     description =

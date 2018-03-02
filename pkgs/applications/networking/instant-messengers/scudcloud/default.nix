@@ -1,21 +1,19 @@
-{ stdenv, fetchgit, python3Packages }:
+{ stdenv, fetchurl, python3Packages }:
 
-python3Packages.buildPythonPackage {
-  name = "scudcloud-1.38";
+let version = "1.63";
+in python3Packages.buildPythonPackage {
+  name = "scudcloud-${version}";
 
-  # Branch 254-port-to-qt5
-  # https://github.com/raelgc/scudcloud/commit/6bcd877daea3d679cd5fd2c946c2d933940c48d9
-  src = fetchgit {
-      url = https://github.com/raelgc/scudcloud/;
-      rev = "6bcd877daea3d679cd5fd2c946c2d933940c48d9";
-      sha256 = "1884svz6m5vl06d0yac5zjb2phxwg6bjva72y15fw4larkjnh72s";
+  src = fetchurl {
+    url = "https://github.com/raelgc/scudcloud/archive/v${version}.tar.gz";
+    sha256 = "e0d1cb72115d0fda17db92d28be51558ad8fe250972683fac3086dbe8d350d22";
   };
 
-  propagatedBuildInputs = with python3Packages; [ pyqt5 dbus-python ];
+  propagatedBuildInputs = with python3Packages; [ pyqt5 dbus-python jsmin ];
 
   meta = with stdenv.lib; {
     description = "Non-official desktop client for Slack";
-    homepage = "https://github.com/raelgc/scudcloud";
+    homepage = https://github.com/raelgc/scudcloud;
     license = licenses.mit;
     platforms = platforms.linux;
     maintainers = with maintainers; [ volhovm ];

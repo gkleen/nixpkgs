@@ -1,34 +1,43 @@
-{ stdenv, fetchFromGitHub, cmake, pkgconfig, qt5, kde5, lxqt, xorg,
-libstatgrab, lm_sensors, libpulseaudio, alsaLib, menu-cache,
-lxmenu-data }:
+{
+  stdenv, fetchFromGitHub,
+  cmake, pkgconfig, lxqt-build-tools,
+  qtbase, qttools, qtx11extras, qtsvg, libdbusmenu, kwindowsystem, solid,
+  kguiaddons, liblxqt, libqtxdg, lxqt-globalkeys, libsysstat,
+  xorg, libstatgrab, lm_sensors, libpulseaudio, alsaLib, menu-cache,
+  lxmenu-data, pcre
+}:
 
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
   pname = "lxqt-panel";
-  version = "0.11.0";
+  version = "0.12.0";
 
-  srcs = fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "lxde";
     repo = pname;
     rev = version;
-    sha256 = "0lwgz6nir4cd50xbmc3arngnw38rb5kqgcsgp3dlq6gpncg45hdq";
+    sha256 = "01xmnb17jpydyfvxwaa6kymzdasnyd94z62gjah8y4pzsmykcr4x";
   };
 
-  nativeBuildInputs = [ cmake pkgconfig ];
+  nativeBuildInputs = [
+    cmake
+    pkgconfig
+    lxqt-build-tools
+  ];
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qttools
-    qt5.qtx11extras
-    qt5.qtsvg
-    qt5.libdbusmenu
-    kde5.kwindowsystem
-    kde5.solid
-    kde5.kguiaddons
-    lxqt.liblxqt
-    lxqt.libqtxdg
-    lxqt.lxqt-globalkeys
-    lxqt.libsysstat
+    qtbase
+    qttools
+    qtx11extras
+    qtsvg
+    libdbusmenu
+    kwindowsystem
+    solid
+    kguiaddons
+    liblxqt
+    libqtxdg
+    lxqt-globalkeys
+    libsysstat
     xorg.libpthreadstubs
     xorg.libXdmcp
     libstatgrab
@@ -37,17 +46,25 @@ stdenv.mkDerivation rec {
     alsaLib
     menu-cache
     lxmenu-data
+    pcre
   ];
 
   cmakeFlags = [ "-DPULL_TRANSLATIONS=NO" ];
 
-  postPatch = lxqt.standardPatch;
+  postPatch = ''
+    for dir in  autostart menu; do
+      substituteInPlace $dir/CMakeLists.txt \
+        --replace "DESTINATION \"\''${LXQT_ETC_XDG_DIR}" "DESTINATION \"etc/xdg"
+    done
+    substituteInPlace panel/CMakeLists.txt \
+      --replace "DESTINATION \''${LXQT_ETC_XDG_DIR}" "DESTINATION etc/xdg"
+  '';
 
   meta = with stdenv.lib; {
     description = "The LXQt desktop panel";
     homepage = https://github.com/lxde/lxqt-panel;
     license = licenses.lgpl21;
-    maintainers = with maintainers; [ romildo ];
     platforms = with platforms; unix;
+    maintainers = with maintainers; [ romildo ];
   };
 }

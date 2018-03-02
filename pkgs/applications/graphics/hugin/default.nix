@@ -5,11 +5,11 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "hugin-2016.2.0";
+  name = "hugin-2018.0.0";
 
   src = fetchurl {
     url = "mirror://sourceforge/hugin/${name}.tar.bz2";
-    sha256 = "058zd63vx29yrx2pphbbll7kzcxkai22q26lpw13rn4lvp41pasl";
+    sha256 = "1jv5wpqbq49fhbl5g521g1qxhdm1rm7acxd18fr3n3n5d830vbyk";
   };
 
   buildInputs = [

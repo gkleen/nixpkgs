@@ -14,6 +14,9 @@ stdenv.mkDerivation rec {
   postPatch = ''
     substituteInPlace power-usage-report \
       --replace "'which'" "'${which}/bin/which'"
+
+    # Avoid a glibc >= 2.25 deprecation warning that gets fatal via -Werror.
+    sed 1i'#include <sys/sysmacros.h>' -i fatrace.c
   '';
 
   makeFlags = [ "PREFIX=$(out)" ];
@@ -29,7 +32,6 @@ stdenv.mkDerivation rec {
       Requires a Linux kernel with the FANOTIFY configuration option enabled.
       Enabling X86_MSR is also recommended for power-usage-report on x86.
     '';
-    maintainers = with maintainers; [ nckx ];
     platforms = platforms.linux;
   };
 }

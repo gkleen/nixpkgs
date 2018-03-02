@@ -1,18 +1,23 @@
-{ stdenv, fetchFromGitHub, which, pkgconfig, libxcb, xcbutilkeysyms
-, xcbutilimage, pam, libX11, libev, cairo, libxkbcommon, libxkbfile }:
+{ stdenv, fetchFromGitHub, autoreconfHook, pkgconfig, libxcb,
+  xcbutilkeysyms , xcbutilimage, pam, libX11, libev, cairo, libxkbcommon,
+  libxkbfile, libjpeg_turbo
+}:
 
 stdenv.mkDerivation rec {
-  rev = "c8e1aece7301c3c6481bf2f695734f8d273f252e";
-  version = "2.7-2016-09-17";
+  version = "2.10.1-1-c";
   name = "i3lock-color-${version}";
+
   src = fetchFromGitHub {
-    owner = "chrjguill";
+    owner = "PandorasFox";
     repo = "i3lock-color";
-    inherit rev;
-    sha256 = "07fpvwgdfxsnxnf63idrz3n1kbyayr53lsfns2q775q93cz1mfia";
+    rev = "01476c56333cccae80cdd3f125b0b9f3a0fe2cb3";
+    sha256 = "06ca8496fkdkvh4ycg0b7kd3r1bjdqdwfimb51v4nj1lm87pdkdf";
   };
-  buildInputs = [ which pkgconfig libxcb xcbutilkeysyms xcbutilimage pam libX11
-    libev cairo libxkbcommon libxkbfile ];
+
+  nativeBuildInputs = [ autoreconfHook pkgconfig ];
+  buildInputs = [ libxcb xcbutilkeysyms xcbutilimage pam libX11
+    libev cairo libxkbcommon libxkbfile libjpeg_turbo ];
+
   makeFlags = "all";
   preInstall = ''
     mkdir -p $out/share/man/man1
@@ -23,9 +28,12 @@ stdenv.mkDerivation rec {
   '';
   meta = with stdenv.lib; {
     description = "A simple screen locker like slock";
-    homepage = http://i3wm.org/i3lock/;
+    homepage = https://i3wm.org/i3lock/;
     maintainers = with maintainers; [ garbas malyn ];
     license = licenses.bsd3;
-    platforms = platforms.all;
+
+    # Needs the SSE2 instruction set. See upstream issue
+    # https://github.com/chrjguill/i3lock-color/issues/44
+    platforms = platforms.i686 ++ platforms.x86_64;
   };
 }

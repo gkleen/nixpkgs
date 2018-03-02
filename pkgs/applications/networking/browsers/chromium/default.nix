@@ -1,8 +1,8 @@
 { newScope, stdenv, makeWrapper, makeDesktopItem, ed
+, glib, gtk3, gnome3, gsettings-desktop-schemas
 
 # package customization
 , channel ? "stable"
-, enableSELinux ? false
 , enableNaCl ? false
 , enableHotwording ? false
 , gnomeSupport ? false, gnome ? null
@@ -22,7 +22,7 @@ let
     upstream-info = (callPackage ./update.nix {}).getChannel channel;
 
     mkChromiumDerivation = callPackage ./common.nix {
-      inherit enableSELinux enableNaCl enableHotwording gnomeSupport gnome
+      inherit enableNaCl enableHotwording gnomeSupport gnome
               gnomeKeyringSupport proprietaryCodecs cupsSupport pulseSupport
               enableWideVine;
     };
@@ -35,7 +35,7 @@ let
   };
 
   desktopItem = makeDesktopItem {
-    name = "chromium";
+    name = "chromium-browser";
     exec = "chromium %U";
     icon = "chromium";
     comment = "An open source web browser from Google";
@@ -63,10 +63,23 @@ let
 
   sandboxExecutableName = chromium.browser.passthru.sandboxExecutableName;
 
-in stdenv.mkDerivation {
-  name = "chromium${suffix}-${chromium.browser.version}";
+  version = chromium.browser.version;
 
-  buildInputs = [ makeWrapper ed ];
+  inherit (stdenv.lib) versionAtLeast;
+
+in stdenv.mkDerivation {
+  name = "chromium${suffix}-${version}";
+  inherit version;
+
+  buildInputs = [
+    makeWrapper ed
+
+    # needed for GSETTINGS_SCHEMAS_PATH
+    gsettings-desktop-schemas glib gtk3
+
+    # needed for XDG_ICON_DIRS
+    gnome3.defaultIconTheme
+  ];
 
   outputs = ["out" "sandbox"];
 
@@ -83,15 +96,17 @@ in stdenv.mkDerivation {
     ed -v -s "$out/bin/chromium" << EOF
     2i
 
-    if [ -x "/var/setuid-wrappers/${sandboxExecutableName}" ]
+    if [ -x "/run/wrappers/bin/${sandboxExecutableName}" ]
     then
-      export CHROME_DEVEL_SANDBOX="/var/setuid-wrappers/${sandboxExecutableName}"
+      export CHROME_DEVEL_SANDBOX="/run/wrappers/bin/${sandboxExecutableName}"
     else
       export CHROME_DEVEL_SANDBOX="$sandbox/bin/${sandboxExecutableName}"
     fi
 
     # libredirect causes chromium to deadlock on startup
     export LD_PRELOAD="\$(echo -n "\$LD_PRELOAD" | tr ':' '\n' | grep -v /lib/libredirect\\\\.so$ | tr '\n' ':')"
+
+    export XDG_DATA_DIRS=$XDG_ICON_DIRS:$GSETTINGS_SCHEMAS_PATH\''${XDG_DATA_DIRS:+:}\$XDG_DATA_DIRS
 
     .
     w
@@ -102,13 +117,19 @@ in stdenv.mkDerivation {
     ln -s "$out/bin/chromium" "$out/bin/chromium-browser"
 
     mkdir -p "$out/share/applications"
-    for f in '${chromium.browser}'/share/*; do
+    for f in '${chromium.browser}'/share/*; do # hello emacs */
       ln -s -t "$out/share/" "$f"
     done
     cp -v "${desktopItem}/share/applications/"* "$out/share/applications"
   '';
 
-  inherit (chromium.browser) meta packageName;
+  inherit (chromium.browser) packageName;
+  meta = chromium.browser.meta // {
+    broken = if enableWideVine then
+          builtins.trace "WARNING: WideVine is not functional, please only use for testing"
+             true
+        else false;
+  };
 
   passthru = {
     inherit (chromium) upstream-info browser;

@@ -24,6 +24,25 @@ let
   compose = f: g: x: f (g x);
 in
 {
+  bdftopcf = attrs: attrs // {
+    buildInputs = attrs.buildInputs ++ [ xorg.xproto xorg.fontsproto ];
+  };
+
+  bitmap = attrs: attrs // {
+    nativeBuildInputs = attrs.nativeBuildInputs ++ [ makeWrapper ];
+    postInstall = ''
+      paths=(
+        "$out/share/X11/%T/%N"
+        "$out/include/X11/%T/%N"
+        "${xorg.xbitmaps}/include/X11/%T/%N"
+      )
+      wrapProgram "$out/bin/bitmap" \
+        --suffix XFILESEARCHPATH : $(IFS=:; echo "''${paths[*]}")
+      makeWrapper "$out/bin/bitmap" "$out/bin/bitmap-color" \
+        --suffix XFILESEARCHPATH : "$out/share/X11/%T/%N-color"
+    '';
+  };
+
   encodings = attrs: attrs // {
     buildInputs = attrs.buildInputs ++ [ xorg.mkfontscale ];
   };
@@ -41,7 +60,7 @@ in
       ''
         ALIASFILE=${xorg.fontalias}/share/fonts/X11/misc/fonts.alias
         test -f $ALIASFILE
-        ln -s $ALIASFILE $out/lib/X11/fonts/misc/fonts.alias
+        cp $ALIASFILE $out/lib/X11/fonts/misc/fonts.alias
       '';
   };
 
@@ -71,13 +90,13 @@ in
   };
 
   libxcb = attrs : attrs // {
-    nativeBuildInputs = [ args.python ];
+    nativeBuildInputs = attrs.nativeBuildInputs ++ [ args.python ];
     configureFlags = "--enable-xkb --enable-xinput";
-    outputs = [ "out" "dev" "doc" ];
+    outputs = [ "out" "dev" "man" "doc" ];
   };
 
   xcbproto = attrs : attrs // {
-    nativeBuildInputs = [ args.python ];
+    nativeBuildInputs = attrs.nativeBuildInputs ++ [ args.python ];
   };
 
   libX11 = attrs: attrs // {
@@ -177,7 +196,7 @@ in
   };
 
   libXext = attrs: attrs // {
-    outputs = [ "out" "dev" "doc" ];
+    outputs = [ "out" "dev" "man" "doc" ];
     propagatedBuildInputs = [ xorg.xproto xorg.libXau ];
     preConfigure = setMalloc0ReturnsNullCrossCompiling;
   };
@@ -187,7 +206,7 @@ in
   };
 
   libXi = attrs: attrs // {
-    outputs = [ "out" "dev" "doc" ];
+    outputs = [ "out" "dev" "man" "doc" ];
     propagatedBuildInputs = [ xorg.libXfixes ];
   };
 
@@ -235,6 +254,11 @@ in
   };
 
   libXpm = attrs: attrs // {
+    name = "libXpm-3.5.12";
+    src = args.fetchurl {
+      url = mirror://xorg/individual/lib/libXpm-3.5.12.tar.bz2;
+      sha256 = "1v5xaiw4zlhxspvx76y3hq4wpxv7mpj6parqnwdqvpj8vbinsspx";
+    };
     outputs = [ "bin" "dev" "out" ]; # tiny man in $bin
     patchPhase = "sed -i '/USE_GETTEXT_TRUE/d' sxpm/Makefile.in cxpm/Makefile.in";
   };
@@ -310,9 +334,15 @@ in
     installFlags = "sdkdir=\${out}/include/xorg";
   };
 
-  xf86inputlibinput = attrs: attrs // {
+  xf86inputlibinput = attrs: attrs // rec {
+    name = "xf86-input-libinput-0.26.0";
+    src = args.fetchurl {
+      url = "mirror://xorg/individual/driver/${name}.tar.bz2";
+      sha256 = "0yrqs88b7yn9nljwlxzn76jfmvf0sh939kzij5b2jvr2qa7mbjmb";
+    };
+    outputs = [ "out" "dev" ];
     buildInputs = attrs.buildInputs ++ [ args.libinput ];
-    installFlags = "sdkdir=\${out}/include/xorg";
+    installFlags = "sdkdir=\${dev}/include/xorg";
   };
 
   xf86inputsynaptics = attrs: attrs // {
@@ -327,16 +357,18 @@ in
       "--with-xorg-conf-dir=$(out)/share/X11/xorg.conf.d"
       "--with-udev-rules-dir=$(out)/lib/udev/rules.d"
     ];
+
+    meta = attrs.meta // {
+      platforms = ["i686-linux" "x86_64-linux"];
+    };
   };
 
   # Obsolete drivers that don't compile anymore.
   xf86videoark        = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videogeode      = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videoglide      = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
-  xf86videoglint      = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videoi128       = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videonewport    = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
-  xf86videoopenchrome = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videotga        = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videov4l        = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
   xf86videovoodoo     = attrs: attrs // { meta = attrs.meta // { broken = true; }; };
@@ -350,19 +382,21 @@ in
     NIX_CFLAGS_COMPILE = "-I${xorg.xorgserver.dev or xorg.xorgserver}/include/xorg";
   };
 
-  xf86videonv = attrs: attrs // {
-    patches = [( args.fetchpatch {
-      url = http://cgit.freedesktop.org/xorg/driver/xf86-video-nv/patch/?id=fc78fe98222b0204b8a2872a529763d6fe5048da;
-      sha256 = "0i2ddgqwj6cfnk8f4r73kkq3cna7hfnz7k3xj3ifx5v8mfiva6gw";
-    })];
-  };
-
   xf86videovmware = attrs: attrs // {
     buildInputs =  attrs.buildInputs ++ [ args.mesa_drivers ]; # for libxatracker
+    meta = attrs.meta // {
+      platforms = ["i686-linux" "x86_64-linux"];
+    };
   };
 
   xf86videoqxl = attrs: attrs // {
-    buildInputs =  attrs.buildInputs ++ [ args.spice_protocol ];
+    buildInputs =  attrs.buildInputs ++ [ args.spice-protocol ];
+  };
+
+  xf86videosiliconmotion = attrs: attrs // {
+    meta = attrs.meta // {
+      platforms = ["i686-linux" "x86_64-linux"];
+    };
   };
 
   xdriinfo = attrs: attrs // {
@@ -393,19 +427,32 @@ in
   };
 
   xorgserver = with xorg; attrs_passed:
-    # exchange attrs if fglrxCompat is set
+    # exchange attrs if abiCompat is set
     let
-      attrs = if !args.fglrxCompat then attrs_passed else
-        with args; {
+      attrs = with args;
+        if (args.abiCompat == null) then attrs_passed
+        else if (args.abiCompat == "1.17") then {
           name = "xorg-server-1.17.4";
           builder = ./builder.sh;
           src = fetchurl {
             url = mirror://xorg/individual/xserver/xorg-server-1.17.4.tar.bz2;
             sha256 = "0mv4ilpqi5hpg182mzqn766frhi6rw48aba3xfbaj4m82v0lajqc";
           };
-          buildInputs = [pkgconfig dri2proto dri3proto renderproto libdrm openssl libX11 libXau libXaw libxcb xcbutil xcbutilwm xcbutilimage xcbutilkeysyms xcbutilrenderutil libXdmcp libXfixes libxkbfile libXmu libXpm libXrender libXres libXt ];
+          nativeBuildInputs = [ pkgconfig ];
+          buildInputs = [ dri2proto dri3proto renderproto libdrm openssl libX11 libXau libXaw libxcb xcbutil xcbutilwm xcbutilimage xcbutilkeysyms xcbutilrenderutil libXdmcp libXfixes libxkbfile libXmu libXpm libXrender libXres libXt ];
           meta.platforms = stdenv.lib.platforms.unix;
-        };
+        } else if (args.abiCompat == "1.18") then {
+            name = "xorg-server-1.18.4";
+            builder = ./builder.sh;
+            src = fetchurl {
+              url = mirror://xorg/individual/xserver/xorg-server-1.18.4.tar.bz2;
+              sha256 = "1j1i3n5xy1wawhk95kxqdc54h34kg7xp4nnramba2q8xqfr5k117";
+            };
+            nativeBuildInputs = [ pkgconfig ];
+            buildInputs = [ dri2proto dri3proto renderproto libdrm openssl libX11 libXau libXaw libxcb xcbutil xcbutilwm xcbutilimage xcbutilkeysyms xcbutilrenderutil libXdmcp libXfixes libxkbfile libXmu libXpm libXrender libXres libXt ];
+            postPatch = "sed '1i#include <malloc.h>' -i include/os.h";
+            meta.platforms = stdenv.lib.platforms.unix;
+        } else throw "unsupported xorg abiCompat: ${args.abiCompat}";
 
     in attrs //
     (let
@@ -421,6 +468,7 @@ in
         damageproto xcmiscproto  bigreqsproto
         inputproto xextproto randrproto renderproto presentproto
         dri2proto dri3proto kbproto xineramaproto resourceproto scrnsaverproto videoproto
+        libXfont2
       ];
       # fix_segfault: https://bugs.freedesktop.org/show_bug.cgi?id=91316
       commonPatches = [ ];
@@ -445,6 +493,9 @@ in
           args.udev
         ];
         patches = commonPatches;
+        prePatch = stdenv.lib.optionalString stdenv.hostPlatform.isMusl ''
+          export CFLAGS+=" -D__uid_t=uid_t -D__gid_t=gid_t"
+        '';
         configureFlags = [
           "--enable-kdrive"             # not built by default
           "--enable-xephyr"
@@ -498,7 +549,7 @@ in
           "--with-sha1=CommonCrypto"
         ];
         preConfigure = ''
-          ensureDir $out/Applications
+          mkdir -p $out/Applications
           export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -Wno-error"
           substituteInPlace hw/xquartz/pbproxy/Makefile.in --replace -F/System -F${args.apple_sdk.frameworks.ApplicationServices}
         '';
@@ -522,7 +573,7 @@ in
   };
 
   twm = attrs: attrs // {
-    nativeBuildInputs = [args.bison args.flex];
+    nativeBuildInputs = attrs.nativeBuildInputs ++ [args.bison args.flex];
   };
 
   xcursorthemes = attrs: attrs // {
@@ -548,8 +599,20 @@ in
   };
 
   xf86videointel = attrs: attrs // {
-    buildInputs = attrs.buildInputs ++ [xorg.libXfixes];
-    nativeBuildInputs = [args.autoreconfHook xorg.utilmacros];
+    # the update script only works with released tarballs :-/
+    name = "xf86-video-intel-2017-10-19";
+    src = args.fetchurl {
+      url = "http://cgit.freedesktop.org/xorg/driver/xf86-video-intel/snapshot/"
+          + "4798e18b2b2c8b0a05dc967e6140fd9962bc1a73.tar.gz";
+      sha256 = "1zpgbibfpdassswfj68zwhhfpvd2p80rpxw92bis6lv81ssknwby";
+    };
+    buildInputs = attrs.buildInputs ++ [xorg.libXfixes xorg.libXScrnSaver xorg.pixman];
+    nativeBuildInputs = attrs.nativeBuildInputs ++ [args.autoreconfHook xorg.utilmacros];
+    configureFlags = "--with-default-dri=3 --enable-tools";
+
+    meta = attrs.meta // {
+      platforms = ["i686-linux" "x86_64-linux"];
+    };
   };
 
   xf86videoxgi = attrs: attrs // {
@@ -559,6 +622,10 @@ in
       (args.fetchpatch {
         url = "https://cgit.freedesktop.org/xorg/driver/xf86-video-xgi/patch/?id=bd94c475035739b42294477cff108e0c5f15ef67";
         sha256 = "0myfry07655adhrpypa9rqigd6rfx57pqagcwibxw7ab3wjay9f6";
+      })
+      (args.fetchpatch {
+        url = "https://cgit.freedesktop.org/xorg/driver/xf86-video-xgi/patch/?id=78d1138dd6e214a200ca66fa9e439ee3c9270ec8";
+        sha256 = "0z3643afgrync280zrp531ija0hqxc5mrwjif9nh9lcnzgnz2d6d";
       })
     ];
   };

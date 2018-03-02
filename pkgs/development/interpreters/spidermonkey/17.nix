@@ -13,13 +13,27 @@ stdenv.mkDerivation rec {
 
   propagatedBuildInputs = [ nspr ];
 
-  buildInputs = [ pkgconfig perl python2 zip libffi readline ];
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ perl python2 zip libffi readline ];
 
   postUnpack = "sourceRoot=\${sourceRoot}/js/src";
+
+  patches = [
+    (fetchurl {
+      name = "jsoptparse-gcc7.patch";
+      url = "https://src.fedoraproject.org/cgit/rpms/mozjs17.git/plain/"
+          + "mozjs17.0.0-gcc7.patch?id=43b846629a299f";
+      sha256 = "17plyaq0jwf9wli4zlgvh4ri3zyk6nj1fiakh3wnd37nsl90raf9";
+    })
+  ];
+  patchFlags = "-p3";
 
   postPatch = ''
     # Fixes an issue with version detection under perl 5.22.x
     sed -i 's/(defined\((@TEMPLATE_FILE)\))/\1/' config/milestone.pl
+  '' + stdenv.lib.optionalString stdenv.isAarch64 ''
+    patch -p1 -d ../.. < ${./aarch64-double-conversion.patch}
+    patch -p1 -d ../.. < ${./aarch64-48bit-va-fix.patch}
   '';
 
   preConfigure = ''

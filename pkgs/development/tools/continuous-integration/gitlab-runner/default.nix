@@ -1,22 +1,22 @@
 { lib, buildGoPackage, fetchFromGitLab, fetchurl, go-bindata }:
 
 let
-  version = "1.10.0";
+  version = "10.4.0";
   # Gitlab runner embeds some docker images these are prebuilt for arm and x86_64
   docker_x86_64 = fetchurl {
-    url = "https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/v${version}/docker/prebuilt-x86_64.tar.xz";
-    sha256 = "1fv4sv92ng4gx53pbpagb6kv2hdab04lf2chsflf10xgzqw5l521";
+    url = "https://gitlab-runner-downloads.s3.amazonaws.com/v${version}/docker/prebuilt-x86_64.tar.xz";
+    sha256 = "0fcddi1mwgj831abn628zcpwsah3mmvrbdi851pjf8vraynwr2xa";
   };
 
   docker_arm = fetchurl {
-    url = "https://gitlab-ci-multi-runner-downloads.s3.amazonaws.com/v${version}/docker/prebuilt-arm.tar.xz";
-    sha256 = "153dbgk6fvl73d5qhainqr9hzicsryc6ynlryi9si40ld82flrsr";
+    url = "https://gitlab-runner-downloads.s3.amazonaws.com/v${version}/docker/prebuilt-arm.tar.xz";
+    sha256 = "1zlk3i9jzmsqz5r3kzg08z9hyhidw9dpv5ji46bnbjis8q3dlw54";
   };
 in
 buildGoPackage rec {
   inherit version;
   name = "gitlab-runner-${version}";
-  goPackagePath = "gitlab.com/gitlab-org/gitlab-ci-multi-runner";
+  goPackagePath = "gitlab.com/gitlab-org/gitlab-runner";
   commonPackagePath = "${goPackagePath}/common";
   buildFlagsArray = ''
     -ldflags=
@@ -27,10 +27,12 @@ buildGoPackage rec {
 
   src = fetchFromGitLab {
     owner = "gitlab-org";
-    repo = "gitlab-ci-multi-runner";
+    repo = "gitlab-runner";
     rev = "v${version}";
-    sha256 = "0ma6b6624c8218cz4gg5pr077li7nbs0v3mpgr1hxq7v465spa7j";
+    sha256 = "0kp6h53d1q652i4wp94hydy1ixlgmqh92sjsc6pqicnfc7nvwgfq";
   };
+
+  patches = [ ./fix-shell-path.patch ];
 
   buildInputs = [ go-bindata ];
 
@@ -52,15 +54,13 @@ buildGoPackage rec {
 
   postInstall = ''
     install -d $out/bin
-    # The recommended name is gitlab-runner so we create a symlink with that name
-    ln -sf gitlab-ci-multi-runner $bin/bin/gitlab-runner
   '';
 
   meta = with lib; {
     description = "GitLab Runner the continuous integration executor of GitLab";
     license = licenses.mit;
-    homepage = "https://about.gitlab.com/gitlab-ci/";
-    platforms = platforms.unix;
-    maintainers = [ lib.maintainers.bachp ];
+    homepage = https://about.gitlab.com/gitlab-ci/;
+    platforms = platforms.unix ++ platforms.darwin;
+    maintainers = with maintainers; [ bachp zimbatm ];
   };
 }

@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, libXft, cairo, harfbuzz
+{ stdenv, fetchurl, fetchpatch, pkgconfig, libXft, cairo, harfbuzz
 , libintlOrEmpty, gobjectIntrospection, darwin
 }:
 
@@ -6,14 +6,14 @@ with stdenv.lib;
 
 let
   ver_maj = "1.40";
-  ver_min = "3";
+  ver_min = "14";
 in
 stdenv.mkDerivation rec {
   name = "pango-${ver_maj}.${ver_min}";
 
   src = fetchurl {
     url = "mirror://gnome/sources/pango/${ver_maj}/${name}.tar.xz";
-    sha256 = "abba8b5ce728520c3a0f1535eab19eac3c14aeef7faa5aded90017ceac2711d3";
+    sha256 = "90af1beaa7bf9e4c52db29ec251ec4fd0a8f2cc185d521ad1f88d01b3a6a17e3";
   };
 
   outputs = [ "bin" "dev" "out" "devdoc" ];
@@ -52,7 +52,7 @@ stdenv.mkDerivation rec {
     homepage = http://www.pango.org/;
     license = licenses.lgpl2Plus;
 
-    maintainers = with maintainers; [ raskin urkud ];
+    maintainers = with maintainers; [ raskin ];
     platforms = platforms.linux ++ platforms.darwin;
   };
 }

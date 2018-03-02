@@ -1,18 +1,24 @@
-{ stdenv, fetchurl, coreutils, pam, groff
-, sendmailPath ? "/var/setuid-wrappers/sendmail"
+{ stdenv, fetchurl, coreutils, pam, groff, sssd
+, sendmailPath ? "/run/wrappers/bin/sendmail"
 , withInsults ? false
+, withSssd ? false
 }:
 
 stdenv.mkDerivation rec {
-  name = "sudo-1.8.19p1";
+  name = "sudo-1.8.22";
 
   src = fetchurl {
     urls =
       [ "ftp://ftp.sudo.ws/pub/sudo/${name}.tar.gz"
         "ftp://ftp.sudo.ws/pub/sudo/OLD/${name}.tar.gz"
       ];
-    sha256 = "14pwdwl03kdbbyjkvxrfx409x3c1fjqz8aqz2wgwddinhz7v3bxq";
+    sha256 = "00pxp74xkwdcmrjwy55j0k8p684jk1zx3nzdc11v30q8q8kwnmkj";
   };
+
+  prePatch = ''
+    # do not set sticky bit in nix store
+    substituteInPlace src/Makefile.in --replace 04755 0755
+  '';
 
   configureFlags = [
     "--with-env-editor"
@@ -22,9 +28,13 @@ stdenv.mkDerivation rec {
     "--with-logpath=/var/log/sudo.log"
     "--with-iologdir=/var/log/sudo-io"
     "--with-sendmail=${sendmailPath}"
+    "--enable-tmpfiles.d=no"
   ] ++ stdenv.lib.optional withInsults [
     "--with-insults"
     "--with-all-insults"
+  ] ++ stdenv.lib.optional withSssd [
+    "--with-sssd"
+    "--with-sssd-lib=${sssd}/lib"
   ];
 
   configureFlagsArray = [
@@ -61,9 +71,9 @@ stdenv.mkDerivation rec {
       providing an audit trail of the commands and their arguments.
       '';
 
-    homepage = http://www.sudo.ws/;
+    homepage = https://www.sudo.ws/;
 
-    license = http://www.sudo.ws/sudo/license.html;
+    license = https://www.sudo.ws/sudo/license.html;
 
     maintainers = [ stdenv.lib.maintainers.eelco ];
 

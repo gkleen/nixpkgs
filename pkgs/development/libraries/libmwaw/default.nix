@@ -3,19 +3,21 @@ let
   s = # Generated upstream information
   rec {
     baseName="libmwaw";
-    version="0.3.9";
+    version="0.3.13";
     name="${baseName}-${version}";
-    hash="185jnp7b7s550xpz3bhaii275qw5yd3j29zijkd2rr8h2p9s9z7p";
-    url="https://heanet.dl.sourceforge.net/project/libmwaw/libmwaw/libmwaw-0.3.9/libmwaw-0.3.9.tar.xz";
-    sha256="185jnp7b7s550xpz3bhaii275qw5yd3j29zijkd2rr8h2p9s9z7p";
+    hash="1sjs3nc39im232h5bf81w3il8ivd7w2bc2qssxf7k74g8hlcfmfv";
+    url="mirror://sourceforge/libmwaw/libmwaw/libmwaw-0.3.13/libmwaw-0.3.13.tar.xz";
+    sha256="1sjs3nc39im232h5bf81w3il8ivd7w2bc2qssxf7k74g8hlcfmfv";
   };
+
+  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    boost pkgconfig cppunit zlib libwpg libwpd librevenge
+    boost cppunit zlib libwpg libwpd librevenge
   ];
 in
 stdenv.mkDerivation {
   inherit (s) name version;
-  inherit buildInputs;
+  inherit nativeBuildInputs buildInputs;
   src = fetchurl {
     inherit (s) url sha256;
   };

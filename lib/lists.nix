@@ -1,6 +1,6 @@
 # General list operations.
-
-with import ./trivial.nix;
+{ lib }:
+with lib.trivial;
 
 rec {
 
@@ -16,17 +16,22 @@ rec {
   */
   singleton = x: [x];
 
-  /* "Fold" a binary function `op' between successive elements of
-     `list' with `nul' as the starting value, i.e., `fold op nul [x_1
-     x_2 ... x_n] == op x_1 (op x_2 ... (op x_n nul))'.  (This is
-     Haskell's foldr).
+  /* “right fold” a binary function `op' between successive elements of
+     `list' with `nul' as the starting value, i.e.,
+     `foldr op nul [x_1 x_2 ... x_n] == op x_1 (op x_2 ... (op x_n nul))'.
+     Type:
+       foldr :: (a -> b -> b) -> b -> [a] -> b
 
      Example:
-       concat = fold (a: b: a + b) "z"
+       concat = foldr (a: b: a + b) "z"
        concat [ "a" "b" "c" ]
        => "abcz"
+       # different types
+       strange = foldr (int: str: toString (int + 1) + str) "a"
+       strange [ 1 2 3 4 ]
+       => "2345a"
   */
-  fold = op: nul: list:
+  foldr = op: nul: list:
     let
       len = length list;
       fold' = n:
@@ -35,13 +40,25 @@ rec {
         else op (elemAt list n) (fold' (n + 1));
     in fold' 0;
 
-  /* Left fold: `fold op nul [x_1 x_2 ... x_n] == op (... (op (op nul
-     x_1) x_2) ... x_n)'.
+  /* `fold' is an alias of `foldr' for historic reasons */
+  # FIXME(Profpatsch): deprecate?
+  fold = foldr;
+
+
+  /* “left fold”, like `foldr', but from the left:
+     `foldl op nul [x_1 x_2 ... x_n] == op (... (op (op nul x_1) x_2) ... x_n)`.
+
+     Type:
+       foldl :: (b -> a -> b) -> b -> [a] -> b
 
      Example:
        lconcat = foldl (a: b: a + b) "z"
        lconcat [ "a" "b" "c" ]
        => "zabc"
+       # different types
+       lstrange = foldl (str: int: str + toString (int + 1)) ""
+       strange [ 1 2 3 4 ]
+       => "a2345"
   */
   foldl = op: nul: list:
     let
@@ -52,7 +69,7 @@ rec {
         else op (foldl' (n - 1)) (elemAt list n);
     in foldl' (length list - 1);
 
-  /* Strict version of foldl.
+  /* Strict version of `foldl'.
 
      The difference is that evaluation is forced upon access. Usually used
      with small whole results (in contract with lazily-generated list or large
@@ -60,15 +77,21 @@ rec {
   */
   foldl' = builtins.foldl' or foldl;
 
-  /* Map with index
-
-     FIXME(zimbatm): why does this start to count at 1?
+  /* Map with index starting from 0
 
      Example:
-       imap (i: v: "${v}-${toString i}") ["a" "b"]
+       imap0 (i: v: "${v}-${toString i}") ["a" "b"]
+       => [ "a-0" "b-1" ]
+  */
+  imap0 = f: list: genList (n: f n (elemAt list n)) (length list);
+
+  /* Map with index starting from 1
+
+     Example:
+       imap1 (i: v: "${v}-${toString i}") ["a" "b"]
        => [ "a-1" "b-2" ]
   */
-  imap = f: list: genList (n: f (n + 1) (elemAt list n)) (length list);
+  imap1 = f: list: genList (n: f (n + 1) (elemAt list n)) (length list);
 
   /* Map and concatenate the result.
 
@@ -140,7 +163,7 @@ rec {
        any isString [ 1 { } ]
        => false
   */
-  any = builtins.any or (pred: fold (x: y: if pred x then true else y) false);
+  any = builtins.any or (pred: foldr (x: y: if pred x then true else y) false);
 
   /* Return true iff function `pred' returns true for all elements of
      `list'.
@@ -151,7 +174,7 @@ rec {
        all (x: x < 3) [ 1 2 3 ]
        => false
   */
-  all = builtins.all or (pred: fold (x: y: if pred x then y else false) true);
+  all = builtins.all or (pred: foldr (x: y: if pred x then y else false) true);
 
   /* Count how many times function `pred' returns true for the elements
      of `list'.
@@ -174,7 +197,7 @@ rec {
   */
   optional = cond: elem: if cond then [elem] else [];
 
-  /* Return a list or an empty list, dependening on a boolean value.
+  /* Return a list or an empty list, depending on a boolean value.
 
      Example:
        optionals true [ 2 3 ]
@@ -219,7 +242,7 @@ rec {
        => { right = [ 5 3 4 ]; wrong = [ 1 2 ]; }
   */
   partition = builtins.partition or (pred:
-    fold (h: t:
+    foldr (h: t:
       if pred h
       then { right = [h] ++ t.right; wrong = t.wrong; }
       else { right = t.right; wrong = [h] ++ t.wrong; }
@@ -362,6 +385,30 @@ rec {
       if len < 2 then list
       else (sort strictLess pivot.left) ++  [ first ] ++  (sort strictLess pivot.right));
 
+  /* Compare two lists element-by-element.
+
+     Example:
+       compareLists compare [] []
+       => 0
+       compareLists compare [] [ "a" ]
+       => -1
+       compareLists compare [ "a" ] []
+       => 1
+       compareLists compare [ "a" "b" ] [ "a" "c" ]
+       => 1
+  */
+  compareLists = cmp: a: b:
+    if a == []
+    then if b == []
+         then 0
+         else -1
+    else if b == []
+         then 1
+         else let rel = cmp (head a) (head b); in
+              if rel == 0
+              then compareLists cmp (tail a) (tail b)
+              else rel;
+
   /* Return the first (at most) N elements of a list.
 
      Example:
@@ -417,8 +464,12 @@ rec {
   init = list: assert list != []; take (length list - 1) list;
 
 
-  /* FIXME(zimbatm) Not used anywhere
-   */
+  /* return the image of the cross product of some lists by a function
+
+    Example:
+      crossLists (x:y: "${toString x}${toString y}") [[1 2] [3 4]]
+      => [ "13" "14" "23" "24" ]
+  */
   crossLists = f: foldl (fs: args: concatMap (f: map f args) fs) [f];
 
 
@@ -453,5 +504,13 @@ rec {
        => [ 1 4 5 ]
   */
   subtractLists = e: filter (x: !(elem x e));
+
+  /* Test if two lists have no common element.
+     It should be slightly more efficient than (intersectLists a b == [])
+  */
+  mutuallyExclusive = a: b:
+    (builtins.length a) == 0 ||
+    (!(builtins.elem (builtins.head a) b) &&
+     mutuallyExclusive (builtins.tail a) b);
 
 }

@@ -1,28 +1,34 @@
 { stdenv, fetchFromGitHub, asciidoc-full, gettext
-, gobjectIntrospection, gtk3, hicolor_icon_theme, libnotify, librsvg
-, pythonPackages, udisks2, wrapGAppsHook }:
+, gobjectIntrospection, gtk3, hicolor-icon-theme, libnotify, librsvg
+, udisks2, wrapGAppsHook
+, buildPythonApplication
+, docopt
+, pygobject3
+, pyyaml
+, ...
+}:
 
-pythonPackages.buildPythonApplication rec {
+buildPythonApplication rec {
   name = "udiskie-${version}";
-  version = "1.5.1";
+  version = "1.7.3";
 
   src = fetchFromGitHub {
     owner = "coldfix";
     repo = "udiskie";
     rev = version;
-    sha256 = "01x5fvllb262x6r3547l23z7p6hr7ddz034bkhmj2cqmf83sxwxd";
+    sha256 = "1yv1faq81n3vspf3jprcs5v21l2fchy3m3pc7lk8jb0xqlnh60x4";
   };
 
   buildInputs = [
     asciidoc-full        # For building man page.
-    hicolor_icon_theme
+    hicolor-icon-theme
     wrapGAppsHook
     librsvg              # required for loading svg icons (udiskie uses svg icons)
   ];
 
   propagatedBuildInputs = [
-    gettext gobjectIntrospection gtk3 libnotify pythonPackages.docopt
-    pythonPackages.pygobject3 pythonPackages.pyyaml udisks2
+    gettext gobjectIntrospection gtk3 libnotify docopt
+    pygobject3 pyyaml udisks2
   ];
 
   postBuild = "make -C doc";

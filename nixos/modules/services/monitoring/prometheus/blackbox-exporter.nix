@@ -54,10 +54,11 @@ in {
         Restart = "always";
         PrivateTmp = true;
         WorkingDirectory = /tmp;
+        AmbientCapabilities = [ "CAP_NET_RAW" ]; # for ping probes
         ExecStart = ''
           ${pkgs.prometheus-blackbox-exporter}/bin/blackbox_exporter \
-            -web.listen-address :${toString cfg.port} \
-            -config.file ${cfg.configFile} \
+            --web.listen-address :${toString cfg.port} \
+            --config.file ${cfg.configFile} \
             ${concatStringsSep " \\\n  " cfg.extraFlags}
         '';
         ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";

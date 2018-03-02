@@ -1,26 +1,35 @@
-{ stdenv, fetchFromGitHub, cmake, qt5, kde5, lxqt }:
+{ stdenv, fetchFromGitHub, cmake, lxqt-build-tools, qtbase, qttools, qtsvg, kwindowsystem, liblxqt, libqtxdg, qtx11extras }:
 
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
   pname = "lxqt-notificationd";
-  version = "0.11.0";
+  version = "0.12.0";
 
-  srcs = fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "lxde";
     repo = pname;
     rev = version;
-    sha256 = "001xcvmg7ap5pbssc9pqp4jshgq2h4zxk9rra76xnrby6k8n6p3x";
+    sha256 = "0pmpdqgnb2dfxw5lirh89j8hnrwwcn2zc64byg4zi0xdvq6qms43";
   };
 
-  nativeBuildInputs = [ cmake ];
+  nativeBuildInputs = [
+    cmake
+    lxqt-build-tools
+  ];
+
+  postPatch = ''
+    substituteInPlace autostart/CMakeLists.txt \
+      --replace "DESTINATION \"\''${LXQT_ETC_XDG_DIR}" "DESTINATION \"etc/xdg"
+  '';
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qttools
-    qt5.qtsvg
-    kde5.kwindowsystem
-    lxqt.liblxqt
-    lxqt.libqtxdg
+    qtbase
+    qttools
+    qtsvg
+    kwindowsystem
+    liblxqt
+    libqtxdg
+    qtx11extras
   ];
 
   cmakeFlags = [ "-DPULL_TRANSLATIONS=NO" ];
@@ -29,7 +38,7 @@ stdenv.mkDerivation rec {
     description = "The LXQt notification daemon";
     homepage = https://github.com/lxde/lxqt-notificationd;
     license = licenses.lgpl21;
-    maintainers = with maintainers; [ romildo ];
     platforms = with platforms; unix;
+    maintainers = with maintainers; [ romildo ];
   };
 }

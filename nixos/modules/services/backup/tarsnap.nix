@@ -115,7 +115,7 @@ in
                 description = ''
                   Print global archive statistics upon completion.
                   The output is available via
-                  <command>systemctl status tarsnap@archive-name</command>.
+                  <command>systemctl status tarsnap-archive-name</command>.
                 '';
               };
 
@@ -230,6 +230,14 @@ in
                   Download bandwidth rate limit in bytes.
                 '';
               };
+
+              verbose = mkOption {
+                type = types.bool;
+                default = false;
+                description = ''
+                  Whether to produce verbose logging output.
+                '';
+              };
             };
           }
         ));
@@ -293,7 +301,10 @@ in
         '';
 
         script =
-          let run = ''tarsnap --configfile "/etc/tarsnap/${name}.conf" -c -f "${name}-$(date +"%Y%m%d%H%M%S")" ${concatStringsSep " " cfg.directories}'';
+          let run = ''tarsnap --configfile "/etc/tarsnap/${name}.conf" \
+                        -c -f "${name}-$(date +"%Y%m%d%H%M%S")" \
+                        ${optionalString cfg.verbose "-v"} \
+                        ${concatStringsSep " " cfg.directories}'';
           in if (cfg.cachedir != null) then ''
             mkdir -p ${cfg.cachedir}
             chmod 0700 ${cfg.cachedir}

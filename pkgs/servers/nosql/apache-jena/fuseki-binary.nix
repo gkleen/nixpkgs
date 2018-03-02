@@ -3,10 +3,10 @@ let
   s = # Generated upstream information
   rec {
     baseName="apache-jena-fuseki";
-    version = "2.4.1";
+    version = "3.5.0";
     name="${baseName}-${version}";
     url="http://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-${version}.tar.gz";
-    sha256 = "01yjpghgz637wwgnk5n9d7kchc3mmrbyrm8fs4rh2hkh66mq3ya4";
+    sha256 = "0pdq103vqpkbwi84yyigw4dy60ch7xzazaj3gfcbipg73v81wpvp";
   };
   buildInputs = [
     makeWrapper
@@ -24,7 +24,7 @@ stdenv.mkDerivation {
     for i in "$out"/bin/*; do
       wrapProgram "$i" \
         --prefix "PATH" : "${java}/bin/" \
-        --set "FUSEKI_HOME" '"''${FUSEKI_HOME:-'"$out"'}"' \
+        --set-default "FUSEKI_HOME" "$out" \
         ;
     done
   '';
@@ -34,7 +34,7 @@ stdenv.mkDerivation {
     license = stdenv.lib.licenses.asl20;
     maintainers = [stdenv.lib.maintainers.raskin];
     platforms = stdenv.lib.platforms.linux;
-    homepage = "http://jena.apache.org";
+    homepage = http://jena.apache.org;
     downloadPage = "http://archive.apache.org/dist/jena/binaries/";
     downloadURLRegexp = "apache-jena-fuseki-.*[.]tar[.]gz\$";
   };

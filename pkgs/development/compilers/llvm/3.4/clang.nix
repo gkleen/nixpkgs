@@ -39,6 +39,7 @@ stdenv.mkDerivation {
     # GCC_INSTALL_PREFIX points here, so just use it even though it may not
     # actually be a gcc
     gcc = stdenv.cc.cc;
+    hardeningUnsupportedFlags = [ "stackprotector" ];
   };
 
   enableParallelBuilding = true;
@@ -46,7 +47,7 @@ stdenv.mkDerivation {
   meta = {
     description = "A c, c++, objective-c, and objective-c++ frontend for the llvm compiler";
     homepage    = http://llvm.org/;
-    license     = stdenv.lib.licenses.bsd3;
+    license     = stdenv.lib.licenses.ncsa;
     platforms   = stdenv.lib.platforms.all;
   };
 }

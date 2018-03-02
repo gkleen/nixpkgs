@@ -20,8 +20,8 @@ let
   externalDownloads = import ./downloads.nix {inherit fetchurl; inherit (lib) optionalAttrs; inherit (stdenv) system;};
   # Some .so-files are later copied from .jar-s to $HOME, so patch them beforehand
   patchelfInJars =
-       lib.optional (stdenv.system == "x86_64-linux") {jar = "share/arduino/lib/jssc-2.8.0.jar"; file = "libs/linux/libjSSC-2.8_x86_64.so";}
-    ++ lib.optional (stdenv.system == "i686-linux") {jar = "share/arduino/lib/jssc-2.8.0.jar"; file = "libs/linux/libjSSC-2.8_x86.so";}
+       lib.optional (stdenv.system == "x86_64-linux") {jar = "share/arduino/lib/jssc-2.8.0-arduino1.jar"; file = "libs/linux/libjSSC-2.8_x86_64.so";}
+    ++ lib.optional (stdenv.system == "i686-linux") {jar = "share/arduino/lib/jssc-2.8.0-arduino1.jar"; file = "libs/linux/libjSSC-2.8_x86.so";}
   ;
   # abiVersion 6 is default, but we need 5 for `avrdude_bin` executable
   ncurses5 = ncurses.override { abiVersion = "5"; };
@@ -54,25 +54,25 @@ let
              + stdenv.lib.optionalString (!withGui) "-core";
 in
 stdenv.mkDerivation rec {
-  version = "1.6.12";
+  version = "1.8.5";
   name = "${flavor}-${version}";
 
   src = fetchFromGitHub {
     owner = "arduino";
     repo = "Arduino";
     rev = "${version}";
-    sha256 = "0rz8dv1mncwx2wkafakxqdi2y0rq3f72fr57cg0z5hgdgdm89lkh";
+    sha256 = "0ww72qfk7fyvprz15lc80i1axfdacb5fij4h5j5pakrg76mng2c3";
   };
 
   teensyduino_src = fetchurl {
-    url = "http://www.pjrc.com/teensy/td_131/TeensyduinoInstall.${teensy_architecture}";
+    url = "https://www.pjrc.com/teensy/td_140/TeensyduinoInstall.${teensy_architecture}";
     sha256 =
       lib.optionalString ("${teensy_architecture}" == "linux64")
-        "1q4wv6s0900hyv9z1mjq33fr2isscps4q3bsy0h12wi3l7ir94g9"
+        "0127a1ak31252dbmr5niqa5mkvbm8dnz1cfcnmydzx9qn9rk00ir"
       + lib.optionalString ("${teensy_architecture}" == "linux32")
-        "06fl951f44avqyqim5qmy73siylbqcnsmz55zmj2dzhgf4sflkvc"
+        "01mxj5xsr7gka652c9rp4szy5mkcka8mljk044v4agk3sxvx3v3i"
       + lib.optionalString ("${teensy_architecture}" == "linuxarm")
-        "0ldf33w8wkqwklcj8fn4p22f23ibpwpf7873dc6i2jfmmbx0yvxn";
+        "1dff3alhvk9x8qzy3n85qrg6rfmy6l9pj6fmrlzpli63lzykvv4i";
   };
 
   buildInputs = [ jdk ant libusb libusb1 unzip zlib ncurses5 readline
@@ -92,6 +92,10 @@ stdenv.mkDerivation rec {
       download_dst=(''${download_dst[@]:1})
       cp -v $file_src $file_dst
     done
+
+    # Deliberately break build.xml's download statement in order to cause
+    # an error if anything needed is missing from download.nix.
+    substituteInPlace build/build.xml --replace "get src" "get error"
 
     cd ./arduino-core && ant
     cd ../build && ant 
@@ -208,7 +212,7 @@ stdenv.mkDerivation rec {
   meta = with stdenv.lib; {
     description = "Open-source electronics prototyping platform";
     homepage = http://arduino.cc/;
-    license = stdenv.lib.licenses.gpl2;
+    license = if withTeensyduino then licenses.unfreeRedistributable else licenses.gpl2;
     platforms = platforms.linux;
     maintainers = with maintainers; [ antono auntie robberer bjornfor ];
   };

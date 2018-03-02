@@ -1,14 +1,15 @@
-{ stdenv, fetchurl, fetchpatch, pkgconfig, audiofile, libcap
+{ stdenv, fetchurl, fetchpatch, pkgconfig, audiofile, libcap, libiconv
 , openglSupport ? false, mesa_noglu, mesa_glu
 , alsaSupport ? true, alsaLib
-, x11Support ? true, libXext, libICE, libXrandr
+, x11Support ? hostPlatform == buildPlatform, libXext, libICE, libXrandr
 , pulseaudioSupport ? true, libpulseaudio
 , OpenGL, CoreAudio, CoreServices, AudioUnit, Kernel, Cocoa
+, hostPlatform, buildPlatform
 }:
 
 # OSS is no longer supported, for it's much crappier than ALSA and
 # PulseAudio.
-assert (stdenv.isLinux && !(stdenv ? cross)) -> alsaSupport || pulseaudioSupport;
+assert hostPlatform.isLinux -> alsaSupport || pulseaudioSupport;
 
 let
   inherit (stdenv.lib) optional optionals;
@@ -37,9 +38,10 @@ stdenv.mkDerivation rec {
     optional stdenv.isDarwin Cocoa;
 
   buildInputs = let
-    notMingw = !(stdenv ? cross) || stdenv.cross.libc != "msvcrt";
+    notMingw = !hostPlatform.isMinGW;
   in optional notMingw audiofile
-  ++ optionals stdenv.isDarwin [ OpenGL CoreAudio CoreServices AudioUnit Kernel ];
+  ++ optionals stdenv.isDarwin [ OpenGL CoreAudio CoreServices AudioUnit Kernel ]
+  ++ [ libiconv ];
 
   # XXX: By default, SDL wants to dlopen() PulseAudio, in which case
   # we must arrange to add it to its RPATH; however, `patchelf' seems
@@ -52,9 +54,8 @@ stdenv.mkDerivation rec {
     "--enable-rpath"
     "--disable-pulseaudio-shared"
     "--disable-osmesa-shared"
-  ] ++ optionals (stdenv ? cross) ([
-    "--without-x"
-  ] ++ optional alsaSupport "--with-alsa-prefix=${alsaLib.out}/lib");
+  ] ++ optional (!x11Support) "--without-x"
+    ++ optional (alsaSupport && hostPlatform != buildPlatform) "--with-alsa-prefix=${alsaLib.out}/lib";
 
   patches = [
     # Fix window resizing issues, e.g. for xmonad
@@ -77,7 +78,8 @@ stdenv.mkDerivation rec {
     # Workaround X11 bug to allow changing gamma
     # Ticket: https://bugs.freedesktop.org/show_bug.cgi?id=27222
     (fetchpatch {
-      url = "http://pkgs.fedoraproject.org/cgit/rpms/SDL.git/plain/SDL-1.2.15-x11-Bypass-SetGammaRamp-when-changing-gamma.patch?id=04a3a7b1bd88c2d5502292fad27e0e02d084698d";
+      name = "SDL_SetGamma.patch";
+      url = "http://src.fedoraproject.org/cgit/rpms/SDL.git/plain/SDL-1.2.15-x11-Bypass-SetGammaRamp-when-changing-gamma.patch?id=04a3a7b1bd88c2d5502292fad27e0e02d084698d";
       sha256 = "0x52s4328kilyq43i7psqkqg7chsfwh0aawr50j566nzd7j51dlv";
     })
     # Fix a build failure on OS X Mavericks

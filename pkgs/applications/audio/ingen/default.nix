@@ -1,20 +1,23 @@
 { stdenv, fetchgit, boost, ganv, glibmm, gtkmm2, libjack2, lilv
-, lv2, makeWrapper, pkgconfig, python, raul, rdflib, serd, sord, sratom
+, lv2Unstable, makeWrapper, pkgconfig, python, raul, rdflib, serd, sord, sratom
+
 , suil
 }:
 
 stdenv.mkDerivation  rec {
   name = "ingen-unstable-${rev}";
-  rev = "2016-10-29";
+  rev = "2017-07-22";
 
   src = fetchgit {
-    url = "http://git.drobilla.net/cgit.cgi/ingen.git";
-    rev = "fd147d0b888090bfb897505852c1f25dbdf77e18";
-    sha256 = "1qmg79962my82c43vyrv5sxbqci9c7gc2s9bwaaqd0fcf08xcz1z";
+    url = "https://git.drobilla.net/cgit.cgi/ingen.git";
+    rev = "cc4a4db33f4d126a07a4a498e053c5fb9a883be3";
+    sha256 = "1gmwmml486r9zq4w65v91mfaz36af9zzyjkmi74m8qmh67ffqn3w";
+    deepClone = true;
   };
 
+  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    boost ganv glibmm gtkmm2 libjack2 lilv lv2 makeWrapper pkgconfig
+    boost ganv glibmm gtkmm2 libjack2 lilv lv2Unstable makeWrapper
     python raul serd sord sratom suil
   ];
 

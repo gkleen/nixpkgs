@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchFromGitHub, which, go, go-bindata, makeWrapper, rsync
+{ stdenv, lib, fetchFromGitHub, fetchpatch, removeReferencesTo, which, go, go-bindata, makeWrapper, rsync
 , iptables, coreutils
 , components ? [
     "cmd/kubeadm"
@@ -8,9 +8,7 @@
     "cmd/kube-controller-manager"
     "cmd/kube-proxy"
     "plugin/cmd/kube-scheduler"
-    "cmd/kube-dns"
-    "federation/cmd/federation-apiserver"
-    "federation/cmd/federation-controller-manager"
+    "test/e2e/e2e.test"
   ]
 }:
 
@@ -18,18 +16,26 @@ with lib;
 
 stdenv.mkDerivation rec {
   name = "kubernetes-${version}";
-  version = "1.5.2";
+  version = "1.9.1";
 
   src = fetchFromGitHub {
     owner = "kubernetes";
     repo = "kubernetes";
     rev = "v${version}";
-    sha256 = "1ps9bn5gqknyjv0b9jvp7xg3cyd4anq11j785p22347al0b8w81v";
+    sha256 = "1dmq2g138h7fsswmq4l47b44gsl9anmm3ywqyi7y48f1rkvc11mk";
   };
 
-  buildInputs = [ makeWrapper which go rsync go-bindata ];
+  buildInputs = [ removeReferencesTo makeWrapper which go rsync go-bindata ];
 
   outputs = ["out" "man" "pause"];
+
+  patches = [
+    # patch is from https://github.com/kubernetes/kubernetes/pull/58207
+    (fetchpatch {
+      url = "https://github.com/kubernetes/kubernetes/commit/a990b04dc8a7d8408a71eee40db93621cf2b6d1b.patch";
+      sha256 = "0piqilc5c9frikl74hamkffawwg1mvdwfxqvjnmk6wdma43dbb7w";
+    })
+  ];
 
   postPatch = ''
     substituteInPlace "hack/lib/golang.sh" --replace "_cgo" ""
@@ -45,7 +51,7 @@ stdenv.mkDerivation rec {
 
   postBuild = ''
     ./hack/generate-docs.sh
-    (cd build/pause && gcc pause.c -o pause)
+    (cd build/pause && cc pause.c -o pause)
   '';
 
   installPhase = ''
@@ -55,16 +61,15 @@ stdenv.mkDerivation rec {
     cp build/pause/pause "$pause/bin/pause"
     cp -R docs/man/man1 "$man/share/man"
 
+    cp cluster/addons/addon-manager/kube-addons.sh $out/bin/kube-addons
+    patchShebangs $out/bin/kube-addons
+    wrapProgram $out/bin/kube-addons --set "KUBECTL_BIN" "$out/bin/kubectl"
+
     $out/bin/kubectl completion bash > $out/share/bash-completion/completions/kubectl
   '';
 
   preFixup = ''
-    # Remove references to go compiler
-    while read file; do
-      cat $file | sed "s,${go},$(echo "${go}" | sed "s,$NIX_STORE/[^-]*,$NIX_STORE/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee,"),g" > $file.tmp
-      mv $file.tmp $file
-      chmod +x $file
-    done < <(find $out/bin $pause/bin -type f 2>/dev/null)
+    find $out/bin $pause/bin -type f -exec remove-references-to -t ${go} '{}' +
   '';
 
   meta = {
@@ -72,6 +77,6 @@ stdenv.mkDerivation rec {
     license = licenses.asl20;
     homepage = http://kubernetes.io;
     maintainers = with maintainers; [offline];
-    platforms = platforms.linux;
+    platforms = platforms.unix;
   };
 }

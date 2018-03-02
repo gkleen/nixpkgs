@@ -1,17 +1,18 @@
-{ stdenv, fetchFromGitHub, cmake, gmp, mpfr, gperftools }:
+{ stdenv, fetchFromGitHub, cmake, gmp }:
 
 stdenv.mkDerivation rec {
   name = "lean-${version}";
-  version = "3.0.0";
+  version = "3.3.0";
 
   src = fetchFromGitHub {
     owner  = "leanprover";
     repo   = "lean";
     rev    = "v${version}";
-    sha256 = "1ds25213vir8llans7na3laqs8rgr06clgp9xzq8akiwfy87b74i";
+    sha256 = "0irh9b4haz0pzzxrb4hwcss91a0xb499kjrcrmr2s59p3zq8bbd9";
   };
 
-  buildInputs = [ gmp mpfr cmake gperftools ];
+  nativeBuildInputs = [ cmake ];
+  buildInputs = [ gmp ];
   enableParallelBuilding = true;
 
   preConfigure = ''

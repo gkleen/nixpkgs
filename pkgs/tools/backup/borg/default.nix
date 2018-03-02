@@ -1,31 +1,35 @@
-{ stdenv, fetchurl, python3Packages, acl, lz4, openssl }:
+{ stdenv, fetchurl, python3Packages, acl, lz4, openssl, openssh }:
 
 python3Packages.buildPythonApplication rec {
   name = "borgbackup-${version}";
-  version = "1.0.9";
+  version = "1.1.4";
   namePrefix = "";
 
   src = fetchurl {
     url = "https://github.com/borgbackup/borg/releases/download/"
       + "${version}/${name}.tar.gz";
-    sha256 = "1ciwp9yilcibk0x82y5nn8ps95jrm8rxvff8mjrlp7a2w100i1im";
+    sha256 = "1cicqwh85wfp65y00qaq6q4i4jcyy9b66qz5gpl80qc880wab912";
   };
 
   nativeBuildInputs = with python3Packages; [
     # For building documentation:
-    sphinx sphinx_rtd_theme
+    sphinx guzzle_sphinx_theme
   ];
   buildInputs = [
-    acl lz4 openssl python3Packages.setuptools_scm
-  ];
+    lz4 openssl python3Packages.setuptools_scm
+  ] ++ stdenv.lib.optionals stdenv.isLinux [ acl ];
   propagatedBuildInputs = with python3Packages; [
-    cython llfuse msgpack
-  ];
+    cython msgpack-python
+  ] ++ stdenv.lib.optionals (!stdenv.isDarwin) [ llfuse ];
 
   preConfigure = ''
     export BORG_OPENSSL_PREFIX="${openssl.dev}"
     export BORG_LZ4_PREFIX="${lz4.dev}"
   '';
+
+  makeWrapperArgs = [
+    ''--prefix PATH ':' "${openssh}/bin"''
+  ];
 
   postInstall = ''
     make -C docs singlehtml
@@ -42,6 +46,6 @@ python3Packages.buildPythonApplication rec {
     homepage = https://borgbackup.github.io/;
     license = licenses.bsd3;
     platforms = platforms.unix; # Darwin and FreeBSD mentioned on homepage
-    maintainers = with maintainers; [ nckx ];
+    maintainers = with maintainers; [ flokli ];
   };
 }

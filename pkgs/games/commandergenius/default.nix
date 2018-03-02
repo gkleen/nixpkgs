@@ -24,14 +24,14 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     description = "Modern Interpreter for the Commander Keen Games";
-    longdescription = ''
+    longDescription = ''
       Commander Genius is an open-source clone of
       Commander Keen which allows you to play
       the games, and some of the mods
       made for it. All of the original data files
       are required to do so
     '';
-    homepage = "https://github.com/gerstrong/Commander-Genius";
+    homepage = https://github.com/gerstrong/Commander-Genius;
     maintainers = with maintainers; [ hce ];
     license = licenses.gpl2;
     platforms = platforms.linux;

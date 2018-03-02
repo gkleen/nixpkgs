@@ -1,14 +1,18 @@
-{ coreutils, fetchurl, db, openssl, pcre, perl, pkgconfig, stdenv }:
+{ coreutils, db, fetchurl, openldap, openssl, pcre, perl, pkgconfig, stdenv
+, enableLDAP ? false
+}:
 
 stdenv.mkDerivation rec {
-  name = "exim-4.88";
+  name = "exim-4.90.1";
 
   src = fetchurl {
-    url = "http://ftp.exim.org/pub/exim/exim4/${name}.tar.bz2";
-    sha256 = "0bca3wb45hl7h8m8bpvsmrmqa07jhbhqyigs9pl29hhzwgbmz78i";
+    url = "http://ftp.exim.org/pub/exim/exim4/${name}.tar.xz";
+    sha256 = "09ppq8l7cah6dcqwdvpa6r12i6fdcd9lvxlfp18mggj3438xz62w";
   };
 
-  buildInputs = [ coreutils db openssl pcre perl pkgconfig ];
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ coreutils db openssl pcre perl ]
+    ++ stdenv.lib.optional enableLDAP openldap;
 
   preBuild = ''
     sed '
@@ -32,6 +36,11 @@ stdenv.mkDerivation rec {
       s:^# \(RM_COMMAND\)=.*:\1=${coreutils}/bin/rm:
       s:^# \(TOUCH_COMMAND\)=.*:\1=${coreutils}/bin/touch:
       s:^# \(PERL_COMMAND\)=.*:\1=${perl}/bin/perl:
+      ${stdenv.lib.optionalString enableLDAP ''
+        s:^# \(LDAP_LIB_TYPE=OPENLDAP2\)$:\1:
+        s:^# \(LOOKUP_LDAP=yes\)$:\1:
+        s:^# \(LOOKUP_LIBS\)=.*:\1=-lldap:
+      ''}
       #/^\s*#.*/d
       #/^\s*$/d
     ' < src/EDITME > Local/Makefile

@@ -1,25 +1,23 @@
-{ stdenv, fetchgit, nix }:
-
+{ stdenv, fetchFromGitHub, nix, cmake, pkgconfig }:
+let version = "3.0.1"; in
 stdenv.mkDerivation {
-  name = "nix-plugins-1.0.0";
+  name = "nix-plugins-${version}";
 
-  src = fetchgit {
-    url = git://github.com/shlevy/nix-plugins.git;
-    rev = "refs/tags/1.0.0";
-    sha256 = "1w7l4mdwgf5w1g48mbng4lcg2nihixvp835mg2j7gghnya309fxl";
+  src = fetchFromGitHub {
+    owner = "shlevy";
+    repo = "nix-plugins";
+    rev = version;
+    sha256 = "1pmk2m0kc6a3jqygm5cy1fl5gbcy0ghc2xs4ww0gh20walrys82r";
   };
 
+  nativeBuildInputs = [ cmake pkgconfig ];
+
   buildInputs = [ nix ];
-
-  buildFlags = [ "NIX_INCLUDE=${nix}/include" ];
-
-  installFlags = [ "PREFIX=$(out)" ];
 
   meta = {
     description = "Collection of miscellaneous plugins for the nix expression language";
     homepage = https://github.com/shlevy/nix-plugins;
     license = stdenv.lib.licenses.mit;
     platforms = stdenv.lib.platforms.all;
-    broken = true;
   };
 }

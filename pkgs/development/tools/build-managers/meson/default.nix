@@ -1,12 +1,37 @@
-{ lib, python3Packages, fetchurl }:
-python3Packages.buildPythonPackage rec {
-  version = "0.35.0";
-  name = "meson-${version}";
+{ lib, python3Packages }:
+python3Packages.buildPythonApplication rec {
+  version = "0.44.0";
+  pname = "meson";
+  name = "${pname}-${version}";
 
-  src = fetchurl {
-    url = "mirror://pypi/m/meson/${name}.tar.gz";
-    sha256 = "0w4vian55cwcv2m5qzn73aznf9a0y24cszqb7dkpahrb9yrg25l3";
+  src = python3Packages.fetchPypi {
+    inherit pname version;
+    sha256 = "1rpqp9iwbvr4xvfdh3iyfh1ha274hbb66jbgw3pa5a73x4d4ilqn";
   };
+
+  postFixup = ''
+    pushd $out/bin
+    # undo shell wrapper as meson tools are called with python
+    for i in *; do
+      mv ".$i-wrapped" "$i"
+    done
+    popd
+  '';
+
+  patches = [
+    # Unlike libtool, vanilla Meson does not pass any information
+    # about the path library will be installed to to g-ir-scanner,
+    # breaking the GIR when path other than ${!outputLib}/lib is used.
+    # We patch Meson to add a --fallback-library-path argument with
+    # library install_dir to g-ir-scanner.
+    ./gir-fallback-path.patch
+  ];
+
+  postPatch = ''
+    sed -i -e 's|e.fix_rpath(install_rpath)||' mesonbuild/scripts/meson_install.py
+  '';
+
+  setupHook = ./setup-hook.sh;
 
   meta = with lib; {
     homepage = http://mesonbuild.com;

@@ -1,21 +1,18 @@
 { stdenv, fetchurl, perl, texinfo }:
 
 stdenv.mkDerivation rec {
-  name = "libtasn1-4.10";
+  name = "libtasn1-4.13";
 
   src = fetchurl {
     url = "mirror://gnu/libtasn1/${name}.tar.gz";
-    sha256 = "681a4d9a0d259f2125713f2e5766c5809f151b3a1392fd91390f780b4b8f5a02";
+    sha256 = "1jlc1iahj8k3haz28j55nzg7sgni5h41vqy461i1bpbx6668wlky";
   };
 
   outputs = [ "out" "dev" "devdoc" ];
   outputBin = "dev";
 
-  # Warning causes build to fail on darwin since 4.9,
-  # check if this can be removed in the next release.
-  CFLAGS = "-Wno-sign-compare";
-
-  buildInputs = [ perl texinfo ];
+  nativeBuildInputs = [ texinfo ];
+  buildInputs = [ perl ];
 
   doCheck = true;
 

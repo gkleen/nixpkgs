@@ -7,6 +7,8 @@ let
 
   inherit (pkgs) alsaUtils;
 
+  pulseaudioEnabled = config.hardware.pulseaudio.enable;
+
 in
 
 {
@@ -19,7 +21,7 @@ in
 
       enable = mkOption {
         type = types.bool;
-        default = true;
+        default = false;
         description = ''
           Whether to enable ALSA sound.
         '';
@@ -80,7 +82,7 @@ in
 
     environment.systemPackages = [ alsaUtils ];
 
-    environment.etc = mkIf (config.sound.extraConfig != "")
+    environment.etc = mkIf (!pulseaudioEnabled && config.sound.extraConfig != "")
       [
         { source = pkgs.writeText "asound.conf" config.sound.extraConfig;
           target = "asound.conf";

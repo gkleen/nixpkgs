@@ -10,13 +10,13 @@ with lib;
     programs.adb = {
       enable = mkOption {
         default = false;
-        example = true;
         type = types.bool;
         description = ''
           Whether to configure system to use Android Debug Bridge (adb).
           To grant access to a user, it must be part of adbusers group:
           <code>users.extraUsers.alice.extraGroups = ["adbusers"];</code>
         '';
+        relatedPackages = [ ["androidenv" "platformTools"] ];
       };
     };
   };

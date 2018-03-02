@@ -1,7 +1,7 @@
-{ stdenv, fetchurl, fetchFromGitHub, makeWrapper
-, docutils, perl, pkgconfig, python3, which, ffmpeg_3_2
+{ stdenv, fetchurl, fetchFromGitHub, fetchpatch, makeWrapper
+, docutils, perl, pkgconfig, python3, which, ffmpeg
 , freefont_ttf, freetype, libass, libpthreadstubs
-, lua, lua5_sockets, libuchardet, libiconv ? null, darwin
+, lua, luasocket, libuchardet, libiconv ? null, darwin
 
 , x11Support ? true,
     mesa       ? null,
@@ -13,19 +13,19 @@
     wayland      ? null,
     libxkbcommon ? null
 
-, rubberbandSupport  ? !stdenv.isDarwin, rubberband ? null
+, rubberbandSupport  ? true,  rubberband    ? null
 , xineramaSupport    ? true,  libXinerama   ? null
 , xvSupport          ? true,  libXv         ? null
 , sdl2Support        ? true,  SDL2          ? null
-, alsaSupport        ? !stdenv.isDarwin,  alsaLib       ? null
+, alsaSupport        ? true,  alsaLib       ? null
 , screenSaverSupport ? true,  libXScrnSaver ? null
 , vdpauSupport       ? true,  libvdpau      ? null
-, dvdreadSupport     ? !stdenv.isDarwin,  libdvdread    ? null
-, dvdnavSupport      ? dvdreadSupport,  libdvdnav     ? null
+, dvdreadSupport     ? true,  libdvdread    ? null
+, dvdnavSupport      ? true,  libdvdnav     ? null
 , bluraySupport      ? true,  libbluray     ? null
 , speexSupport       ? true,  speex         ? null
 , theoraSupport      ? true,  libtheora     ? null
-, pulseSupport       ? !stdenv.isDarwin,  libpulseaudio ? null
+, pulseSupport       ? true,  libpulseaudio ? null
 , bs2bSupport        ? true,  libbs2b       ? null
 , cacaSupport        ? true,  libcaca       ? null
 , libpngSupport      ? true,  libpng        ? null
@@ -33,6 +33,7 @@
 , vaapiSupport       ? true,  libva         ? null
 , drmSupport         ? true,  libdrm        ? null
 , vapoursynthSupport ? false, vapoursynth   ? null
+, archiveSupport     ? false, libarchive    ? null
 , jackaudioSupport   ? false, libjack2      ? null
 
 # scripts you want to be loaded by default
@@ -65,30 +66,43 @@ assert libpngSupport      -> available libpng;
 assert youtubeSupport     -> available youtube-dl;
 assert vapoursynthSupport -> available vapoursynth;
 assert jackaudioSupport   -> available libjack2;
+assert archiveSupport     -> available libarchive;
 assert vaapiSupport       -> available libva;
 assert drmSupport         -> available libdrm;
 
 let
   # Purity: Waf is normally downloaded by bootstrap.py, but
   # for purity reasons this behavior should be avoided.
-  wafVersion = "1.8.12";
+  wafVersion = "1.9.8";
   waf = fetchurl {
     urls = [ "http://waf.io/waf-${wafVersion}"
              "http://www.freehackers.org/~tnagy/release/waf-${wafVersion}" ];
-    sha256 = "12y9c352zwliw0zk9jm2lhynsjcf5jy0k1qch1c1av8hnbm2pgq1";
+    sha256 = "1gsd3zza1wixv2vhvq3inp4vb71i41a1kbwqnwixhnvdmcmw8z8n";
   };
 in stdenv.mkDerivation rec {
   name = "mpv-${version}";
-  version = "0.23.0";
+  version = "0.27.0";
 
   src = fetchFromGitHub {
     owner = "mpv-player";
     repo  = "mpv";
     rev    = "v${version}";
-    sha256 = "02k8p4z1mwxxlg9spwwrlcciia80kyrpp09hpl60g22h85jj1ng9";
+    sha256 = "0746kmsg69675y5c70vn8imcr9d1zpjz97f27xr1vx00yjpd518v";
   };
 
-  patchPhase = ''
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/mpv-player/mpv/commit/2ecf240b1cd20875991a5b18efafbe799864ff7f.patch";
+      sha256 = "1sr0770rvhsgz8d7ysr9qqp4g9gwdhgj8g3rgnz90wl49lgrykhb";
+    })
+    (fetchpatch {
+      name = "CVE-2018-6360.patch";
+      url = https://salsa.debian.org/multimedia-team/mpv/raw/ddface85a1adfdfe02ffb25b5ac7fac715213b97/debian/patches/09_ytdl-hook-whitelist-protocols.patch;
+      sha256 = "1gb1lkjbr8rv4v9ji6w5z97kbxbi16dbwk2255ajbvngjrc7vivv";
+    })
+  ];
+
+  postPatch = ''
     patchShebangs ./TOOLS/
   '';
 
@@ -101,19 +115,26 @@ in stdenv.mkDerivation rec {
     "--disable-libmpv-static"
     "--disable-static-build"
     "--disable-build-date" # Purity
+    (enableFeature archiveSupport "libarchive")
+    (enableFeature dvdreadSupport "dvdread")
+    (enableFeature dvdnavSupport "dvdnav")
     (enableFeature vaapiSupport "vaapi")
     (enableFeature waylandSupport "wayland")
+    (enableFeature stdenv.isLinux "dvbin")
   ];
 
   configurePhase = ''
     python3 ${waf} configure --prefix=$out $configureFlags
   '';
 
-  nativeBuildInputs = [ docutils makeWrapper perl pkgconfig python3 which ];
+  nativeBuildInputs = [
+    docutils makeWrapper perl
+    pkgconfig python3 which
+  ];
 
   buildInputs = [
-    ffmpeg_3_2 freetype libass libpthreadstubs
-    lua lua5_sockets libuchardet
+    ffmpeg freetype libass libpthreadstubs
+    lua luasocket libuchardet
   ] ++ optional alsaSupport        alsaLib
     ++ optional xvSupport          libXv
     ++ optional theoraSupport      libtheora
@@ -122,9 +143,6 @@ in stdenv.mkDerivation rec {
     ++ optional bluraySupport      libbluray
     ++ optional jackaudioSupport   libjack2
     ++ optional pulseSupport       libpulseaudio
-    ++ optional stdenv.isDarwin    libiconv
-    ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
-       Cocoa CoreAudio ])
     ++ optional rubberbandSupport  rubberband
     ++ optional screenSaverSupport libXScrnSaver
     ++ optional vdpauSupport       libvdpau
@@ -137,9 +155,13 @@ in stdenv.mkDerivation rec {
     ++ optional vaapiSupport       libva
     ++ optional drmSupport         libdrm
     ++ optional vapoursynthSupport vapoursynth
+    ++ optional archiveSupport     libarchive
     ++ optionals dvdnavSupport     [ libdvdnav libdvdnav.libdvdread ]
     ++ optionals x11Support        [ libX11 libXext mesa libXxf86vm ]
-    ++ optionals waylandSupport    [ wayland libxkbcommon ];
+    ++ optionals waylandSupport    [ wayland libxkbcommon ]
+    ++ optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+      libiconv Cocoa CoreAudio
+    ]);
 
   enableParallelBuilding = true;
 
@@ -147,7 +169,14 @@ in stdenv.mkDerivation rec {
     python3 ${waf} build
   '';
 
-  installPhase = ''
+  installPhase =
+  let
+    getPath  = type : "${luasocket}/lib/lua/${lua.luaversion}/?.${type};" +
+                      "${luasocket}/share/lua/${lua.luaversion}/?.${type}";
+    luaPath  = getPath "lua";
+    luaCPath = getPath "so";
+  in
+  ''
     python3 ${waf} install
 
     # Use a standard font
@@ -155,11 +184,13 @@ in stdenv.mkDerivation rec {
     ln -s ${freefont_ttf}/share/fonts/truetype/FreeSans.ttf $out/share/mpv/subfont.ttf
     # Ensure youtube-dl is available in $PATH for MPV
     wrapProgram $out/bin/mpv \
-      --add-flags "--script=${concatStringsSep "," scripts}" \
+      --add-flags "--scripts=${concatStringsSep "," scripts}" \
+      --prefix LUA_PATH : "${luaPath}" \
+      --prefix LUA_CPATH : "${luaCPath}" \
   '' + optionalString youtubeSupport ''
       --prefix PATH : "${youtube-dl}/bin" \
   '' + optionalString vapoursynthSupport ''
-      --prefix PYTHONPATH : "$(toPythonPath ${vapoursynth}):$PYTHONPATH"
+      --prefix PYTHONPATH : "${vapoursynth}/lib/${python3.libPrefix}/site-packages:$PYTHONPATH"
   '' + ''
 
     cp TOOLS/umpv $out/bin
@@ -171,7 +202,7 @@ in stdenv.mkDerivation rec {
     description = "A media player that supports many video formats (MPlayer and mplayer2 fork)";
     homepage = http://mpv.io;
     license = licenses.gpl2Plus;
-    maintainers = with maintainers; [ AndersonTorres fuuzetsu ];
+    maintainers = with maintainers; [ AndersonTorres fuuzetsu fpletz ];
     platforms = platforms.darwin ++ platforms.linux;
 
     longDescription = ''
@@ -181,5 +212,3 @@ in stdenv.mkDerivation rec {
     '';
   };
 }
-# TODO: investigate caca support
-# TODO: investigate lua5_sockets bug

@@ -1,92 +1,92 @@
-{ stdenv,
-  lib,
-  pythonPackages,
-  fetchurl,
-  coreutils,
-  openssh,
-  buildbot-worker,
-  plugins ? [],
-  enableLocalWorker ? false
-}:
+{ stdenv, lib, openssh, buildbot-worker, buildbot-pkg, pythonPackages, runCommand, makeWrapper }:
 
-pythonPackages.buildPythonApplication (rec {
-  name = "${pname}-${version}";
-  pname = "buildbot";
-  version = "0.9.0.post1";
-  src = fetchurl {
-    url = "mirror://pypi/b/${pname}/${name}.tar.gz";
-    sha256 = "18rnsp691cnmbymlch6czx3mrcmifmf6dk97h9nslgfkkyf25n5g";
+let
+  withPlugins = plugins: runCommand "wrapped-${package.name}" {
+    buildInputs = [ makeWrapper ] ++ plugins;
+    propagatedBuildInputs = package.propagatedBuildInputs;
+    passthru.withPlugins = moarPlugins: withPlugins (moarPlugins ++ plugins);
+  } ''
+    makeWrapper ${package}/bin/buildbot $out/bin/buildbot \
+      --prefix PYTHONPATH : "${package}/lib/python2.7/site-packages:$PYTHONPATH"
+    ln -sfv ${package}/lib $out/lib
+  '';
+
+  package = pythonPackages.buildPythonApplication rec {
+    name = "${pname}-${version}";
+    pname = "buildbot";
+    version = "1.0.0";
+
+    src = pythonPackages.fetchPypi {
+      inherit pname version;
+      sha256 = "0y7gpymxl09gd9dyqj7zqhaihpl9da1v8ppxi4r161ywd8jv9b1g";
+    };
+
+    buildInputs = with pythonPackages; [
+      lz4
+      txrequests
+      pyjade
+      boto3
+      moto
+      txgithub
+      mock
+      setuptoolsTrial
+      isort
+      pylint
+      astroid
+      pyflakes
+      openssh
+      buildbot-worker
+      buildbot-pkg
+      treq
+    ];
+
+    propagatedBuildInputs = with pythonPackages; [
+      # core
+      twisted
+      jinja2
+      zope_interface
+      sqlalchemy
+      sqlalchemy_migrate
+      future
+      dateutil
+      txaio
+      autobahn
+      pyjwt
+      distro
+
+      # tls
+      pyopenssl
+      service-identity
+      idna
+
+      # docs
+      sphinx
+      sphinxcontrib-blockdiag
+      sphinxcontrib-spelling
+      pyenchant
+      docutils
+      ramlfications
+      sphinx-jinja
+
+    ];
+
+    patches = [
+      # This patch disables the test that tries to read /etc/os-release which
+      # is not accessible in sandboxed builds.
+      ./skip_test_linux_distro.patch
+    ];
+
+    postPatch = ''
+      substituteInPlace buildbot/scripts/logwatcher.py --replace '/usr/bin/tail' "$(type -P tail)"
+    '';
+
+    passthru = { inherit withPlugins; };
+
+    meta = with stdenv.lib; {
+      homepage = http://buildbot.net/;
+      description = "Buildbot is an open-source continuous integration framework for automating software build, test, and release processes";
+      maintainers = with maintainers; [ nand0p ryansydnor ];
+      license = licenses.gpl2;
+    };
   };
-
-  buildInputs = with pythonPackages; [
-    lz4
-    txrequests
-    pyjade
-    boto3
-    moto
-    txgithub
-    mock
-    setuptoolsTrial
-    isort
-    pylint
-    astroid
-    pyflakes
-  ] ++ lib.optionals (enableLocalWorker) [openssh];
-
-  propagatedBuildInputs = with pythonPackages; [
-
-    # core
-    twisted
-    jinja2
-    zope_interface
-    future
-    sqlalchemy
-    sqlalchemy_migrate
-    future
-    dateutil
-    txaio
-    autobahn
-
-    # tls
-    pyopenssl
-    service-identity
-    idna
-
-    # docs
-    sphinx
-    sphinxcontrib-blockdiag
-    sphinxcontrib-spelling
-    pyenchant
-    docutils
-    ramlfications
-    sphinx-jinja
-
-  ] ++ plugins ++
-  lib.optionals (enableLocalWorker) [buildbot-worker];
-
-  preInstall = ''
-    # writes out a file that can't be read properly
-    sed -i.bak -e '69,84d' buildbot/test/unit/test_www_config.py
-  '';
-
-  postPatch = ''
-    # re-hardcode path to tail
-    sed -i 's|/usr/bin/tail|${coreutils}/bin/tail|' buildbot/scripts/logwatcher.py
-  '';
-
-  postFixup = ''
-    mv -v $out/bin/buildbot $out/bin/.wrapped-buildbot
-    echo "#!/bin/sh" > $out/bin/buildbot
-    echo "export PYTHONPATH=$PYTHONPATH" >> $out/bin/buildbot
-    echo "exec $out/bin/.wrapped-buildbot \"\$@\"" >> $out/bin/buildbot
-    chmod -c 555 $out/bin/buildbot
-  '';
-
-  meta = with stdenv.lib; {
-    homepage = http://buildbot.net/;
-    description = "Continuous integration system that automates the build/test cycle";
-    maintainers = with maintainers; [ nand0p ryansydnor ];
-    platforms = platforms.all;
-    license = licenses.gpl2;
-  };
-})
+in package

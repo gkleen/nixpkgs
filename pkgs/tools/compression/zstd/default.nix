@@ -1,20 +1,16 @@
-{ stdenv, fetchFromGitHub
+{ stdenv, fetchFromGitHub, gnugrep
 , legacySupport ? false }:
 
 stdenv.mkDerivation rec {
   name = "zstd-${version}";
-  version = "1.1.1";
+  version = "1.3.3";
 
   src = fetchFromGitHub {
-    sha256 = "18snd1jiz0j6r1yk4vkgqmil2gbzwxgmcv2chvpnc5i93pp18hri";
+    sha256 = "15h9i9ygry0znlmvll5r21lzwgyqzynaw9q2wbj4bcn7zjy4c1pn";
     rev = "v${version}";
     repo = "zstd";
     owner = "facebook";
   };
-
-  # The Makefiles don't properly use file targets, but blindly rebuild
-  # all dependencies on every make invocation. So no nice phases. :-(
-  phases = [ "unpackPhase" "installPhase" "fixupPhase" ];
 
   makeFlags = [
     "ZSTD_LEGACY_SUPPORT=${if legacySupport then "1" else "0"}"
@@ -23,6 +19,15 @@ stdenv.mkDerivation rec {
   installFlags = [
     "PREFIX=$(out)"
   ];
+
+  preInstall = ''
+    substituteInPlace programs/zstdgrep \
+      --replace "=grep" "=${gnugrep}/bin/grep" \
+      --replace "=zstdcat" "=$out/bin/zstdcat"
+
+    substituteInPlace programs/zstdless \
+      --replace "zstdcat" "$out/bin/zstdcat"
+  '';
 
   meta = with stdenv.lib; {
     description = "Zstandard real-time compression algorithm";
@@ -40,6 +45,6 @@ stdenv.mkDerivation rec {
     license = with licenses; [ gpl2Plus bsd2 ];
 
     platforms = platforms.unix;
-    maintainers = with maintainers; [ nckx ];
+    maintainers = with maintainers; [ orivej ];
   };
 }

@@ -1,27 +1,27 @@
-{ stdenv, fetchurl, kubernetes }:
+{ stdenv, fetchurl, kubectl }:
 let
   arch = if stdenv.isLinux
          then "linux-amd64"
          else "darwin-amd64";
   checksum = if stdenv.isLinux
-             then "8bb6f9d336ca7913556e463c5b65eb8d69778c518df2fab0d20be943fbf0efc1"
-             else "94c9f2d511aec3d4b7dcc5f0ce6f846506169b4eb7235e1dc137d08edf408098";
-in
-stdenv.mkDerivation rec {
+             then "07bgny8mfdgv9f6zmk31hxhkwy90wr22js21jz679pkz3gmykxvx"
+             else "1f6h96gyhsdb03am586kdqn619h4niwlj29j4bypf3yg2sar4p6x";
   pname = "helm";
-  version = "2.1.3";
+  version = "2.8.1";
+in
+stdenv.mkDerivation {
   name = "${pname}-${version}";
 
   src = fetchurl {
     url = "https://kubernetes-helm.storage.googleapis.com/helm-v${version}-${arch}.tar.gz";
-    sha256 = "${checksum}";
+    sha256 = checksum;
   };
 
   preferLocalBuild = true;
 
   buildInputs = [ ];
 
-  propagatedBuildInputs = [ kubernetes ];
+  propagatedBuildInputs = [ kubectl ];
 
   phases = [ "buildPhase" "installPhase" ];
 
@@ -33,6 +33,10 @@ stdenv.mkDerivation rec {
     tar -xvzf $src
     cp ${arch}/helm $out/bin/${pname}
     chmod +x $out/bin/${pname}
+    mkdir -p $out/share/bash-completion/completions
+    mkdir -p $out/share/zsh/site-functions
+    $out/bin/helm completion bash > $out/share/bash-completion/completions/helm
+    $out/bin/helm completion zsh > $out/share/zsh/site-functions/_helm
   '';
 
   meta = with stdenv.lib; {

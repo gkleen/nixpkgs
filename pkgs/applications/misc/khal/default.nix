@@ -1,15 +1,15 @@
-{ stdenv, fetchurl, pkgs, python3Packages }:
+{ stdenv, pkgs, python3Packages }:
 
 with python3Packages;
 
 buildPythonApplication rec {
-  # Reenable tests for 0.9.0, they are broken at the moment: #15981
-  version = "0.8.4";
-  name = "khal-${version}";
+  name = "${pname}-${version}";
+  pname = "khal";
+  version = "0.9.8";
 
-  src = fetchurl {
-    url = "mirror://pypi/k/khal/khal-${version}.tar.gz";
-    sha256 = "03vy4dp9n43w51mwqjjy08dr5nj7wxqnb085visz3j43vzm42p1f";
+  src = fetchPypi {
+    inherit pname version;
+    sha256 = "1blx3gxnv7sj302biqphfw7i6ilzl2xlmvzp130n3113scg9w17y";
   };
 
   LC_ALL = "en_US.UTF-8";

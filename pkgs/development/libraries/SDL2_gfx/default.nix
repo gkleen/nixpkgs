@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, SDL2 }:
+{ stdenv, darwin, fetchurl, SDL2 }:
 
 stdenv.mkDerivation rec {
   name = "SDL2_gfx-${version}";
@@ -9,9 +9,10 @@ stdenv.mkDerivation rec {
     sha256 = "16jrijzdp095qf416zvj9gs2fqqn6zkyvlxs5xqybd0ip37cp6yn";
   };
 
-  buildInputs = [ SDL2 ];
+  buildInputs = [ SDL2 ]
+    ++ stdenv.lib.optional stdenv.isDarwin darwin.libobjc;
 
-  configureFlags = [ "--enable-mmx" ];
+  configureFlags = if stdenv.isi686 || stdenv.isx86_64 then "--enable-mmx" else "--disable-mmx";
 
   meta = with stdenv.lib; {
     description = "SDL graphics drawing primitives and support functions";
@@ -34,10 +35,10 @@ stdenv.mkDerivation rec {
       code. Its is written in plain C and can be used in C++ code.
     '';
 
-    homepage = "https://sourceforge.net/projects/sdlgfx/";
+    homepage = https://sourceforge.net/projects/sdlgfx/;
     license = licenses.zlib;
 
     maintainers = with maintainers; [ bjg ];
-    platforms = platforms.linux;
+    platforms = platforms.unix;
   };
 }

@@ -1,14 +1,14 @@
 { stdenv, fetchurl, pkgconfig, intltool, babl, gegl, gtk2, glib, gdk_pixbuf
 , pango, cairo, freetype, fontconfig, lcms, libpng, libjpeg, poppler, libtiff
 , webkit, libmng, librsvg, libwmf, zlib, libzip, ghostscript, aalib, jasper
-, python2Packages, libart_lgpl, libexif, gettext, xorg
+, python2Packages, libexif, gettext, xorg
 , AppKit, Cocoa, gtk-mac-integration }:
 
 let
   inherit (python2Packages) pygtk wrapPython python;
 in stdenv.mkDerivation rec {
   name = "gimp-${version}";
-  version = "2.8.18";
+  version = "2.8.22";
 
   # This declarations for `gimp-with-plugins` wrapper,
   # (used for determining $out/lib/gimp/${majorVersion}/ paths)
@@ -18,14 +18,14 @@ in stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "http://download.gimp.org/pub/gimp/v2.8/${name}.tar.bz2";
-    sha256 = "0halh6sl3d2j9gahyabj6h6r3yyldcy7sfb4qrfazpkqqr3j5p9r";
+    sha256 = "12k3lp938qdc9cqj29scg55f3bb8iav2fysd29w0s49bqmfa71wi";
   };
 
   buildInputs =
     [ pkgconfig intltool babl gegl gtk2 glib gdk_pixbuf pango cairo
       freetype fontconfig lcms libpng libjpeg poppler libtiff webkit
       libmng librsvg libwmf zlib libzip ghostscript aalib jasper
-      python pygtk libart_lgpl libexif gettext xorg.libXpm
+      python pygtk libexif gettext xorg.libXpm
       wrapPython
     ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ AppKit Cocoa gtk-mac-integration ];
@@ -51,7 +51,7 @@ in stdenv.mkDerivation rec {
 
   meta = {
     description = "The GNU Image Manipulation Program";
-    homepage = http://www.gimp.org/;
+    homepage = https://www.gimp.org/;
     license = stdenv.lib.licenses.gpl3Plus;
     platforms = stdenv.lib.platforms.unix;
   };

@@ -1,15 +1,22 @@
-{ stdenv, fetchurl }:
+{ stdenv, fetchFromGitHub, autoreconfHook }:
 
 stdenv.mkDerivation rec {
   name = "snapraid-${version}";
-  version = "11.0";
+  version = "11.2";
 
-  src = fetchurl {
-    url = "https://github.com/amadvance/snapraid/releases/download/v${version}/snapraid-${version}.tar.gz";
-    sha256 = "0wapbi8ph7qcyh1jwyrn2r5slzsznlxvg137r4l02xgaaf42p9rh";
+  src = fetchFromGitHub {
+    owner = "amadvance";
+    repo = "snapraid";
+    rev = "v${version}";
+    sha256 = "01z8fl3x2j5bnm0rybj7hhch18is6dkwqc43yzwc6418spr4imsd";
   };
 
+  VERSION = version;
+
   doCheck = true;
+
+  nativeBuildInputs = [ autoreconfHook ];
+  buildInputs = [ ];
 
   meta = {
     homepage = http://www.snapraid.it/;

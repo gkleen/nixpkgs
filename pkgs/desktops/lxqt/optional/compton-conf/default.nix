@@ -1,37 +1,41 @@
-{ stdenv, fetchFromGitHub, cmake, pkgconfig, qt5, kde5, lxqt, libconfig }:
+{ stdenv, fetchFromGitHub, cmake, pkgconfig, qtbase, qttools, lxqt, libconfig }:
 
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
   pname = "compton-conf";
-  version = "0.2.0";
+  version = "0.3.0";
 
-  srcs = fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "lxde";
     repo = pname;
     rev = version;
-    sha256 = "04svxawa8l0ciflrspkzi13nnl7bljmfwwrgxn5lb3sw6qdcmdlk";
+    sha256 = "1p1y7g5psczx1dgh6gd1h5iga8rylvczkwlfirzrh0rfl45dajgb";
   };
 
-  nativeBuildInputs = [ cmake pkgconfig ];
+  nativeBuildInputs = [
+    cmake
+    pkgconfig
+    lxqt.lxqt-build-tools
+  ];
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qttools
-    qt5.qtx11extras
-    qt5.qtsvg
-    kde5.kwindowsystem
-    lxqt.liblxqt
-    lxqt.libqtxdg
+    qtbase
+    qttools
     libconfig
   ];
 
   cmakeFlags = [ "-DPULL_TRANSLATIONS=NO" ];
 
+  preConfigure = ''
+    substituteInPlace autostart/CMakeLists.txt \
+      --replace "DESTINATION \"\''${LXQT_ETC_XDG_DIR}" "DESTINATION \"etc/xdg" \
+    '';
+
   meta = with stdenv.lib; {
     description = "GUI configuration tool for compton X composite manager";
     homepage = https://github.com/lxde/compton-conf;
     license = licenses.lgpl21;
-    maintainers = with maintainers; [ romildo ];
     platforms = with platforms; unix;
+    maintainers = with maintainers; [ romildo ];
   };
 }

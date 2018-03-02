@@ -29,8 +29,7 @@ in {
       enable = mkOption {
         type = types.bool;
         default = false;
-        example = true;
-        description = "Whether to enable touchpad support.";
+        description = "Whether to enable touchpad support. Deprecated: Consider services.xserver.libinput.enable.";
       };
 
       dev = mkOption {
@@ -102,7 +101,6 @@ in {
       tapButtons = mkOption {
         type = types.bool;
         default = true;
-        example = false;
         description = "Whether to enable tap buttons.";
       };
 
@@ -125,7 +123,6 @@ in {
       palmDetect = mkOption {
         type = types.bool;
         default = false;
-        example = true;
         description = "Whether to enable palm detection (hardware support required)";
       };
 
@@ -146,7 +143,6 @@ in {
       horizontalScroll = mkOption {
         type = types.bool;
         default = true;
-        example = false;
         description = "Whether to enable horizontal scrolling (on touchpad)";
       };
 

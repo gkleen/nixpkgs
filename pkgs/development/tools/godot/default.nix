@@ -1,21 +1,22 @@
-{ stdenv, fetchFromGitHub, gcc, scons, pkgconfig, libX11, libXcursor
+{ stdenv, fetchFromGitHub, gcc5, scons, pkgconfig, libX11, libXcursor
 , libXinerama, libXrandr, libXrender, freetype, openssl, alsaLib
-, libpulseaudio, mesa, mesa_glu, zlib }:
+, libpulseaudio, mesa_glu, zlib }:
 
 stdenv.mkDerivation rec {
   name    = "godot-${version}";
-  version = "2.1.1-stable";
+  version = "2.1.4";
 
   src = fetchFromGitHub {
     owner  = "godotengine";
     repo   = "godot";
-    rev    = version;
-    sha256 = "071qkm1l6yn2s9ha67y15w2phvy5m5wl3wqvrslhfmnsir3q3k01";
+    rev    = "${version}-stable";
+    sha256 = "0d2zczn5k7296sky5gllq55cxd586nx134y2iwjpkqqjr62g0h48";
   };
 
+  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    gcc scons pkgconfig libX11 libXcursor libXinerama libXrandr libXrender
-    freetype openssl alsaLib libpulseaudio mesa mesa_glu zlib
+    gcc5 scons libX11 libXcursor libXinerama libXrandr libXrender
+    freetype openssl alsaLib libpulseaudio mesa_glu zlib
   ];
 
   patches = [ ./pkg_config_additions.patch ];
@@ -32,7 +33,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = {
-    homepage    = "http://godotengine.org";
+    homepage    = "https://godotengine.org";
     description = "Free and Open Source 2D and 3D game engine";
     license     = stdenv.lib.licenses.mit;
     platforms   = stdenv.lib.platforms.linux;

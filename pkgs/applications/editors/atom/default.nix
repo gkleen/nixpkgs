@@ -1,12 +1,12 @@
-{ stdenv, fetchurl, lib, makeWrapper, gvfs, atomEnv, libXScrnSaver, libxkbfile }:
+{ stdenv, pkgs, fetchurl, lib, makeWrapper, gvfs, atomEnv}:
 
 stdenv.mkDerivation rec {
   name = "atom-${version}";
-  version = "1.13.0";
+  version = "1.24.0";
 
   src = fetchurl {
     url = "https://github.com/atom/atom/releases/download/v${version}/atom-amd64.deb";
-    sha256 = "17k4v5hibaq4zi86y1sjx09hqng4sm3lr024v2mjnhj65m2nhjb8";
+    sha256 = "1yvwz4lkf7ya775h3fvrg1wkdc30321j666vfjlmax5mbcjrxkzf";
     name = "${name}.deb";
   };
 
@@ -14,16 +14,14 @@ stdenv.mkDerivation rec {
 
   buildCommand = ''
     mkdir -p $out/usr/
-    ar p $src data.tar.gz | tar -C $out -xz ./usr
+    ar p $src data.tar.xz | tar -C $out -xJ ./usr
     substituteInPlace $out/usr/share/applications/atom.desktop \
       --replace /usr/share/atom $out/bin
     mv $out/usr/* $out/
     rm -r $out/share/lintian
     rm -r $out/usr/
     wrapProgram $out/bin/atom \
-      --prefix "PATH" : "${gvfs}/bin" \
-      --prefix LD_PRELOAD : ${stdenv.lib.makeLibraryPath [ libXScrnSaver ]}/libXss.so.1 \
-      --prefix LD_PRELOAD : ${stdenv.lib.makeLibraryPath [ libxkbfile ]}/libxkbfile.so.1
+      --prefix "PATH" : "${gvfs}/bin"
 
     fixupPhase
 
@@ -33,8 +31,14 @@ stdenv.mkDerivation rec {
     patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
       --set-rpath "${atomEnv.libPath}" \
       $out/share/atom/resources/app/apm/bin/node
-    patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" \
-      $out/share/atom/resources/app.asar.unpacked/node_modules/symbols-view/vendor/ctags-linux
+
+    rm -f $out/share/atom/resources/app.asar.unpacked/node_modules/dugite/git/bin/git
+    ln -s ${pkgs.git}/bin/git $out/share/atom/resources/app.asar.unpacked/node_modules/dugite/git/bin/git
+
+    find $out/share/atom -name "*.node" -exec patchelf --set-rpath "${atomEnv.libPath}:$out/share/atom" {} \;
+
+    paxmark m $out/share/atom/atom
+    paxmark m $out/share/atom/resources/app/apm/bin/node
   '';
 
   meta = with stdenv.lib; {

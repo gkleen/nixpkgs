@@ -13,10 +13,14 @@ stdenv.mkDerivation rec {
   };
   name = "${p_name}-${version}";
 
-  buildInputs = [ pkgconfig intltool python3 imagemagick libwnck gtk2
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ intltool python3 imagemagick libwnck gtk2
     exo libxfce4ui libxfce4util xfce4panel xfconf xfce4_dev_tools ];
 
-  preConfigure = "./autogen.sh";
+  preConfigure = ''
+    ./autogen.sh
+    patchShebangs .
+  '';
 
   enableParallelBuilding = true;
 

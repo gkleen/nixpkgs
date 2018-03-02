@@ -6,9 +6,9 @@
 let
   plexPass = throw "Plex pass has been removed at upstream's request; please unset nixpkgs.config.plex.pass";
   plexpkg = if enablePlexPass then plexPass else {
-    version = "1.3.3.3148";
-    vsnHash = "b38628e";
-    sha256 = "1dx8z27l1dwigr3ipcdzn25hnj0206255ihxh9rnh2qchrcqmb5y";
+    version = "1.9.6.4429";
+    vsnHash = "23901a099";
+    sha256 = "0bmqf8b2d9h2h5q3n4ahs8y6a9aihj63rch7wd82rcr1l9xnqk9d";
   };
 
 in stdenv.mkDerivation rec {
@@ -36,7 +36,14 @@ in stdenv.mkDerivation rec {
 
     # Now we need to patch up the executables and libraries to work on Nix.
     # Side note: PLEASE don't put spaces in your binary names. This is stupid.
-    for bin in "Plex Media Server" "Plex DLNA Server" "Plex Media Scanner" "Plex Script Host" "Plex Transcoder" "Plex Relay"; do
+    for bin in "Plex Media Server"              \
+               "Plex DLNA Server"               \
+               "Plex Media Scanner"             \
+               "Plex Media Server Tests"        \
+               "Plex Relay"                     \
+               "Plex Script Host"               \
+               "Plex Transcoder"                \
+               "Plex Tuner Service"             ; do
       patchelf --set-interpreter "${glibc.out}/lib/ld-linux-x86-64.so.2" "$out/usr/lib/plexmediaserver/$bin"
       patchelf --set-rpath "$out/usr/lib/plexmediaserver" "$out/usr/lib/plexmediaserver/$bin"
     done
@@ -67,7 +74,7 @@ in stdenv.mkDerivation rec {
     homepage = http://plex.tv/;
     license = licenses.unfree;
     platforms = platforms.linux;
-    maintainers = with stdenv.lib.maintainers; [ colemickens forkk thoughtpolice ];
+    maintainers = with stdenv.lib.maintainers; [ colemickens forkk thoughtpolice pjones lnl7 ];
     description = "Media / DLNA server";
     longDescription = ''
       Plex is a media server which allows you to store your media and play it

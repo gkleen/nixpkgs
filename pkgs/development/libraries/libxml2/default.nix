@@ -1,33 +1,23 @@
-{ stdenv, lib, fetchurl, zlib, xz, python2, findXMLCatalogs, libiconv, fetchpatch
-, pythonSupport ? (! stdenv ? cross) }:
+{ stdenv, lib, fetchurl, fetchpatch
+, zlib, xz, python2, findXMLCatalogs, libiconv
+, buildPlatform, hostPlatform
+, pythonSupport ? buildPlatform == hostPlatform
+, icuSupport ? false, icu ? null
+}:
 
 let
   python = python2;
+
 in stdenv.mkDerivation rec {
   name = "libxml2-${version}";
-  version = "2.9.4";
+  version = "2.9.7";
 
   src = fetchurl {
     url = "http://xmlsoft.org/sources/${name}.tar.gz";
-    sha256 = "0g336cr0bw6dax1q48bblphmchgihx9p1pjmxdnrd6sh3qci3fgz";
+    sha256 = "034hylzspvkm0p4bczqbf8q05a7r2disr8dz725x4bin61ymwg7n";
   };
 
-  patches = [
-    (fetchpatch {
-      name = "CVE-2016-4658.patch";
-      url = "https://git.gnome.org/browse/libxml2/patch/?id=c1d1f7121194036608bf555f08d3062a36fd344b";
-      sha256 = "0q7i5qgwgzp2x4r820mqq3nx69bgkd7n0v00j28wa6hndbfaaxmb";
-    })
-  ];
-
-  # https://bugzilla.gnome.org/show_bug.cgi?id=766834#c5
-  postPatch = "patch -R < " + fetchpatch {
-    name = "schemas-validity.patch";
-    url = "https://git.gnome.org/browse/libxml2/patch/?id=f6599c5164";
-    sha256 = "0i7a0nhxwkxx6dkm8917qn0bsfn1av6ghg2f4dxanxi4bn4b1jjn";
-  };
-
-  outputs = [ "bin" "dev" "out" "doc" ]
+  outputs = [ "bin" "dev" "out" "man" "doc" ]
     ++ lib.optional pythonSupport "py";
   propagatedBuildOutputs = "out bin" + lib.optionalString pythonSupport " py";
 
@@ -37,16 +27,19 @@ in stdenv.mkDerivation rec {
     # RUNPATH for that, leading to undefined references for its users.
     ++ lib.optional stdenv.isFreeBSD xz;
 
-  propagatedBuildInputs = [ zlib findXMLCatalogs ];
+  propagatedBuildInputs = [ zlib findXMLCatalogs ] ++ lib.optional icuSupport icu;
 
-  configureFlags = lib.optional pythonSupport "--with-python=${python}"
+  configureFlags =
+       lib.optional pythonSupport "--with-python=${python}"
+    ++ lib.optional icuSupport    "--with-icu"
     ++ [ "--exec_prefix=$dev" ];
 
   enableParallelBuilding = true;
 
-  doCheck = !stdenv.isDarwin;
+  doCheck = (stdenv.hostPlatform == stdenv.buildPlatform) && !stdenv.isDarwin &&
+    hostPlatform.libc != "musl";
 
-  crossAttrs = lib.optionalAttrs (stdenv.cross.libc == "msvcrt") {
+  crossAttrs = lib.optionalAttrs (hostPlatform.libc == "msvcrt") {
     # creating the DLL is broken ATM
     dontDisableStatic = true;
     configureFlags = configureFlags ++ [ "--disable-shared" ];
@@ -71,7 +64,7 @@ in stdenv.mkDerivation rec {
   meta = {
     homepage = http://xmlsoft.org/;
     description = "An XML parsing library for C";
-    license = "bsd";
+    license = lib.licenses.mit;
     platforms = lib.platforms.unix;
     maintainers = [ lib.maintainers.eelco ];
   };

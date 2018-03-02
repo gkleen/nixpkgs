@@ -29,7 +29,7 @@ rec {
         cp ${./test-driver/Logger.pm} $libDir/Logger.pm
 
         wrapProgram $out/bin/nixos-test-driver \
-          --prefix PATH : "${lib.makeBinPath [ qemu vde2 netpbm coreutils ]}" \
+          --prefix PATH : "${lib.makeBinPath [ qemu_test vde2 netpbm coreutils ]}" \
           --prefix PERL5LIB : "${with perlPackages; lib.makePerlPath [ TermReadLineGnu XMLWriter IOTty FileSlurp ]}:$out/lib/perl5/site_perl"
       '';
   };
@@ -78,14 +78,26 @@ rec {
     } @ t:
 
     let
-      testDriverName = "nixos-test-driver-${name}";
+      # A standard store path to the vm monitor is built like this:
+      #   /tmp/nix-build-vm-test-run-$name.drv-0/vm-state-machine/monitor
+      # The max filename length of a unix domain socket is 108 bytes.
+      # This means $name can at most be 50 bytes long.
+      maxTestNameLen = 50;
+      testNameLen = builtins.stringLength name;
+
+      testDriverName = with builtins;
+        if testNameLen > maxTestNameLen then
+          abort ("The name of the test '${name}' must not be longer than ${toString maxTestNameLen} " +
+            "it's currently ${toString testNameLen} characters long.")
+        else
+          "nixos-test-driver-${name}";
 
       nodes = buildVirtualNetwork (
         t.nodes or (if t ? machine then { machine = t.machine; } else { }));
 
       testScript' =
         # Call the test script with the computed nodes.
-        if builtins.isFunction testScript
+        if lib.isFunction testScript
         then testScript { inherit nodes; }
         else testScript;
 
@@ -93,7 +105,7 @@ rec {
 
       vms = map (m: m.config.system.build.vm) (lib.attrValues nodes);
 
-      ocrProg = tesseract;
+      ocrProg = tesseract_4.override { enableLanguages = [ "eng" ]; };
 
       # Generate onvenience wrappers for running the test driver
       # interactively with the specified network, and for starting the
@@ -108,16 +120,16 @@ rec {
           mkdir -p $out/bin
           echo "$testScript" > $out/test-script
           ln -s ${testDriver}/bin/nixos-test-driver $out/bin/
-          vms="$(for i in ${toString vms}; do echo $i/bin/run-*-vm; done)"
+          vms=($(for i in ${toString vms}; do echo $i/bin/run-*-vm; done))
           wrapProgram $out/bin/nixos-test-driver \
-            --add-flags "$vms" \
-            ${lib.optionalString enableOCR "--prefix PATH : '${ocrProg}/bin'"} \
-            --run "testScript=\"\$(cat $out/test-script)\"" \
-            --set testScript '$testScript' \
+            --add-flags "''${vms[*]}" \
+            ${lib.optionalString enableOCR
+              "--prefix PATH : '${ocrProg}/bin:${imagemagick}/bin'"} \
+            --run "export testScript=\"\$(cat $out/test-script)\"" \
             --set VLANS '${toString vlans}'
           ln -s ${testDriver}/bin/nixos-test-driver $out/bin/nixos-run-vms
           wrapProgram $out/bin/nixos-run-vms \
-            --add-flags "$vms" \
+            --add-flags "''${vms[*]}" \
             ${lib.optionalString enableOCR "--prefix PATH : '${ocrProg}/bin'"} \
             --set tests 'startAll; joinAll;' \
             --set VLANS '${toString vlans}' \
@@ -148,6 +160,7 @@ rec {
           { key = "run-in-machine";
             networking.hostName = "client";
             nix.readOnlyStore = false;
+            virtualisation.writableStore = false;
           }
         ];
 

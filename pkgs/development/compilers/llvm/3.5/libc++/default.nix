@@ -20,7 +20,11 @@ stdenv.mkDerivation rec {
                 '"${libcxxabi}/lib/libc++abi.dylib"'
   '';
 
-  patches = [ ./darwin.patch ];
+  patches = [
+    ./darwin.patch
+    # glibc 2.26 fix
+    ./xlocale-glibc-2.26.patch
+  ];
 
   buildInputs = [ cmake libcxxabi ] ++ lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
@@ -40,7 +44,7 @@ stdenv.mkDerivation rec {
   meta = {
     homepage = http://libcxx.llvm.org/;
     description = "A new implementation of the C++ standard library, targeting C++11";
-    license = "BSD";
+    license = with stdenv.lib.licenses; [ ncsa mit ];
     platforms = stdenv.lib.platforms.unix;
   };
 }

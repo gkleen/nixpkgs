@@ -11,6 +11,8 @@ let
 
   # build nsd with the options needed for the given config
   nsdPkg = pkgs.nsd.override {
+    configFile = "${configFile}/nsd.conf";
+
     bind8Stats = cfg.bind8Stats;
     ipv6 = cfg.ipv6;
     ratelimit = cfg.ratelimit.enable;
@@ -30,6 +32,7 @@ let
       cd $out/zones
 
       for zoneFile in *; do
+        echo "|- checking zone '$out/zones/$zoneFile'"
         ${nsdPkg}/sbin/nsd-checkzone "$zoneFile" "$zoneFile" || {
           if grep -q \\\\\\$ "$zoneFile"; then
             echo zone "$zoneFile" contains escaped dollar signes \\\$
@@ -787,6 +790,8 @@ in
 
   config = mkIf cfg.enable {
 
+    environment.systemPackages = [ nsdPkg ];
+
     users.extraGroups = singleton {
       name = username;
       gid = config.ids.gids.nsd;
@@ -810,6 +815,7 @@ in
 
       serviceConfig = {
         ExecStart = "${nsdPkg}/sbin/nsd -d -c ${nsdEnv}/nsd.conf";
+        StandardError = "null";
         PIDFile = pidFile;
         Restart = "always";
         RestartSec = "4s";
@@ -843,4 +849,6 @@ in
     };
 
   };
+
+  meta.maintainers = with lib.maintainers; [ hrdinka ];
 }

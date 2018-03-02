@@ -31,18 +31,51 @@ let
       pkgs.xorg.fontadobe75dpi
     ];
 
+  xrandrOptions = {
+    output = mkOption {
+      type = types.str;
+      example = "DVI-0";
+      description = ''
+        The output name of the monitor, as shown by <citerefentry>
+          <refentrytitle>xrandr</refentrytitle>
+          <manvolnum>1</manvolnum>
+        </citerefentry> invoked without arguments.
+      '';
+    };
+
+    primary = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Whether this head is treated as the primary monitor,
+      '';
+    };
+
+    monitorConfig = mkOption {
+      type = types.lines;
+      default = "";
+      example = ''
+        DisplaySize 408 306
+        Option "DPMS" "false"
+      '';
+      description = ''
+        Extra lines to append to the <literal>Monitor</literal> section
+        verbatim.
+      '';
+    };
+  };
 
   # Just enumerate all heads without discarding XRandR output information.
   xrandrHeads = let
-    mkHead = num: output: {
+    mkHead = num: config: {
       name = "multihead${toString num}";
-      inherit output;
+      inherit config;
     };
-  in imap mkHead cfg.xrandrHeads;
+  in imap1 mkHead cfg.xrandrHeads;
 
   xrandrDeviceSection = let
     monitors = flip map xrandrHeads (h: ''
-      Option "monitor-${h.output}" "${h.name}"
+      Option "monitor-${h.config.output}" "${h.name}"
     '');
     # First option is indented through the space in the config but any
     # subsequent options aren't so we need to apply indentation to
@@ -62,9 +95,13 @@ let
       value = ''
         Section "Monitor"
           Identifier "${current.name}"
+          ${optionalString (current.config.primary) ''
+          Option "Primary" "true"
+          ''}
           ${optionalString (previous != []) ''
           Option "RightOf" "${(head previous).name}"
           ''}
+          ${current.config.monitorConfig}
         EndSection
       '';
     } ++ previous;
@@ -121,6 +158,15 @@ in
         default = false;
         description = ''
           Whether to enable the X server.
+        '';
+      };
+
+      plainX = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Whether the X11 session can be plain (without DM/WM) and
+          the Xsession script will be used as fallback or not.
         '';
       };
 
@@ -258,7 +304,7 @@ in
         type = types.str;
         default = "us";
         description = ''
-          Keyboard layout.
+          Keyboard layout, or multiple keyboard layouts separated by commas.
         '';
       };
 
@@ -329,12 +375,38 @@ in
 
       xrandrHeads = mkOption {
         default = [];
-        example = [ "HDMI-0" "DVI-0" ];
-        type = with types; listOf string;
+        example = [
+          "HDMI-0"
+          { output = "DVI-0"; primary = true; }
+          { output = "DVI-1"; monitorConfig = "Option \"Rotate\" \"left\""; }
+        ];
+        type = with types; listOf (coercedTo str (output: {
+          inherit output;
+        }) (submodule { options = xrandrOptions; }));
+        # Set primary to true for the first head if no other has been set
+        # primary already.
+        apply = heads: let
+          hasPrimary = any (x: x.primary) heads;
+          firstPrimary = head heads // { primary = true; };
+          newHeads = singleton firstPrimary ++ tail heads;
+        in if heads != [] && !hasPrimary then newHeads else heads;
         description = ''
-          Simple multiple monitor configuration, just specify a list of XRandR
-          outputs which will be mapped from left to right in the order of the
+          Multiple monitor configuration, just specify a list of XRandR
+          outputs. The individual elements should be either simple strings or
+          an attribute set of output options.
+
+          If the element is a string, it is denoting the physical output for a
+          monitor, if it's an attribute set, you must at least provide the
+          <option>output</option> option.
+
+          The monitors will be mapped from left to right in the order of the
           list.
+
+          By default, the first monitor will be set as the primary monitor if
+          none of the elements contain an option that has set
+          <option>primary</option> to <literal>true</literal>.
+
+          <note><para>Only one monitor is allowed to be primary.</para></note>
 
           Be careful using this option with multiple graphic adapters or with
           drivers that have poor support for XRandR, unexpected things might
@@ -417,6 +489,15 @@ in
         '';
       };
 
+      verbose = mkOption {
+        type = types.nullOr types.int;
+        default = 3;
+        example = 7;
+        description = ''
+          Controls verbosity of X logging.
+        '';
+      };
+
       useGlamor = mkOption {
         type = types.bool;
         default = false;
@@ -433,6 +514,14 @@ in
           Whether to enable the DontZap option, which binds Ctrl+Alt+Backspace
           to forcefully kill X. This can lead to data loss and is disabled
           by default.
+        '';
+      };
+
+      terminateOnReset = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether to terminate X upon server reset.
         '';
       };
     };
@@ -459,11 +548,25 @@ in
           knownVideoDrivers;
       in optional (driver != null) ({ inherit name; modules = []; driverName = name; } // driver));
 
-    assertions =
-      [ { assertion = config.security.polkit.enable;
-          message = "X11 requires Polkit to be enabled (‘security.polkit.enable = true’).";
-        }
-      ];
+    nixpkgs.config = optionalAttrs (elem "vboxvideo" cfg.videoDrivers) { xorg.abiCompat = "1.18"; };
+
+    assertions = [
+      { assertion = config.security.polkit.enable;
+        message = "X11 requires Polkit to be enabled (‘security.polkit.enable = true’).";
+      }
+      (let primaryHeads = filter (x: x.primary) cfg.xrandrHeads; in {
+        assertion = length primaryHeads < 2;
+        message = "Only one head is allowed to be primary in "
+                + "‘services.xserver.xrandrHeads’, but there are "
+                + "${toString (length primaryHeads)} heads set to primary: "
+                + concatMapStringsSep ", " (x: x.output) primaryHeads;
+      })
+      { assertion = cfg.desktopManager.default == "none" && cfg.windowManager.default == "none" -> cfg.plainX;
+        message = "Either the desktop manager or the window manager shouldn't be `none`! "
+                + "To explicitly allow this, you can also set `services.xserver.plainX` to `true`. "
+                + "The `default` value looks for enabled WMs/DMs and select the first one.";
+      }
+    ];
 
     environment.etc =
       (optionals cfg.exportConfiguration
@@ -475,6 +578,22 @@ in
             target = "X11/xkb";
           }
         ])
+      # localectl looks into 00-keyboard.conf
+      ++ [
+        {
+          text = ''
+            Section "InputClass"
+              Identifier "Keyboard catchall"
+              MatchIsKeyboard "on"
+              Option "XkbModel" "${cfg.xkbModel}"
+              Option "XkbLayout" "${cfg.layout}"
+              Option "XkbOptions" "${cfg.xkbOptions}"
+              Option "XkbVariant" "${cfg.xkbVariant}"
+            EndSection
+          '';
+          target = "X11/xorg.conf.d/00-keyboard.conf";
+        }
+      ]
       # Needed since 1.18; see https://bugs.freedesktop.org/show_bug.cgi?id=89023#c5
       ++ (let cfgPath = "/X11/xorg.conf.d/10-evdev.conf"; in
         [{
@@ -548,17 +667,18 @@ in
       };
 
     services.xserver.displayManager.xserverArgs =
-      [ "-terminate"
-        "-config ${configFile}"
+      [ "-config ${configFile}"
         "-xkbdir" "${cfg.xkbDir}"
         # Log at the default verbosity level to stderr rather than /var/log/X.*.log.
-        "-verbose" "3" "-logfile" "/dev/null"
+         "-logfile" "/dev/null"
       ] ++ optional (cfg.display != null) ":${toString cfg.display}"
         ++ optional (cfg.tty     != null) "vt${toString cfg.tty}"
         ++ optional (cfg.dpi     != null) "-dpi ${toString cfg.dpi}"
+        ++ optional (cfg.verbose != null) "-verbose ${toString cfg.verbose}"
         ++ optional (!cfg.enableTCP) "-nolisten tcp"
         ++ optional (cfg.autoRepeatDelay != null) "-ardelay ${toString cfg.autoRepeatDelay}"
-        ++ optional (cfg.autoRepeatInterval != null) "-arinterval ${toString cfg.autoRepeatInterval}";
+        ++ optional (cfg.autoRepeatInterval != null) "-arinterval ${toString cfg.autoRepeatInterval}"
+        ++ optional cfg.terminateOnReset "-terminate";
 
     services.xserver.modules =
       concatLists (catAttrs "modules" cfg.drivers) ++
@@ -567,6 +687,14 @@ in
       ];
 
     services.xserver.xkbDir = mkDefault "${pkgs.xkeyboard_config}/etc/X11/xkb";
+
+    system.extraDependencies = singleton (pkgs.runCommand "xkb-validated" {
+      inherit (cfg) xkbModel layout xkbVariant xkbOptions;
+      nativeBuildInputs = [ pkgs.xkbvalidate ];
+    } ''
+      validate "$xkbModel" "$layout" "$xkbVariant" "$xkbOptions"
+      touch "$out"
+    '');
 
     services.xserver.config =
       ''
@@ -583,16 +711,6 @@ in
         Section "Monitor"
           Identifier "Monitor[0]"
           ${cfg.monitorSection}
-        EndSection
-
-        Section "InputClass"
-          Identifier "Keyboard catchall"
-          MatchIsKeyboard "on"
-          Option "XkbRules" "base"
-          Option "XkbModel" "${cfg.xkbModel}"
-          Option "XkbLayout" "${cfg.layout}"
-          Option "XkbOptions" "${cfg.xkbOptions}"
-          Option "XkbVariant" "${cfg.xkbVariant}"
         EndSection
 
         # Additional "InputClass" sections

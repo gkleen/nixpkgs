@@ -2,8 +2,8 @@
 
 stdenv.mkDerivation rec {
 
-  name = "coq-fiat-${coq.coq-version}-${version}";
-  version = "20161024";
+  name = "coq-fiat-${coq.coq-version}-unstable-${version}";
+  version = "2016-10-24";
 
   src = fetchgit {
     url = "https://github.com/mit-plv/fiat.git";
@@ -32,4 +32,7 @@ stdenv.mkDerivation rec {
     platforms = coq.meta.platforms;
   };
 
+  passthru = {
+    compatibleCoqVersions = v: v == "8.5";
+  };
 }

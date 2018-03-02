@@ -1,11 +1,11 @@
-{ stdenv, fetchFromGitHub, fetchurl, makeWrapper
+{ stdenv, fetchFromGitHub, makeWrapper
 , perl, pandoc, python2Packages, git
-, par2cmdline ? null, par2Support ? false
+, par2cmdline ? null, par2Support ? true
 }:
 
 assert par2Support -> par2cmdline != null;
 
-let version = "0.28.1"; in
+let version = "0.29.1"; in
 
 with stdenv.lib;
 
@@ -16,10 +16,15 @@ stdenv.mkDerivation rec {
     repo = "bup";
     owner = "bup";
     rev = version;
-    sha256 = "1hsxzrjvqa3pd74vmz8agiiwynrzynp1i726h0fzdsakc4adya4l";
+    sha256 = "0wdr399jf64zzzsdvldhrwvnh5xpbghjvslr1j2cwr5y4i36znxf";
   };
 
-  buildInputs = [ git python2Packages.python ];
+  buildInputs = [
+    git
+    (python2Packages.python.withPackages
+      (p: with p; [ setuptools tornado ]
+        ++ stdenv.lib.optionals (!stdenv.isDarwin) [ pyxattr pylibacl fuse ]))
+  ];
   nativeBuildInputs = [ pandoc perl makeWrapper ];
 
   postPatch = ''
@@ -41,15 +46,11 @@ stdenv.mkDerivation rec {
 
   postInstall = ''
     wrapProgram $out/bin/bup \
-      --prefix PATH : ${git}/bin \
-      --prefix PYTHONPATH : ${concatStringsSep ":" (map (x: "$(toPythonPath ${x})")
-        (with python2Packages;
-         [ setuptools tornado ]
-         ++ stdenv.lib.optionals (!stdenv.isDarwin) [ pyxattr pylibacl fuse ]))}
+      --prefix PATH : ${git}/bin
   '';
 
   meta = {
-    homepage = "https://github.com/bup/bup";
+    homepage = https://github.com/bup/bup;
     description = "Efficient file backup system based on the git packfile format";
     license = licenses.gpl2Plus;
 
@@ -58,7 +59,7 @@ stdenv.mkDerivation rec {
       Capable of doing *fast* incremental backups of virtual machine images.
     '';
 
-    platforms = platforms.linux;
+    platforms = platforms.linux ++ platforms.darwin;
     maintainers = with maintainers; [ muflax ];
   };
 }

@@ -1,22 +1,20 @@
-{ fetchgit, fetchFromGitHub, bootPkgs }:
+{ fetchgit, fetchFromGitHub, bootPkgs, cabal-install }:
 
 bootPkgs.callPackage ./base.nix {
-  version = "0.2.020161101";
+  version = "0.2.020170323";
 
-  # deprecated on HEAD, directly included in the distribution
-  ghcjs-prim = null;
-  inherit bootPkgs;
+  inherit bootPkgs cabal-install;
 
   ghcjsSrc = fetchFromGitHub {
     owner = "ghcjs";
     repo = "ghcjs";
-    rev = "899c834a36692bbbde9b9d16fe5b92ce55a623c4";
-    sha256 = "024yj4k0dxy7nvyq19n3xbhh4b4csdrgj19a3l4bmm1zn84gmpl6";
+    rev = "2b3759942fb5b2fc1a58d314d9b098d4622fa6b6";
+    sha256 = "15asapg0va8dvcdycsx8dgk4xcpdnhml4h31wka6vvxf5anzz8aw";
   };
   ghcjsBootSrc = fetchgit {
     url = git://github.com/ghcjs/ghcjs-boot.git;
-    rev = "b000a4f4619b850bf3f9a45c9058f7a51e7709c8";
-    sha256 = "164v0xf33r6mnympp6s70v8j6g7ccyg7z95gjp43bq150ppvisbq";
+    rev = "106e144cca6529a1b9612c11aea5d6ef65b96745";
+    sha256 = "0gxg8iiwvm93x1dwhxypczn9qiz4m1xvj8i7cf4snfdy2jdyhi5l";
     fetchSubmodules = true;
   };
 
@@ -47,4 +45,6 @@ bootPkgs.callPackage ./base.nix {
     "unix"
   ];
   stage2 = import ./head_stage2.nix;
+
+  patches = [ ./ghcjs-head.patch ];
 }

@@ -1,17 +1,19 @@
 { fetchurl, stdenv, curl, openssl, zlib, expat, perl, python, gettext, cpio
-, gnugrep, gzip, openssh
+, gnugrep, gnused, gawk, coreutils # needed at runtime by git-filter-branch etc
+, gzip, openssh, pcre2
 , asciidoc, texinfo, xmlto, docbook2x, docbook_xsl, docbook_xml_dtd_45
 , libxslt, tcl, tk, makeWrapper, libiconv
 , svnSupport, subversionClient, perlLibs, smtpPerlLibs, gitwebPerlLibs
 , guiSupport
 , withManual ? true
 , pythonSupport ? true
+, withpcre2 ? true
 , sendEmailSupport
 , darwin
 }:
 
 let
-  version = "2.11.0";
+  version = "2.16.2";
   svn = subversionClient.override { perlBindings = true; };
 in
 
@@ -20,7 +22,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://www.kernel.org/pub/software/scm/git/git-${version}.tar.xz";
-    sha256 = "02zx368id8rys0bh2sjrxz0ln2l2wm5nf1vhp1rj72clsilqszky";
+    sha256 = "05y7480f2p7fkncbhf08zz56jbykcp0ia5gl6y3djs0lsa5mfq2m";
   };
 
   hardeningDisable = [ "format" ];
@@ -30,7 +32,7 @@ stdenv.mkDerivation {
     ./symlinks-in-bin.patch
     ./git-sh-i18n.patch
     ./ssh-path.patch
-    ./ssl-cert-file.patch
+    ./git-send-email-honor-PATH.patch
   ];
 
   postPatch = ''
@@ -44,6 +46,7 @@ stdenv.mkDerivation {
     ++ stdenv.lib.optionals withManual [ asciidoc texinfo xmlto docbook2x
          docbook_xsl docbook_xml_dtd_45 libxslt ]
     ++ stdenv.lib.optionals guiSupport [tcl tk]
+    ++ stdenv.lib.optionals withpcre2 [ pcre2 ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ darwin.Security ];
 
 
@@ -51,13 +54,13 @@ stdenv.mkDerivation {
   NIX_LDFLAGS = stdenv.lib.optionalString (!stdenv.cc.isClang) "-lgcc_s"
               + stdenv.lib.optionalString (stdenv.isFreeBSD) "-lthr";
 
-  # without this, git fails when trying to check for /etc/gitconfig existence
-  propagatedSandboxProfile = stdenv.lib.sandbox.allowDirectoryList "/etc";
-
   makeFlags = "prefix=\${out} PERL_PATH=${perl}/bin/perl SHELL_PATH=${stdenv.shell} "
       + (if pythonSupport then "PYTHON_PATH=${python}/bin/python" else "NO_PYTHON=1")
       + (if stdenv.isSunOS then " INSTALL=install NO_INET_NTOP= NO_INET_PTON=" else "")
-      + (if stdenv.isDarwin then " NO_APPLE_COMMON_CRYPTO=1" else " sysconfdir=/etc/ ");
+      + (if stdenv.isDarwin then " NO_APPLE_COMMON_CRYPTO=1" else " sysconfdir=/etc/ ")
+      # XXX: USE_PCRE2 might be useful in general, look into it
+      # XXX other alpine options?
+      + (if stdenv.hostPlatform.isMusl then "NO_SYS_POLL_H=1 NO_GETTEXT=YesPlease" else "");
 
   # build git-credential-osxkeychain if darwin
   postBuild = stdenv.lib.optionalString stdenv.isDarwin ''
@@ -70,7 +73,9 @@ stdenv.mkDerivation {
   # so that `SPARSE_FLAGS' corresponds to the current architecture...
   #doCheck = true;
 
-  installFlags = "NO_INSTALL_HARDLINKS=1";
+  installFlags = "NO_INSTALL_HARDLINKS=1"
+    + (if withpcre2 then " USE_LIBPCRE2=1" else "");
+
 
   preInstall = stdenv.lib.optionalString stdenv.isDarwin ''
     mkdir -p $out/bin
@@ -105,11 +110,24 @@ stdenv.mkDerivation {
           --replace ' grep' ' ${gnugrep}/bin/grep' \
           --replace ' egrep' ' ${gnugrep}/bin/egrep'
 
-      # Fix references to the perl binary. Note that the tab character
-      # in the patterns is important.
-      sed -i -e 's|	perl -ne|	${perl}/bin/perl -ne|g' \
-             -e 's|	perl -e|	${perl}/bin/perl -e|g' \
-             $out/libexec/git-core/{git-am,git-submodule}
+      # Fix references to the perl, sed, awk and various coreutil binaries used by
+      # shell scripts that git calls (e.g. filter-branch)
+      SCRIPT="$(cat <<'EOS'
+        BEGIN{
+          @a=(
+            '${perl}/bin/perl', '${gnugrep}/bin/grep', '${gnused}/bin/sed', '${gawk}/bin/awk',
+            '${coreutils}/bin/cut', '${coreutils}/bin/basename', '${coreutils}/bin/dirname',
+            '${coreutils}/bin/wc', '${coreutils}/bin/tr'
+          );
+        }
+        foreach $c (@a) {
+          $n=(split("/", $c))[-1];
+          s|(?<=[^#][^/.-])\b''${n}(?=\s)|''${c}|g
+        }
+      EOS
+      )"
+      perl -0777 -i -pe "$SCRIPT" \
+        $out/libexec/git-core/git-{sh-setup,filter-branch,merge-octopus,mergetool,quiltimport,request-pull,stash,submodule,subtree,web--browse}
 
       # Fix references to gettext.
       substituteInPlace $out/libexec/git-core/git-sh-i18n \
@@ -128,6 +146,22 @@ stdenv.mkDerivation {
       # Also put git-http-backend into $PATH, so that we can use smart
       # HTTP(s) transports for pushing
       ln -s $out/libexec/git-core/git-http-backend $out/bin/git-http-backend
+
+      # wrap perl commands
+      gitperllib=$out/lib/perl5/site_perl
+      for i in ${builtins.toString perlLibs}; do
+        gitperllib=$gitperllib:$i/lib/perl5/site_perl
+      done
+      wrapProgram $out/libexec/git-core/git-cvsimport \
+                  --set GITPERLLIB "$gitperllib"
+      wrapProgram $out/libexec/git-core/git-add--interactive \
+                  --set GITPERLLIB "$gitperllib"
+      wrapProgram $out/libexec/git-core/git-archimport \
+                  --set GITPERLLIB "$gitperllib"
+      wrapProgram $out/libexec/git-core/git-instaweb \
+                  --set GITPERLLIB "$gitperllib"
+      wrapProgram $out/libexec/git-core/git-cvsexportcommit \
+                  --set GITPERLLIB "$gitperllib"
     ''
 
    + (if svnSupport then
@@ -185,7 +219,7 @@ EOF
   enableParallelBuilding = true;
 
   meta = {
-    homepage = http://git-scm.com/;
+    homepage = https://git-scm.com/;
     description = "Distributed version control system";
     license = stdenv.lib.licenses.gpl2;
 

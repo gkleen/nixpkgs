@@ -1,6 +1,6 @@
 { stdenv, fetchurl
 , boost, freeglut, glew, gsl, lcms2, libpng, libtiff, mesa, vigra
-, help2man, pkgconfig, perl, tetex }:
+, help2man, pkgconfig, perl, texlive }:
 
 stdenv.mkDerivation rec {
   name = "enblend-enfuse-${version}";
@@ -13,7 +13,7 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ boost freeglut glew gsl lcms2 libpng libtiff mesa vigra ];
 
-  nativeBuildInputs = [ help2man perl pkgconfig tetex ];
+  nativeBuildInputs = [ help2man perl pkgconfig texlive.combined.scheme-small ];
 
   preConfigure = ''
     patchShebangs src/embrace
@@ -25,7 +25,6 @@ stdenv.mkDerivation rec {
     homepage = http://enblend.sourceforge.net/;
     description = "Blends away the seams in a panoramic image mosaic using a multiresolution spline";
     license = licenses.gpl2;
-    maintainers = with maintainers; [ nckx ];
     platforms = with platforms; linux;
   };
 }

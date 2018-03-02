@@ -1,14 +1,20 @@
-{ stdenv, fetchurl, mkPythonDerivation, pycurl }:
+{ stdenv, fetchurl, buildPythonPackage, pycurl, six, rpm, dateutil }:
 
-mkPythonDerivation rec {
-  name = "koji-1.8";
+buildPythonPackage rec {
+  pname = "koji";
+  version = "1.13.0";
+  name = "${pname}-${version}";
+  format = "other";
 
   src = fetchurl {
-    url = "https://fedorahosted.org/released/koji/koji-1.8.0.tar.bz2";
-    sha256 = "10dph209h4jgajb5jmbjhqy4z4hd22i7s2d93vm3ikdf01i8iwf1";
+    url = "https://releases.pagure.org/koji/${name}.tar.bz2";
+    sha256 = "18b18rcbdqqw33g7h20hf5bpbci2ixdi05yda1fvpv30c1kkzd8w";
   };
 
-  propagatedBuildInputs = [ pycurl ];
+  propagatedBuildInputs = [ pycurl six rpm dateutil ];
+
+  # Judging from SyntaxError
+  #disabled = isPy3k;
 
   makeFlags = "DESTDIR=$(out)";
 
@@ -19,7 +25,7 @@ mkPythonDerivation rec {
   '';
 
   meta = {
-    maintainers = [ stdenv.lib.maintainers.mornfall ];
+    maintainers = [ ];
     platforms = stdenv.lib.platforms.linux;
   };
 }

@@ -101,6 +101,70 @@ let
         Name = "$(EXECUTABLE_NAME)";
       };
     }
+    {
+      Identifier = "com.apple.package-type.static-library";
+      Type = "PackageType";
+      Name = "Mach-O Static Library";
+      DefaultBuildSettings = {
+        EXECUTABLE_PREFIX = "lib";
+        EXECUTABLE_SUFFIX = ".a";
+        EXECUTABLE_NAME = "$(EXECUTABLE_PREFIX)$(PRODUCT_NAME)$(EXECUTABLE_VARIANT_SUFFIX)$(EXECUTABLE_SUFFIX)";
+        EXECUTABLE_PATH = "$(EXECUTABLE_NAME)";
+      };
+      ProductReference = {
+        FileType = "archive.ar";
+        Name = "$(EXECUTABLE_NAME)";
+        IsLaunchable = "NO";
+      };
+    }
+    {
+      Identifier = "com.apple.package-type.wrapper";
+      Type = "PackageType";
+      Name = "Wrapper";
+      DefaultBuildSettings = {
+        WRAPPER_SUFFIX = ".bundle";
+        WRAPPER_NAME = "$(WRAPPER_PREFIX)$(PRODUCT_NAME)$(WRAPPER_SUFFIX)";
+        CONTENTS_FOLDER_PATH = "$(WRAPPER_NAME)/Contents";
+        EXECUTABLE_NAME = "$(EXECUTABLE_PREFIX)$(PRODUCT_NAME)$(EXECUTABLE_VARIANT_SUFFIX)$(EXECUTABLE_SUFFIX)";
+        EXECUTABLE_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/MacOS";
+        EXECUTABLE_PATH = "$(EXECUTABLE_FOLDER_PATH)/$(EXECUTABLE_NAME)";
+        INFOPLIST_PATH = "$(CONTENTS_FOLDER_PATH)/Info.plist";
+        INFOSTRINGS_PATH = "$(LOCALIZED_RESOURCES_FOLDER_PATH)/InfoPlist.strings";
+        PKGINFO_PATH = "$(CONTENTS_FOLDER_PATH)/PkgInfo";
+        PBDEVELOPMENTPLIST_PATH = "$(CONTENTS_FOLDER_PATH)/pbdevelopment.plist";
+        VERSIONPLIST_PATH = "$(CONTENTS_FOLDER_PATH)/version.plist";
+        PUBLIC_HEADERS_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/Headers";
+        PRIVATE_HEADERS_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/PrivateHeaders";
+        EXECUTABLES_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/Executables";
+        FRAMEWORKS_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/Frameworks";
+        SHARED_FRAMEWORKS_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/SharedFrameworks";
+        SHARED_SUPPORT_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/SharedSupport";
+        UNLOCALIZED_RESOURCES_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/Resources";
+        LOCALIZED_RESOURCES_FOLDER_PATH = "$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/$(DEVELOPMENT_LANGUAGE).lproj";
+        DOCUMENTATION_FOLDER_PATH = "$(LOCALIZED_RESOURCES_FOLDER_PATH)/Documentation";
+        PLUGINS_FOLDER_PATH = "$(CONTENTS_FOLDER_PATH)/PlugIns";
+        SCRIPTS_FOLDER_PATH = "$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Scripts";
+      };
+      ProductReference = {
+        FileType = "wrapper.cfbundle";
+        Name = "$(WRAPPER_NAME)";
+        IsLaunchable = "NO";
+      };
+    }
+    {
+      Identifier = "com.apple.package-type.wrapper.application";
+      Type = "PackageType";
+      BasedOn = "com.apple.package-type.wrapper";
+      Name = "Application Wrapper";
+      DefaultBuildSettings = {
+        GENERATE_PKGINFO_FILE = "YES";
+      };
+      ProductReference = {
+        FileType = "wrapper.application";
+        Name = "$(WRAPPER_NAME)";
+        IsLaunchable = "YES";
+      };
+    }
   ];
 
   # Based off of the MacOSX Product Types.xcpsec file. All
@@ -124,13 +188,82 @@ let
       Type = "ProductType";
       Name = "Dynamic Library";
       PackageTypes = [ "com.apple.package-type.mach-o-dylib" ];
+      DefaultBuildProperties = {
+        FULL_PRODUCT_NAME = "$(EXECUTABLE_NAME)";
+        MACH_O_TYPE = "mh_dylib";
+        REZ_EXECUTABLE = "YES";
+        EXECUTABLE_SUFFIX = ".$(EXECUTABLE_EXTENSION)";
+        EXECUTABLE_EXTENSION = "dylib";
+        DYLIB_COMPATIBILITY_VERSION = "1";
+        DYLIB_CURRENT_VERSION = "1";
+        FRAMEWORK_FLAG_PREFIX = "-framework";
+        LIBRARY_FLAG_PREFIX = "-l";
+        LIBRARY_FLAG_NOSPACE = "YES";
+        STRIP_STYLE = "debugging";
+        GCC_INLINES_ARE_PRIVATE_EXTERN = "YES";
+        CODE_SIGNING_ALLOWED = "YES";
+        CODE_SIGNING_REQUIRED = "NO";
+      };
+    }
+    {
+      Identifier = "com.apple.product-type.library.static";
+      Type = "ProductType";
+      Name = "Static Library";
+      PackageTypes = [ "com.apple.package-type.static-library" ];
+      DefaultBuildProperties = {
+        FULL_PRODUCT_NAME = "$(EXECUTABLE_NAME)";
+        MACH_O_TYPE = "staticlib";
+        REZ_EXECUTABLE = "YES";
+        EXECUTABLE_PREFIX = "lib";
+        EXECUTABLE_SUFFIX = ".$(EXECUTABLE_EXTENSION)";
+        EXECUTABLE_EXTENSION = "a";
+        FRAMEWORK_FLAG_PREFIX = "-framework";
+        LIBRARY_FLAG_PREFIX = "-l";
+        LIBRARY_FLAG_NOSPACE = "YES";
+        STRIP_STYLE = "debugging";
+        SEPARATE_STRIP = "YES";
+        CLANG_ENABLE_MODULE_DEBUGGING = "NO";
+      };
+    }
+    {
+      Type = "ProductType";
+      Identifier = "com.apple.product-type.bundle";
+      Name = "Bundle";
+      DefaultBuildProperties = {
+        FULL_PRODUCT_NAME = "$(WRAPPER_NAME)";
+        MACH_O_TYPE = "mh_bundle";
+        WRAPPER_PREFIX = "";
+        WRAPPER_SUFFIX = ".$(WRAPPER_EXTENSION)";
+        WRAPPER_EXTENSION = "bundle";
+        WRAPPER_NAME = "$(WRAPPER_PREFIX)$(PRODUCT_NAME)$(WRAPPER_SUFFIX)";
+        FRAMEWORK_FLAG_PREFIX = "-framework";
+        LIBRARY_FLAG_PREFIX = "-l";
+        LIBRARY_FLAG_NOSPACE = "YES";
+        STRIP_STYLE = "non-global";
+      };
+      PackageTypes = [ "com.apple.package-type.wrapper" ];
+      IsWrapper = "YES";
+      HasInfoPlist = "YES";
+      HasInfoPlistStrings = "YES";
+    }
+    {
+      Identifier = "com.apple.product-type.application";
+      Type = "ProductType";
+      BasedOn = "com.apple.product-type.bundle";
+      Name = "Application";
+      DefaultBuildProperties = {
+        MACH_O_TYPE = "mh_execute";
+        WRAPPER_SUFFIX = ".$(WRAPPER_EXTENSION)";
+        WRAPPER_EXTENSION = "app";
+      };
+      PackageTypes = [ "com.apple.package-type.wrapper.application" ];
     }
   ];
 
 in
 
 stdenv.mkDerivation {
-  name = "nixpkgs.platform";
+  name = "MacOSX.platform";
   buildInputs = [ xcbuild ];
   buildCommand = ''
     mkdir -p $out/
@@ -147,6 +280,6 @@ stdenv.mkDerivation {
 
     mkdir -p $out/Developer/SDKs/
     cd $out/Developer/SDKs/
-    ln -s ${sdk}
+    cp -r ${sdk} ${sdk.name}
   '';
 }

@@ -1,23 +1,23 @@
 { stdenv, fetchurl, pkgconfig, wrapGAppsHook, gettext, glib, gtk3
-, libmowgli, libmcs, dbus_glib, libxml2, xorg, gnome3, alsaLib
+, libmowgli, dbus-glib, libxml2, xorg, gnome3, alsaLib
 , libpulseaudio, libjack2, fluidsynth, libmad, libogg, libvorbis
-, libcdio082, libcddb, flac, ffmpeg, mpg123, libcue, libmms, libbs2b
+, libcdio, libcddb, flac, ffmpeg, mpg123, libcue, libmms, libbs2b
 , libsndfile, libmodplug, libsamplerate, soxr, lirc, curl, wavpack
 , neon, faad2, lame, libnotify, libsidplayfp
 }:
 
 stdenv.mkDerivation rec {
   name = "audacious-${version}";
-  version = "3.8";
+  version = "3.9";
 
   src = fetchurl {
     url = "http://distfiles.audacious-media-player.org/audacious-${version}-gtk3.tar.bz2";
-    sha256 = "0rpdzf9pb52lcswxypwh4nq3qkjzliw42v39nm5rlwwxdq6bm99q";
+    sha256 = "0dc7fg0v2l2j4h9cz1baz7rf4n0a5jgk09qvsj806sh6jp7w6ipm";
   };
 
   pluginsSrc = fetchurl {
     url = "http://distfiles.audacious-media-player.org/audacious-plugins-${version}-gtk3.tar.bz2";
-    sha256 = "0j9svdqdjvj5spx1vfp0m63xh8xwk8naqsikdxfxbb68xk33rxb9";
+    sha256 = "1gck37c5pnzxdhrnb1g75b5hi31s2dc952wifxns45pkdlayrmra";
   };
 
   nativeBuildInputs = [
@@ -25,9 +25,9 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    gettext glib gtk3 libmowgli libmcs dbus_glib libxml2
+    gettext glib gtk3 libmowgli dbus-glib libxml2
     xorg.libXcomposite gnome3.defaultIconTheme alsaLib libjack2
-    libpulseaudio fluidsynth libmad libogg libvorbis libcdio082
+    libpulseaudio fluidsynth libmad libogg libvorbis libcdio
     libcddb flac ffmpeg mpg123 libcue libmms libbs2b libsndfile
     libmodplug libsamplerate soxr lirc curl wavpack neon faad2
     lame libnotify libsidplayfp

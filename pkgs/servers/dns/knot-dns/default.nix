@@ -1,29 +1,35 @@
-{ stdenv, fetchurl, pkgconfig, gnutls, jansson, liburcu, lmdb, libcap_ng, libidn
-, systemd, nettle, libedit }:
+{ stdenv, fetchurl, pkgconfig, gnutls, liburcu, lmdb, libcap_ng, libidn
+, systemd, nettle, libedit, zlib, libiconv, libintlOrEmpty
+}:
+
+let inherit (stdenv.lib) optional optionals; in
 
 # Note: ATM only the libraries have been tested in nixpkgs.
 stdenv.mkDerivation rec {
   name = "knot-dns-${version}";
-  version = "2.4.0";
+  version = "2.6.5";
 
   src = fetchurl {
     url = "http://secure.nic.cz/files/knot-dns/knot-${version}.tar.xz";
-    sha256 = "0y9nhp9lfmxv4iy1xg7l4lfxv4168qhag26wwg0dbi0zjpkd790b";
+    sha256 = "33cd676706e2baeb37cf3879ccbc91a1e1cd1ee5d7a082adff4d1e753ce49d46";
   };
 
   outputs = [ "bin" "out" "dev" ];
 
   nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    gnutls jansson liburcu lmdb libidn
+    gnutls liburcu libidn
     nettle libedit
+    libiconv lmdb
     # without sphinx &al. for developer documentation
   ]
-    ++ stdenv.lib.optionals stdenv.isLinux [ libcap_ng systemd ];
+    ++ optionals stdenv.isLinux [ libcap_ng systemd ]
+    ++ libintlOrEmpty
+    ++ optional stdenv.isDarwin zlib; # perhaps due to gnutls
 
   enableParallelBuilding = true;
 
-  CFLAGS = [ "-DNDEBUG" ];
+  CFLAGS = [ "-O2" "-DNDEBUG" ];
 
   #doCheck = true; problems in combination with dynamic linking
 

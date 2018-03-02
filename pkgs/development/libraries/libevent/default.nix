@@ -1,18 +1,39 @@
-{ stdenv, fetchurl, openssl, findutils }:
+{ stdenv, fetchurl, findutils
+, sslSupport? true, openssl
+}:
 
-let version = "2.0.22"; in
-stdenv.mkDerivation {
+assert sslSupport -> openssl != null;
+
+stdenv.mkDerivation rec {
   name = "libevent-${version}";
+  version = "2.1.8";
 
   src = fetchurl {
     url = "https://github.com/libevent/libevent/releases/download/release-${version}-stable/libevent-${version}-stable.tar.gz";
-    sha256 = "18qz9qfwrkakmazdlwxvjmw8p76g70n3faikwvdwznns1agw9hki";
+    sha256 = "1hhxnxlr0fsdv7bdmzsnhdz16fxf3jg2r6vyljcl3kj6pflcap4n";
   };
 
-  outputs = [ "out" "dev" ];
+  # libevent_openssl is moved into its own output, so that openssl isn't present
+  # in the default closure.
+  outputs = [ "out" "dev" ]
+    ++ stdenv.lib.optional sslSupport "openssl"
+    ;
   outputBin = "dev";
+  propagatedBuildOutputs = [ "out" ]
+    ++ stdenv.lib.optional sslSupport "openssl"
+    ;
 
-  buildInputs = [ openssl ] ++ stdenv.lib.optional stdenv.isCygwin findutils;
+  buildInputs = []
+    ++ stdenv.lib.optional sslSupport openssl
+    ++ stdenv.lib.optional stdenv.isCygwin findutils
+    ;
+
+  postInstall = stdenv.lib.optionalString sslSupport ''
+    moveToOutput "lib/libevent_openssl*" "$openssl"
+    substituteInPlace "$dev/lib/pkgconfig/libevent_openssl.pc" \
+      --replace "$out" "$openssl"
+    sed "/^libdir=/s|$out|$openssl|" -i "$openssl"/lib/libevent_openssl.la
+  '';
 
   meta = with stdenv.lib; {
     description = "Event notification library";

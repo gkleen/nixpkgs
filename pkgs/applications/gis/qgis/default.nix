@@ -1,20 +1,22 @@
-{ stdenv, fetchurl, gdal, cmake, qt4, flex, bison, proj, geos, xlibsWrapper, sqlite, gsl
+{ stdenv, fetchurl, fetchpatch, gdal, cmake, qt4, flex, bison, proj, geos, xlibsWrapper, sqlite, gsl
 , qwt, fcgi, python2Packages, libspatialindex, libspatialite, qscintilla, postgresql, makeWrapper
 , qjson, qca2, txt2tags, openssl
 , withGrass ? false, grass
 }:
 
 stdenv.mkDerivation rec {
-  name = "qgis-2.18.3";
+  name = "qgis-2.18.16";
 
   buildInputs = [ gdal qt4 flex openssl bison proj geos xlibsWrapper sqlite gsl qwt qscintilla
     fcgi libspatialindex libspatialite postgresql qjson qca2 txt2tags ] ++
     (stdenv.lib.optional withGrass grass) ++
-    (with python2Packages; [ numpy psycopg2 requests2 python2Packages.qscintilla sip ]);
+    (with python2Packages; [ jinja2 numpy psycopg2 pygments requests python2Packages.qscintilla sip ]);
 
   nativeBuildInputs = [ cmake makeWrapper ];
 
-  enableParallelBuilding = true;
+  # `make -f src/providers/wms/CMakeFiles/wmsprovider_a.dir/build.make src/providers/wms/CMakeFiles/wmsprovider_a.dir/qgswmssourceselect.cpp.o`:
+  # fatal error: ui_qgsdelimitedtextsourceselectbase.h: No such file or directory
+  enableParallelBuilding = false;
 
   # To handle the lack of 'local' RPATH; required, as they call one of
   # their built binaries requiring their libs, in the build process.
@@ -24,7 +26,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "http://qgis.org/downloads/${name}.tar.bz2";
-    sha256 = "155kz7fizhkmgc4lsmk1cph1zar03pdd8pjpmv81yyx1z0i4ygvl";
+    sha256 = "0d880m013kzi4qiyr27yjx6hzpb652slp66gyqgw9ziw03wy12c9";
   };
 
   cmakeFlags = stdenv.lib.optional withGrass "-DGRASS_PREFIX7=${grass}/${grass.name}";

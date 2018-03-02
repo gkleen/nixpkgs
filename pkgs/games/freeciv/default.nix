@@ -12,7 +12,7 @@ let
   gtkName = if gtkClient then "-gtk" else "";
 
   name = "freeciv";
-  version = "2.5.6";
+  version = "2.5.10";
 in
 stdenv.mkDerivation {
   name = "${name}${sdlName}${gtkName}-${version}";
@@ -20,7 +20,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "mirror://sourceforge/freeciv/${name}-${version}.tar.bz2";
-    sha256 = "16wrnsx5rmbz6rjs03bhy0vn20i6n6g73lx7fjpai98ixhzc5bfg";
+    sha256 = "00mkzhfcbc27d8m7hj644h8lyc9mb8nhqfcngc52zkidarb438f8";
   };
 
   nativeBuildInputs = [ pkgconfig ];
@@ -36,6 +36,8 @@ stdenv.mkDerivation {
     ++ optional enableSqlite "--enable-fcdb=sqlite3"
     ++ optional (!gtkClient) "--enable-fcmp=cli"
     ++ optional (!server) "--disable-server";
+
+  enableParallelBuilding = true;
 
   meta = with stdenv.lib; {
     description = "Multiplayer (or single player), turn-based strategy game";

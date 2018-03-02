@@ -1,22 +1,28 @@
 { name
+, channel
 , writeScript
 , xidel
 , coreutils
 , gnused
 , gnugrep
 , curl
+, gnupg
 , baseName ? "firefox"
-, basePath ? "pkgs/applications/networking/browsers/firefox-bin" 
-, baseUrl ? "http://archive.mozilla.org/pub/firefox/releases/"
+, basePath ? "pkgs/applications/networking/browsers/firefox-bin"
+, baseUrl
 }:
 
 let
-  version = (builtins.parseDrvName name).version;
-  isBeta = builtins.stringLength version + 1 == builtins.stringLength (builtins.replaceStrings ["b"] ["bb"] version);
-in writeScript "update-${baseName}-bin" ''
-  PATH=${coreutils}/bin:${gnused}/bin:${gnugrep}/bin:${xidel}/bin:${curl}/bin
+  isBeta =
+    channel != "release";
 
+in writeScript "update-${name}" ''
+  PATH=${coreutils}/bin:${gnused}/bin:${gnugrep}/bin:${xidel}/bin:${curl}/bin:${gnupg}/bin
+  set -eux
   pushd ${basePath}
+
+  HOME=`mktemp -d`
+  cat ${./firefox.key} | gpg --import
 
   tmpfile=`mktemp`
   url=${baseUrl}
@@ -39,8 +45,12 @@ in writeScript "update-${baseName}-bin" ''
            grep -e "${if isBeta then "b" else ""}\([[:digit:]]\|[[:digit:]][[:digit:]]\)$" | ${if isBeta then "" else "grep -v \"b\" |"} \
            tail -1`
 
+  curl --silent -o $HOME/shasums "$url$version/SHA512SUMS"
+  curl --silent -o $HOME/shasums.asc "$url$version/SHA512SUMS.asc"
+  gpgv --keyring=$HOME/.gnupg/pubring.kbx $HOME/shasums.asc $HOME/shasums
+
   # this is a list of sha512 and tarballs for both arches
-  shasums=`curl --silent $url$version/SHA512SUMS`
+  shasums=`cat $HOME/shasums`
 
   cat > $tmpfile <<EOF
   {
@@ -72,7 +82,7 @@ in writeScript "update-${baseName}-bin" ''
   }
   EOF
 
-  mv $tmpfile ${if isBeta then "beta_" else ""}sources.nix
+  mv $tmpfile ${channel}_sources.nix
 
   popd
 ''

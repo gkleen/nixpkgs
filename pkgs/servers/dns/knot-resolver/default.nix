@@ -1,70 +1,82 @@
-{ stdenv, fetchurl, pkgconfig, utillinux, vimNox, which
-, knot-dns, luajit, libuv, lmdb
-, cmocka, systemd, hiredis, libmemcached
-, gnutls, nettle
-, luajitPackages, makeWrapper
+{ stdenv, fetchurl, runCommand, pkgconfig, hexdump, which
+, knot-dns, luajit, libuv, lmdb, gnutls, nettle
+, cmocka, systemd, dns-root-data, makeWrapper
+, extraFeatures ? false /* catch-all if defaults aren't enough */
+, hiredis, libmemcached, luajitPackages
 }:
+let # un-indented, over the whole file
 
-let
-  inherit (stdenv.lib) optional;
-in
-stdenv.mkDerivation rec {
+result = if extraFeatures then wrapped-full else unwrapped;
+
+inherit (stdenv.lib) optional optionals optionalString concatStringsSep;
+
+unwrapped = stdenv.mkDerivation rec {
   name = "knot-resolver-${version}";
-  version = "1.2.0";
+  version = "2.1.1";
 
   src = fetchurl {
     url = "http://secure.nic.cz/files/knot-resolver/${name}.tar.xz";
-    sha256 = "b8828197dbd563e4b502571538c6d44ef2bb07dede1df884b785921f8aec77fd";
+    sha256 = "0b9caee03d7cd30e1dc8fa0ce5fafade31fc1785314986bbf77cad446522a1b3";
   };
 
   outputs = [ "out" "dev" ];
 
   configurePhase = ":";
 
-  nativeBuildInputs = [ pkgconfig which makeWrapper ]
-    ++ [(if stdenv.isLinux then utillinux.bin/*hexdump*/ else vimNox/*xxd*/)];
+  nativeBuildInputs = [ pkgconfig which hexdump ];
 
-  buildInputs = [ knot-dns luajit libuv gnutls ]
-    # TODO: lmdb needs lmdb.pc; embedded for now
-    ## optional dependencies
-    ++ optional doInstallCheck cmocka
-    ++ optional stdenv.isLinux systemd # socket activation
-    ++ [
-      nettle # DNS cookies
-      hiredis libmemcached # additional cache backends
-      # http://knot-resolver.readthedocs.io/en/latest/build.html#requirements
-    ];
+  # http://knot-resolver.readthedocs.io/en/latest/build.html#requirements
+  buildInputs = [ knot-dns luajit libuv gnutls nettle lmdb ]
+    ++ optional doCheck cmocka
+    ++ optional stdenv.isLinux systemd # sd_notify
+    ## optional dependencies; TODO: libedit, dnstap
+    ;
 
-  makeFlags = [ "PREFIX=$(out)" ];
+  makeFlags = [
+    "PREFIX=$(out)"
+    "ROOTHINTS=${dns-root-data}/root.hints"
+    "KEYFILE_DEFAULT=${dns-root-data}/root.ds"
+  ];
   CFLAGS = [ "-O2" "-DNDEBUG" ];
 
   enableParallelBuilding = true;
 
-  doInstallCheck = true;
-  installCheckTarget = "check";
+  doCheck = true;
+  doInstallCheck = false; # FIXME
   preInstallCheck = ''
-    export LD_LIBRARY_PATH="$out/lib"
+    patchShebangs tests/config/runtest.sh
   '';
 
-  # optional: to allow auto-bootstrapping root trust anchor via https
-  postInstall = with luajitPackages; ''
-    wrapProgram "$out/sbin/kresd" \
-      --set LUA_PATH '${
-        stdenv.lib.concatStringsSep ";"
-          (map getLuaPath [ luasec luasocket ])
-        }' \
-      --set LUA_CPATH '${
-        stdenv.lib.concatStringsSep ";"
-          (map getLuaCPath [ luasec luasocket ])
-        }'
+  postInstall = ''
+    rm "$out"/etc/knot-resolver/root.hints # using system-wide instead
   '';
 
   meta = with stdenv.lib; {
     description = "Caching validating DNS resolver, from .cz domain registry";
     homepage = https://knot-resolver.cz;
     license = licenses.gpl3Plus;
-    platforms = platforms.unix;
+    # Platforms using negative pointers for stack won't work ATM due to LuaJIT impl.
+    platforms = filter (p: p != "aarch64-linux") platforms.unix;
     maintainers = [ maintainers.vcunat /* upstream developer */ ];
   };
-}
+};
+
+wrapped-full = with luajitPackages; let
+    luaPkgs =  [ luasec luasocket ]; # TODO: cqueues and others for http2 module
+  in runCommand unwrapped.name
+  {
+    nativeBuildInputs = [ makeWrapper ];
+    preferLocalBuild = true;
+    allowSubstitutes = false;
+  }
+  ''
+    mkdir -p "$out/sbin" "$out/share"
+    makeWrapper '${unwrapped}/sbin/kresd' "$out"/sbin/kresd \
+      --set LUA_PATH  '${concatStringsSep ";" (map getLuaPath  luaPkgs)}' \
+      --set LUA_CPATH '${concatStringsSep ";" (map getLuaCPath luaPkgs)}'
+    ln -sr '${unwrapped}/share/man' "$out"/share/
+    ln -sr "$out"/{sbin,bin}
+  '';
+
+in result
 

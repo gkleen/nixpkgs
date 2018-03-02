@@ -1,4 +1,4 @@
-{ fetchurl, stdenv, libpng }:
+{ fetchurl, stdenv, libpng, autoreconfHook }:
 
 # debian splits this package into plotutils and libplot2c2
 
@@ -13,14 +13,8 @@ stdenv.mkDerivation rec {
     sha256 = "1arkyizn5wbgvbh53aziv3s6lmd3wm9lqzkhxb3hijlp1y124hjg";
   };
 
+  nativeBuildInputs = [ autoreconfHook ];
   buildInputs = [ libpng ];
-
-  # disable failing test on i686
-  # https://lists.gnu.org/archive/html/bug-plotutils/2016-04/msg00002.html
-  prePatch = stdenv.lib.optionalString stdenv.isi686 ''
-    substituteInPlace test/Makefile.in --replace 'spline.test' ' '
-  '';
-
   patches = map fetchurl (import ./debian-patches.nix);
 
   configureFlags = "--enable-libplotter"; # required for pstoedit
@@ -28,6 +22,8 @@ stdenv.mkDerivation rec {
   hardeningDisable = [ "format" ];
 
   doCheck = true;
+
+  enableParallelBuilding = true;
 
   meta = {
     description = "Powerful C/C++ library for exporting 2D vector graphics";
@@ -52,6 +48,6 @@ stdenv.mkDerivation rec {
 
     license = stdenv.lib.licenses.gpl2Plus;
     maintainers = [ stdenv.lib.maintainers.marcweber ];
-    platforms = stdenv.lib.platforms.gnu;
+    platforms = stdenv.lib.platforms.unix;
   };
 }

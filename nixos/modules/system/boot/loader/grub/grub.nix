@@ -53,20 +53,32 @@ let
       inherit (args) devices;
       inherit (efi) canTouchEfiVariables;
       inherit (cfg)
-        version extraConfig extraPerEntryConfig extraEntries forceInstall 
-        extraEntriesBeforeNixOS extraPrepareConfig configurationLimit copyKernels
+        version extraConfig extraPerEntryConfig extraEntries forceInstall useOSProber
+        extraEntriesBeforeNixOS extraPrepareConfig extraInitrd configurationLimit copyKernels
         default fsIdentifier efiSupport efiInstallAsRemovable gfxmodeEfi gfxmodeBios;
       path = (makeBinPath ([
         pkgs.coreutils pkgs.gnused pkgs.gnugrep pkgs.findutils pkgs.diffutils pkgs.btrfs-progs
-        pkgs.utillinux ] ++ (if cfg.efiSupport && (cfg.version == 2) then [pkgs.efibootmgr ] else [])
+        pkgs.utillinux ]
+        ++ (optional (cfg.efiSupport && (cfg.version == 2)) pkgs.efibootmgr)
+        ++ (optionals cfg.useOSProber [pkgs.busybox pkgs.os-prober])
       )) + ":" + (makeSearchPathOutput "bin" "sbin" [
         pkgs.mdadm pkgs.utillinux
       ]);
+      font = if lib.last (lib.splitString "." cfg.font) == "pf2"
+             then cfg.font
+             else "${convertedFont}";
     });
 
   bootDeviceCounters = fold (device: attr: attr // { "${device}" = (attr."${device}" or 0) + 1; }) {}
     (concatMap (args: args.devices) cfg.mirroredBoots);
 
+  convertedFont = (pkgs.runCommand "grub-font-converted.pf2" {}
+           (builtins.concatStringsSep " "
+             ([ "${realGrub}/bin/grub-mkfont"
+               cfg.font
+               "--output" "$out"
+             ] ++ (optional (cfg.fontSize!=null) "--size ${toString cfg.fontSize}")))
+         );
 in
 
 {
@@ -98,7 +110,7 @@ in
 
       device = mkOption {
         default = "";
-        example = "/dev/hda";
+        example = "/dev/disk/by-id/wwn-0x500001234567890a";
         type = types.str;
         description = ''
           The device on which the GRUB boot loader will be installed.
@@ -111,7 +123,7 @@ in
 
       devices = mkOption {
         default = [];
-        example = [ "/dev/hda" ];
+        example = [ "/dev/disk/by-id/wwn-0x500001234567890a" ];
         type = types.listOf types.str;
         description = ''
           The devices on which the boot loader, GRUB, will be
@@ -123,8 +135,8 @@ in
       mirroredBoots = mkOption {
         default = [ ];
         example = [
-          { path = "/boot1"; devices = [ "/dev/sda" ]; }
-          { path = "/boot2"; devices = [ "/dev/sdb" ]; }
+          { path = "/boot1"; devices = [ "/dev/disk/by-id/wwn-0x500001234567890a" ]; }
+          { path = "/boot2"; devices = [ "/dev/disk/by-id/wwn-0x500009876543210a" ]; }
         ];
         description = ''
           Mirror the boot configuration to multiple partitions and install grub
@@ -166,7 +178,7 @@ in
 
             devices = mkOption {
               default = [ ];
-              example = [ "/dev/sda" "/dev/sdb" ];
+              example = [ "/dev/disk/by-id/wwn-0x500001234567890a" "/dev/disk/by-id/wwn-0x500009876543210a" ];
               type = types.listOf types.str;
               description = ''
                 The path to the devices which will have the GRUB MBR written.
@@ -237,6 +249,12 @@ in
           menuentry "Windows 7" {
             chainloader (hd0,4)+1
           }
+
+          # GRUB 2 with UEFI example, chainloading another distro
+          menuentry "Fedora" {
+            set root=(hd1,1)
+            chainloader /efi/fedora/grubx64.efi
+          }
         '';
         description = ''
           Any additional entries you want added to the GRUB boot menu.
@@ -265,6 +283,27 @@ in
         '';
       };
 
+      extraInitrd = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        example = "/boot/extra_initramfs.gz";
+        description = ''
+          The path to a second initramfs to be supplied to the kernel.
+          This ramfs will not be copied to the store, so that it can
+          contain secrets such as LUKS keyfiles or ssh keys.
+          This implies that rolling back to a previous configuration
+          won't rollback the state of this file.
+        '';
+      };
+
+      useOSProber = mkOption {
+        default = false;
+        type = types.bool;
+        description = ''
+          If set to true, append entries for other OSs detected by os-prober.
+        '';
+      };
+
       splashImage = mkOption {
         type = types.nullOr types.path;
         example = literalExample "./my-background.png";
@@ -273,6 +312,24 @@ in
           14-colour image in XPM format, optionally compressed with
           <command>gzip</command> or <command>bzip2</command>.  Set to
           <literal>null</literal> to run GRUB in text mode.
+        '';
+      };
+
+      font = mkOption {
+        type = types.nullOr types.path;
+        default = "${realGrub}/share/grub/unicode.pf2";
+        description = ''
+          Path to a TrueType, OpenType, or pf2 font to be used by Grub.
+        '';
+      };
+
+      fontSize = mkOption {
+        type = types.nullOr types.int;
+        example = literalExample 16;
+        default = null;
+        description = ''
+          Font size for the grub menu. Ignored unless <literal>font</literal>
+          is set to a ttf or otf font.
         '';
       };
 
@@ -358,7 +415,6 @@ in
 
       efiInstallAsRemovable = mkOption {
         default = false;
-        example = true;
         type = types.bool;
         description = ''
           Whether to invoke <literal>grub-install</literal> with
@@ -461,7 +517,7 @@ in
           sha256 = "14kqdx2lfqvh40h6fjjzqgff1mwk74dmbjvmqphi6azzra7z8d59";
         }
         # GRUB 1.97 doesn't support gzipped XPMs.
-        else "${pkgs.nixos-artwork}/share/artwork/gnome/Gnome_Dark.png");
+        else "${pkgs.nixos-artwork.wallpapers.gnome-dark}/share/artwork/gnome/Gnome_Dark.png");
     }
 
     (mkIf cfg.enable {

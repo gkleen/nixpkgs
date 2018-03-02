@@ -2,31 +2,25 @@
 , db, cyrus_sasl, svrcore, icu, net_snmp, kerberos, pcre, perlPackages
 }:
 let
-  version = "1.3.5.4";
+  version = "1.3.5.19";
 in
 stdenv.mkDerivation rec {
   name = "389-ds-base-${version}";
 
   src = fetchurl {
     url = "http://directory.fedoraproject.org/binaries/${name}.tar.bz2";
-    sha256 = "1f1r4wky8x39jdabnd277f6m0snnzh9f0wvsr8x4rnvkckjphbx8";
+    sha256 = "1r1n44xfvy51r4r1180dfmjziyj3pqxwmnv6rjvvvjjm87fslmdd";
   };
 
+  nativeBuildInputs = [ pkgconfig ];
   buildInputs = [
-    pkgconfig perl pam nspr nss openldap db cyrus_sasl svrcore icu
+    perl pam nspr nss openldap db cyrus_sasl svrcore icu
     net_snmp kerberos pcre
   ] ++ (with perlPackages; [ MozillaLdap NetAddrIP DBFile ]);
 
   # TODO: Fix bin/ds-logpipe.py, bin/logconv, bin/cl-dump
 
   patches = [ ./perl-path.patch
-    # https://fedorahosted.org/389/ticket/48354
-    (fetchpatch {
-      name = "389-ds-base-CVE-2016-5416.patch";
-      url = "https://fedorahosted.org/389/changeset/3c2cd48b7d2cb0579f7de6d460bcd0c9bb1157bd/?format=diff&new=3c2cd48b7d2cb0579f7de6d460bcd0c9bb1157bd";
-      addPrefixes = true;
-      sha256 = "1kv3a3di1cihkaf8xdbb5mzvhm4c3frx8rc5mji8xgjyj9ni6xja";
-    })
   ];
 
   preConfigure = ''
@@ -46,7 +40,7 @@ stdenv.mkDerivation rec {
     "--with-sasl=${cyrus_sasl.dev}"
     "--with-netsnmp=${net_snmp}"
   ];
-  
+
   preInstall = ''
     # The makefile doesn't create this directory for whatever reason
     mkdir -p $out/lib/dirsrv
@@ -60,7 +54,7 @@ stdenv.mkDerivation rec {
   passthru.version = version;
 
   meta = with stdenv.lib; {
-    homepage = https://directory.fedoraproject.org/;
+    homepage = http://www.port389.org/;
     description = "Enterprise-class Open Source LDAP server for Linux";
     license = licenses.gpl2;
     platforms = platforms.linux;

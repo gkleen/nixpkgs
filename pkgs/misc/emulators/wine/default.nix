@@ -38,6 +38,7 @@
   gphoto2Support ? false,
   ldapSupport ? false,
   pulseaudioSupport ? false,
+  udevSupport ? false,
   xineramaSupport ? false,
   xmlSupport ? false }:
 
@@ -50,14 +51,17 @@ let wine-build = build: release:
                   netapiSupport cursesSupport vaSupport pcapSupport v4lSupport saneSupport
                   gsmSupport gphoto2Support ldapSupport fontconfigSupport alsaSupport
                   pulseaudioSupport xineramaSupport gtkSupport openclSupport xmlSupport tlsSupport
-                  openglSupport gstreamerSupport;
+                  openglSupport gstreamerSupport udevSupport;
         };
       });
 
 in if wineRelease == "staging" then
-  callPackage ./staging.nix {
-    inherit libtxc_dxtn_Name;
-    wineUnstable = wine-build wineBuild "unstable";
-  }
+  let wineUnstable = wine-build wineBuild "unstable"; in
+    # wine staging is not yet at 3.0, using unstable
+    # FIXME update winestaging sources
+    wineUnstable
+    # callPackage ./staging.nix {
+    #   inherit libtxc_dxtn_Name wineUnstable;
+    # }
 else
   wine-build wineBuild wineRelease

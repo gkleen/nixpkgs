@@ -2,19 +2,19 @@
 , rtmpdump, substituteAll }:
 
 let
-  inherit (pythonPackages) python nose pycrypto requests2 mock;
+  inherit (pythonPackages) python nose pycrypto requests mock;
 in stdenv.mkDerivation rec {
   name = "svtplay-dl-${version}";
-  version = "1.9";
+  version = "1.9.7";
 
   src = fetchFromGitHub {
     owner = "spaam";
     repo = "svtplay-dl";
     rev = version;
-    sha256 = "0kqly2jzpn1l26is65nhaq0xdvsjylh7wm12fw9r1wz1558pqswf";
+    sha256 = "0zj102ir08s9knqqv8y6vy9rkrgk77xs7kqp00v9fzrlqyspf68r";
   };
 
-  pythonPaths = [ pycrypto requests2 ];
+  pythonPaths = [ pycrypto requests ];
   buildInputs = [ python perl nose mock rtmpdump makeWrapper ] ++ pythonPaths;
   nativeBuildInputs = [ zip ];
 
@@ -34,7 +34,12 @@ in stdenv.mkDerivation rec {
   '';
 
   doCheck = true;
-  checkPhase = "sh scripts/run-tests.sh -2";
+  checkPhase = ''
+    sed -i "/def test_parse_m3u8/i\\
+        @unittest.skip('requires internet')" lib/svtplay_dl/tests/hls.py
+
+    sh scripts/run-tests.sh -2
+  '';
 
   meta = with stdenv.lib; {
     homepage = https://github.com/spaam/svtplay-dl;

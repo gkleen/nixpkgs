@@ -1,7 +1,7 @@
 {stdenv, xcodewrapper}:
 { name
 , src
-, sdkVersion ? "10.2"
+, sdkVersion ? "11.2"
 , target ? null
 , configuration ? null
 , scheme ? null
@@ -62,6 +62,9 @@ stdenv.mkDerivation {
         # Import the certificate into the keychain
         security import ${certificateFile} -k $keychainName -P "${certificatePassword}" -A 
 
+        # Grant the codesign utility permissions to read from the keychain
+        security set-key-partition-list -S apple-tool:,apple: -s -k "" $keychainName
+        
         # Determine provisioning ID
         PROVISIONING_PROFILE=$(grep UUID -A1 -a ${provisioningProfile} | grep -o "[-A-Za-z0-9]\{36\}")
 
@@ -77,8 +80,10 @@ stdenv.mkDerivation {
       ''}
 
     # Do the building
-    xcodebuild -target ${_target} -configuration ${_configuration} ${stdenv.lib.optionalString (scheme != null) "-scheme ${scheme}"} -sdk ${_sdk} TARGETED_DEVICE_FAMILY="1, 2" ONLY_ACTIVE_ARCH=NO CONFIGURATION_TEMP_DIR=$TMPDIR CONFIGURATION_BUILD_DIR=$out ${if generateXCArchive then "archive" else ""} ${xcodeFlags} ${if release then ''"CODE_SIGN_IDENTITY=${codeSignIdentity}" PROVISIONING_PROFILE=$PROVISIONING_PROFILE OTHER_CODE_SIGN_FLAGS="--keychain $HOME/Library/Keychains/$keychainName"'' else ""}
-    
+    export LD=clang # To avoid problem with -isysroot parameter that is unrecognized by the stock ld. Comparison with an impure build shows that it uses clang instead. Ugly, but it works
+
+    xcodebuild -target ${_target} -configuration ${_configuration} ${stdenv.lib.optionalString (scheme != null) "-scheme ${scheme}"} -sdk ${_sdk} TARGETED_DEVICE_FAMILY="1, 2" ONLY_ACTIVE_ARCH=NO CONFIGURATION_TEMP_DIR=$TMPDIR CONFIGURATION_BUILD_DIR=$out ${if generateXCArchive then "archive" else ""} ${xcodeFlags} ${if release then ''"CODE_SIGN_IDENTITY=${codeSignIdentity}" PROVISIONING_PROFILE=$PROVISIONING_PROFILE OTHER_CODE_SIGN_FLAGS="--keychain $HOME/Library/Keychains/$keychainName-db"'' else ""}
+
     ${stdenv.lib.optionalString release ''
       ${stdenv.lib.optionalString generateIPA ''
         # Produce an IPA file

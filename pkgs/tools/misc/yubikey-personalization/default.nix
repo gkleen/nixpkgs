@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   name = "yubikey-personalization-${version}";
-  version = "1.17.3";
+  version = "1.18.1";
 
   src = fetchurl {
     url = "https://developers.yubico.com/yubikey-personalization/Releases/ykpers-${version}.tar.gz";
-    sha256 = "034wmwinxmngji1ly8nm9q4hg194iwk164y5rw0whnf69ycc6bs8";
+    sha256 = "0mjjkk6p8d0kblj6vzld4v188y40ynprvd2hnfh7m1hs28wbkzcz";
   };
 
   nativeBuildInputs = [ pkgconfig ];
@@ -28,6 +28,6 @@ stdenv.mkDerivation rec {
     description = "A library and command line tool to personalize YubiKeys";
     license = licenses.bsd2;
     platforms = platforms.unix;
-    maintainers = with maintainers; [ wkennington ];
+    maintainers = with maintainers; [ wkennington calrama ];
   };
 }

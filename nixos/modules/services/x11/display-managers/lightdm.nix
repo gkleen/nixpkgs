@@ -46,15 +46,13 @@ let
       [Seat:*]
       xserver-command = ${xserverWrapper}
       session-wrapper = ${dmcfg.session.script}
-      ${optionalString (elem defaultSessionName dmcfg.session.names) ''
-        user-session = ${defaultSessionName}
-      ''}
       ${optionalString cfg.greeter.enable ''
         greeter-session = ${cfg.greeter.name}
       ''}
       ${optionalString cfg.autoLogin.enable ''
         autologin-user = ${cfg.autoLogin.user}
         autologin-user-timeout = ${toString cfg.autoLogin.timeout}
+        autologin-session = ${defaultSessionName}
       ''}
       ${cfg.extraSeatDefaults}
     '';
@@ -63,7 +61,7 @@ let
     let
       dm = xcfg.desktopManager.default;
       wm = xcfg.windowManager.default;
-    in dm + optionalString (wm != "none") (" + " + wm);
+    in dm + optionalString (wm != "none") ("+" + wm);
 in
 {
   # Note: the order in which lightdm greeter modules are imported
@@ -113,7 +111,7 @@ in
 
       background = mkOption {
         type = types.str;
-        default = "${pkgs.nixos-artwork}/share/artwork/gnome/Gnome_Dark.png";
+        default = "${pkgs.nixos-artwork.wallpapers.gnome-dark}/share/artwork/gnome/Gnome_Dark.png";
         description = ''
           The background image or color to use.
         '';
@@ -192,7 +190,7 @@ in
     services.xserver.displayManager.slim.enable = false;
 
     services.xserver.displayManager.job = {
-      logsXsession = true;
+      logToFile = true;
 
       # lightdm relaunches itself via just `lightdm`, so needs to be on the PATH
       execCmd = ''

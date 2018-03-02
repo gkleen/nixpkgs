@@ -1,5 +1,7 @@
-{ stdenv, fetchurl, fetchpatch, pkgconfig, freetype, expat, libxslt, dejavu_fonts
-, substituteAll }:
+{ stdenv, substituteAll, fetchurl, fetchpatch
+, pkgconfig, freetype, expat, libxslt, dejavu_fonts
+, hostPlatform
+}:
 
 /** Font configuration scheme
  - ./config-compat.patch makes fontconfig try the following root configs, in order:
@@ -28,12 +30,23 @@ stdenv.mkDerivation rec {
       src = ./config-compat.patch;
       inherit configVersion;
     })
+    (fetchpatch {
+      name = "glibc-2.25.diff";
+      url = "https://cgit.freedesktop.org/fontconfig/patch/?id=1ab5258f7c";
+      sha256 = "0x2a4qx51j3gqcp1kp4lisdzmhrkw1zw0r851d82ksgjlc0vkbaz";
+    })
   ];
+  # additionally required for the glibc-2.25 patch; avoid requiring gperf
+  postPatch = ''
+    sed s/CHAR_WIDTH/CHARWIDTH/g -i src/fcobjshash.{h,gperf}
+    touch src/*
+  '';
 
   outputs = [ "bin" "dev" "lib" "out" ]; # $out contains all the config
 
   propagatedBuildInputs = [ freetype ];
-  buildInputs = [ pkgconfig expat ];
+  nativeBuildInputs = [ pkgconfig ];
+  buildInputs = [ expat ];
 
   configureFlags = [
     "--with-cache-dir=/var/cache/fontconfig" # otherwise the fallback is in $out/
@@ -43,7 +56,7 @@ stdenv.mkDerivation rec {
   ];
 
   # We should find a better way to access the arch reliably.
-  crossArch = stdenv.cross.arch or null;
+  crossArch = hostPlatform.arch or null;
 
   preConfigure = ''
     if test -n "$crossConfig"; then

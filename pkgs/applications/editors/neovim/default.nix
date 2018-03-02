@@ -1,15 +1,7 @@
 { stdenv, fetchFromGitHub, cmake, gettext, libmsgpack, libtermkey
-, libtool, libuv, luajit, luaPackages, ncurses, perl, pkgconfig
-, unibilium, makeWrapper, vimUtils, xsel, gperf
-
-, withPython ? true, pythonPackages, extraPythonPackages ? []
-, withPython3 ? true, python3Packages, extraPython3Packages ? []
+, libtool, libuv, luaPackages, ncurses, perl, pkgconfig
+, unibilium, vimUtils, xsel, gperf, callPackage
 , withJemalloc ? true, jemalloc
-, withRuby ? true, bundlerEnv
-
-, withPyGUI ? false
-, vimAlias ? false
-, configure ? null
 }:
 
 with stdenv.lib;
@@ -19,13 +11,13 @@ let
   # Note: this is NOT the libvterm already in nixpkgs, but some NIH silliness:
   neovimLibvterm = stdenv.mkDerivation rec {
     name = "neovim-libvterm-${version}";
-    version = "2016-10-07";
+    version = "2017-11-05";
 
     src = fetchFromGitHub {
       owner = "neovim";
       repo = "libvterm";
-      rev = "11682793d84668057c5aedc3d7f8071bb54eaf2c";
-      sha256 = "0pd90yx6xsagrqjipi26sxri1l4wdnx23ziad1zbxnqx9njxa7g3";
+      rev = "4ca7ebf7d25856e90bc9d9cc49412e80be7c4ea8";
+      sha256 = "05kyvvz8af90mvig11ya5xd8f4mbvapwyclyrihm9lwas706lzf6";
     };
 
     buildInputs = [ perl ];
@@ -40,48 +32,20 @@ let
       description = "VT220/xterm/ECMA-48 terminal emulator library";
       homepage = http://www.leonerd.org.uk/code/libvterm/;
       license = licenses.mit;
-      maintainers = with maintainers; [ nckx garbas ];
+      maintainers = with maintainers; [ garbas ];
       platforms = platforms.unix;
     };
   };
 
-  rubyEnv = bundlerEnv {
-    name = "neovim-ruby-env";
-    gemdir = ./ruby_provider;
-  };
-
-  rubyWrapper = ''--suffix PATH : \"${rubyEnv}/bin\" '' +
-                ''--suffix GEM_HOME : \"${rubyEnv}/${rubyEnv.ruby.gemPath}\" '';
-
-  pythonEnv = pythonPackages.python.buildEnv.override {
-    extraLibs = (
-        if withPyGUI
-          then [ pythonPackages.neovim_gui ]
-          else [ pythonPackages.neovim ]
-      ) ++ extraPythonPackages;
-    ignoreCollisions = true;
-  };
-  pythonWrapper = ''--cmd \"let g:python_host_prog='$out/bin/nvim-python'\" '';
-
-  python3Env = python3Packages.python.buildEnv.override {
-    extraLibs = [ python3Packages.neovim ] ++ extraPython3Packages;
-    ignoreCollisions = true;
-  };
-  python3Wrapper = ''--cmd \"let g:python3_host_prog='$out/bin/nvim-python3'\" '';
-  pythonFlags = optionalString (withPython || withPython3) ''--add-flags "${
-    (optionalString withPython pythonWrapper) +
-    (optionalString withPython3 python3Wrapper)
-  }"'';
-
   neovim = stdenv.mkDerivation rec {
-    name = "neovim-${version}";
-    version = "0.1.7";
+    name = "neovim-unwrapped-${version}";
+    version = "0.2.2";
 
     src = fetchFromGitHub {
       owner = "neovim";
       repo = "neovim";
       rev = "v${version}";
-      sha256 = "0bk0raxlb1xsqyw9pmqmxvcq5szqhimidrasnvzrci84gld8cwz4";
+      sha256 = "1dxr29d0hyag7snbww5s40as90412qb61rgj7gd9rps1iccl9gv4";
     };
 
     enableParallelBuilding = true;
@@ -93,7 +57,6 @@ let
       ncurses
       neovimLibvterm
       unibilium
-      luajit
       luaPackages.lua
       gperf
     ] ++ optional withJemalloc jemalloc
@@ -102,7 +65,6 @@ let
     nativeBuildInputs = [
       cmake
       gettext
-      makeWrapper
       pkgconfig
     ];
 
@@ -123,21 +85,12 @@ let
       substituteInPlace src/nvim/CMakeLists.txt --replace "    util" ""
     '';
 
-    postInstall = stdenv.lib.optionalString stdenv.isDarwin ''
-      echo patching $out/bin/nvim
+    postInstall = stdenv.lib.optionalString stdenv.isLinux ''
+      sed -i -e "s|'xsel|'${xsel}/bin/xsel|" $out/share/nvim/runtime/autoload/provider/clipboard.vim
+    '' + stdenv.lib.optionalString (withJemalloc && stdenv.isDarwin) ''
       install_name_tool -change libjemalloc.1.dylib \
                 ${jemalloc}/lib/libjemalloc.1.dylib \
                 $out/bin/nvim
-      sed -i -e "s|'xsel|'${xsel}/bin/xsel|" $out/share/nvim/runtime/autoload/provider/clipboard.vim
-    '' + optionalString withPython ''
-      ln -s ${pythonEnv}/bin/python $out/bin/nvim-python
-    '' + optionalString withPyGUI ''
-      makeWrapper "${pythonEnv}/bin/pynvim" "$out/bin/pynvim" \
-        --prefix PATH : "$out/bin"
-    '' + optionalString withPython3 ''
-      ln -s ${python3Env}/bin/python3 $out/bin/nvim-python3
-    '' + optionalString (withPython || withPython3 || withRuby) ''
-      wrapProgram $out/bin/nvim ${rubyWrapper + pythonFlags}
     '';
 
     meta = {
@@ -157,25 +110,10 @@ let
       # those contributions were copied from Vim (identified in the commit logs
       # by the vim-patch token). See LICENSE for details."
       license = with licenses; [ asl20 vim ];
-      maintainers = with maintainers; [ manveru garbas ];
+      maintainers = with maintainers; [ manveru garbas rvolosatovs ];
       platforms   = platforms.unix;
     };
   };
 
-in if (vimAlias == false && configure == null) then neovim else stdenv.mkDerivation {
-  name = "neovim-${neovim.version}-configured";
-  inherit (neovim) version meta;
-
-  nativeBuildInputs = [ makeWrapper ];
-
-  buildCommand = ''
-    mkdir -p $out/bin
-    for item in ${neovim}/bin/*; do
-      ln -s $item $out/bin/
-    done
-  '' + optionalString vimAlias ''
-    ln -s $out/bin/nvim $out/bin/vim
-  '' + optionalString (configure != null) ''
-    wrapProgram $out/bin/nvim --add-flags "-u ${vimUtils.vimrcFile configure}"
-  '';
-}
+in
+  neovim

@@ -1,6 +1,6 @@
 { stdenv, fetchurl, fetchFromGitHub }:
 
-let version = "1.05"; in
+let version = "1.12.0"; in
 stdenv.mkDerivation {
   name = "yadm-${version}";
 
@@ -8,7 +8,7 @@ stdenv.mkDerivation {
     owner  = "TheLocehiliosan";
     repo   = "yadm";
     rev    = "${version}";
-    sha256 = "11bqgz28qzgb3iz8xvda9z0mh5r1a9m032pqm772ypiixsfz8hdd";
+    sha256 = "0873jgks7dpfkj5km1jchxdrhf7lia70p0f8zsrh9p4crj5f4pc6";
   };
 
   buildCommand = ''
@@ -20,7 +20,7 @@ stdenv.mkDerivation {
   '';
 
   meta = {
-    homepage = "https://github.com/TheLocehiliosan/yadm";
+    homepage = https://github.com/TheLocehiliosan/yadm;
     description = "Yet Another Dotfiles Manager";
     longDescription = ''
     yadm is a dotfile management tool with 3 main features: Manages files across

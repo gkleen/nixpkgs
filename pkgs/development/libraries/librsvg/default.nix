@@ -1,16 +1,22 @@
 { lib, stdenv, fetchurl, pkgconfig, glib, gdk_pixbuf, pango, cairo, libxml2, libgsf
-, bzip2, libcroco, libintlOrEmpty, darwin
+, bzip2, libcroco, libintlOrEmpty, darwin, rust
 , withGTK ? false, gtk3 ? null
 , gobjectIntrospection ? null, enableIntrospection ? false }:
 
 # no introspection by default, it's too big
 
+let
+  version = "2.42.2";
+  releaseVersion = (lib.concatStringsSep "." (lib.lists.take 2
+    (lib.splitString "." version)));
+
+in
 stdenv.mkDerivation rec {
-  name = "librsvg-2.40.16";
+  name = "librsvg-${version}";
 
   src = fetchurl {
-    url    = "mirror://gnome/sources/librsvg/2.40/${name}.tar.xz";
-    sha256 = "0bpz6gsq8xi1pb5k9ax6vinph460v14znch3y5yz167s0dmwz2yl";
+    url    = "mirror://gnome/sources/librsvg/${releaseVersion}/${name}.tar.xz";
+    sha256 = "0c550a0bffef768a436286116c03d9f6cd3f97f5021c13e7f093b550fac12562";
   };
 
   NIX_LDFLAGS = if stdenv.isDarwin then "-lintl" else null;
@@ -22,7 +28,7 @@ stdenv.mkDerivation rec {
 
   propagatedBuildInputs = [ glib gdk_pixbuf cairo ] ++ lib.optional withGTK gtk3;
 
-  nativeBuildInputs = [ pkgconfig ]
+  nativeBuildInputs = [ pkgconfig rust.rustc rust.cargo ]
     ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
       ApplicationServices
     ]);
@@ -47,6 +53,10 @@ stdenv.mkDerivation rec {
         -i gdk-pixbuf-loader/Makefile
     sed -e "s#\$(GDK_PIXBUF_QUERYLOADERS)#GDK_PIXBUF_MODULEDIR=$GDK_PIXBUF/loaders \$(GDK_PIXBUF_QUERYLOADERS)#" \
          -i gdk-pixbuf-loader/Makefile
+
+    # Fix thumbnailer path
+    sed -e "s#@bindir@\(/gdk-pixbuf-thumbnailer\)#${gdk_pixbuf}/bin\1#g" \
+        -i gdk-pixbuf-loader/librsvg.thumbnailer.in
   '';
 
   # Merge gdkpixbuf and librsvg loaders

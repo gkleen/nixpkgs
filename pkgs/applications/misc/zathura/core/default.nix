@@ -1,23 +1,35 @@
-{ stdenv, lib, fetchurl, pkgconfig, gtk, girara, ncurses, gettext, docutils
-, file, makeWrapper, sqlite, glib
-, synctexSupport ? true, texlive ? null }:
+{ stdenv, fetchurl, makeWrapper, pkgconfig
+, gtk, girara, ncurses, gettext, docutils
+, file, sqlite, glib, texlive, libintlOrEmpty
+, gtk-mac-integration, synctexSupport ? true
+}:
 
 assert synctexSupport -> texlive != null;
 
+with stdenv.lib;
+
 stdenv.mkDerivation rec {
-  version = "0.3.6";
-  name = "zathura-core-${version}";
+  name    = "zathura-core-${version}";
+  version = "0.3.8";
 
   src = fetchurl {
-    url = "http://pwmt.org/projects/zathura/download/zathura-${version}.tar.gz";
-    sha256 = "0fyb5hak0knqvg90rmdavwcmilhnrwgg1s5ykx9wd3skbpi8nsh8";
+    url    = "http://pwmt.org/projects/zathura/download/zathura-${version}.tar.gz";
+    sha256 = "0dz5pky3vmf3s2cp2rv1c099gb1s49p9xlgm3ghyy4pzyxc8bgs6";
   };
 
   icon = ./icon.xpm;
 
-  buildInputs = [ pkgconfig file gtk girara gettext makeWrapper sqlite glib
-  ] ++ lib.optional synctexSupport texlive.bin.core;
+  nativeBuildInputs = [
+    pkgconfig
+  ] ++ optional stdenv.isDarwin [ libintlOrEmpty ];
 
+  buildInputs = [
+    file gtk girara
+    gettext makeWrapper sqlite glib
+  ] ++ optional synctexSupport texlive.bin.core
+    ++ optional stdenv.isDarwin [ gtk-mac-integration ];
+
+  NIX_LDFLAGS = stdenv.lib.optionalString stdenv.isDarwin "-lintl";
   NIX_CFLAGS_COMPILE = "-I${glib.dev}/include/gio-unix-2.0";
 
   makeFlags = [
@@ -25,11 +37,12 @@ stdenv.mkDerivation rec {
     "RSTTOMAN=${docutils}/bin/rst2man.py"
     "VERBOSE=1"
     "TPUT=${ncurses.out}/bin/tput"
-  ] ++ lib.optional synctexSupport "WITH_SYNCTEX=1";
+    (optionalString synctexSupport "WITH_SYNCTEX=1")
+  ];
 
   postInstall = ''
     wrapProgram "$out/bin/zathura" \
-      --prefix PATH ":" "${lib.makeBinPath [ file ]}" \
+      --prefix PATH ":" "${makeBinPath [ file ]}" \
       --prefix XDG_CONFIG_DIRS ":" "$out/etc"
 
     install -Dm644 $icon $out/share/pixmaps/pwmt.xpm
@@ -38,11 +51,11 @@ stdenv.mkDerivation rec {
     echo "Icon=pwmt" >> $out/share/applications/zathura.desktop
   '';
 
-  meta = with stdenv.lib; {
-    homepage = http://pwmt.org/projects/zathura/;
+  meta = {
+    homepage    = http://pwmt.org/projects/zathura/;
     description = "A core component for zathura PDF viewer";
-    license = licenses.zlib;
-    platforms = platforms.linux;
+    license     = licenses.zlib;
+    platforms   = platforms.unix;
     maintainers = with maintainers; [ garbas ];
   };
 }

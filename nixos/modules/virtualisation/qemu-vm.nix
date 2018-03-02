@@ -10,6 +10,7 @@
 { config, lib, pkgs, ... }:
 
 with lib;
+with import ../../lib/qemu-flags.nix { inherit pkgs; };
 
 let
 
@@ -23,7 +24,7 @@ let
   cfg = config.virtualisation;
 
   qemuGraphics = if cfg.graphics then "" else "-nographic";
-  kernelConsole = if cfg.graphics then "" else "console=ttyS0";
+  kernelConsole = if cfg.graphics then "" else "console=${qemuSerialDevice}";
   ttys = [ "tty1" "tty2" "tty3" "tty4" "tty5" "tty6" ];
 
   # Shell script to start the VM.
@@ -72,10 +73,10 @@ let
       '')}
 
       # Start QEMU.
-      exec ${qemu}/bin/qemu-kvm \
+      exec ${qemuBinary qemu} \
           -name ${vmName} \
           -m ${toString config.virtualisation.memorySize} \
-          ${optionalString (pkgs.stdenv.system == "x86_64-linux") "-cpu kvm64"} \
+          -smp ${toString config.virtualisation.cores} \
           ${concatStringsSep " " config.virtualisation.qemu.networkingOptions} \
           -virtfs local,path=/nix/store,security_model=none,mount_tag=store \
           -virtfs local,path=$TMPDIR/xchg,security_model=none,mount_tag=xchg \
@@ -91,7 +92,7 @@ let
             -drive index=0,id=drive1,file=$NIX_DISK_IMAGE,if=${cfg.qemu.diskInterface},cache=writeback,werror=report \
             -kernel ${config.system.build.toplevel}/kernel \
             -initrd ${config.system.build.toplevel}/initrd \
-            -append "$(cat ${config.system.build.toplevel}/kernel-params) init=${config.system.build.toplevel}/init regInfo=${regInfo} ${kernelConsole} $QEMU_KERNEL_PARAMS" \
+            -append "$(cat ${config.system.build.toplevel}/kernel-params) init=${config.system.build.toplevel}/init regInfo=${regInfo}/registration ${kernelConsole} $QEMU_KERNEL_PARAMS" \
           ''} \
           $extraDisks \
           ${qemuGraphics} \
@@ -101,15 +102,7 @@ let
     '';
 
 
-  regInfo = pkgs.runCommand "reginfo"
-    { exportReferencesGraph =
-        map (x: [("closure-" + baseNameOf x) x]) config.virtualisation.pathsInNixDB;
-      buildInputs = [ pkgs.perl ];
-      preferLocalBuild = true;
-    }
-    ''
-      printRegistration=1 perl ${pkgs.pathsFromGraph} closure-* > $out
-    '';
+  regInfo = pkgs.closureInfo { rootPaths = config.virtualisation.pathsInNixDB; };
 
 
   # Generate a hard disk image containing a /boot partition and GRUB
@@ -125,7 +118,7 @@ let
               bootFlash=$out/bios.bin
               ${qemu}/bin/qemu-img create -f qcow2 $diskImage "40M"
               ${if cfg.useEFIBoot then ''
-                cp ${pkgs.OVMF-CSM}/FV/OVMF.fd $bootFlash
+                cp ${pkgs.OVMF-CSM.fd}/FV/OVMF.fd $bootFlash
                 chmod 0644 $bootFlash
               '' else ''
               ''}
@@ -136,15 +129,17 @@ let
                       else "-nographic -serial pty";
         }
         ''
-          # Create a /boot EFI partition with 40M
-          ${pkgs.gptfdisk}/bin/sgdisk -G /dev/vda
-          ${pkgs.gptfdisk}/bin/sgdisk -a 1 -n 1:34:2047 -c 1:"BIOS Boot Partition" -t 1:ef02 /dev/vda
-          ${pkgs.gptfdisk}/bin/sgdisk -a 512 -N 2 -c 2:"EFI System" -t 2:ef00 /dev/vda
-          ${pkgs.gptfdisk}/bin/sgdisk -A 1:set:1 /dev/vda
-          ${pkgs.gptfdisk}/bin/sgdisk -A 2:set:2 /dev/vda
-          ${pkgs.gptfdisk}/bin/sgdisk -h 2 /dev/vda
-          ${pkgs.gptfdisk}/bin/sgdisk -C /dev/vda
-          ${pkgs.utillinux}/bin/sfdisk /dev/vda -A 2
+          # Create a /boot EFI partition with 40M and arbitrary but fixed GUIDs for reproducibility
+          ${pkgs.gptfdisk}/bin/sgdisk \
+            --set-alignment=1 --new=1:34:2047 --change-name=1:BIOSBootPartition --typecode=1:ef02 \
+            --set-alignment=512 --largest-new=2 --change-name=2:EFISystem --typecode=2:ef00 \
+            --attributes=1:set:1 \
+            --attributes=2:set:2 \
+            --disk-guid=97FD5997-D90B-4AA3-8D16-C1723AEA73C1 \
+            --partition-guid=1:1C06F03B-704E-4657-B9CD-681A087A2FDC \
+            --partition-guid=2:970C694F-AFD0-4B99-B750-CDB7A329AB6F \
+            --hybrid 2 \
+            --recompute-chs /dev/vda
           . /sys/class/block/vda2/uevent
           mknod /dev/vda2 b $MAJOR $MINOR
           . /sys/class/block/vda/uevent
@@ -239,6 +234,18 @@ in
           ''
             Whether to run QEMU with a graphics window, or access
             the guest computer serial port through the host tty.
+          '';
+      };
+
+    virtualisation.cores =
+      mkOption {
+        default = 1;
+        type = types.int;
+        description =
+          ''
+            Specify the number of cores the guest is permitted to use.
+            The number can be higher than the available cores on the
+            host system.
           '';
       };
 
@@ -427,7 +434,9 @@ in
 
     virtualisation.pathsInNixDB = [ config.system.build.toplevel ];
 
-    virtualisation.qemu.options = [ "-vga std" "-usbdevice tablet" ];
+    # FIXME: Figure out how to make this work on non-x86
+    virtualisation.qemu.options =
+      mkIf (pkgs.stdenv.isi686 || pkgs.stdenv.isx86_64) [ "-vga std" "-usbdevice tablet" ];
 
     # Mount the host filesystem via 9P, and bind-mount the Nix store
     # of the host into our own filesystem.  We use mkVMOverride to
@@ -440,13 +449,20 @@ in
         ${if cfg.writableStore then "/nix/.ro-store" else "/nix/store"} =
           { device = "store";
             fsType = "9p";
-            options = [ "trans=virtio" "version=9p2000.L" "veryloose" ];
+            options = [ "trans=virtio" "version=9p2000.L" "cache=loose" ];
             neededForBoot = true;
+          };
+        "/tmp" = mkIf config.boot.tmpOnTmpfs
+          { device = "tmpfs";
+            fsType = "tmpfs";
+            neededForBoot = true;
+            # Sync with systemd's tmp.mount;
+            options = [ "mode=1777" "strictatime" "nosuid" "nodev" ];
           };
         "/tmp/xchg" =
           { device = "xchg";
             fsType = "9p";
-            options = [ "trans=virtio" "version=9p2000.L" "veryloose" ];
+            options = [ "trans=virtio" "version=9p2000.L" "cache=loose" ];
             neededForBoot = true;
           };
         "/tmp/shared" =
