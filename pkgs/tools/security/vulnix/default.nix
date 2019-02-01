@@ -1,17 +1,22 @@
-{ stdenv, pythonPackages, fetchurl, callPackage, nix, ronn }:
+{ stdenv, pythonPackages, nix, ronn }:
 
 pythonPackages.buildPythonApplication rec {
   pname = "vulnix";
-  version = "1.6.1";
+  version = "1.7.1";
 
   src = pythonPackages.fetchPypi {
     inherit pname version;
-    sha256 = "0j6v6phq3naqnpvzxxnynsyv9y7bhig1gzvg594qpknqgyzj16bf";
+    sha256 = "15c32976sgb5clixngi6z1fk5h02v1kn1a89h8rkbkvyhfnjgg8m";
   };
 
-  buildInputs =
-    [ ronn ] ++
-    (with pythonPackages; [ freezegun pytest pytestcov ]);
+  buildInputs = [ ronn ];
+
+  checkInputs = with pythonPackages; [
+    freezegun
+    pytest
+    pytestcov
+    pytest-flake8
+  ];
 
   propagatedBuildInputs = [
     nix
@@ -27,14 +32,7 @@ pythonPackages.buildPythonApplication rec {
 
   outputs = [ "out" "doc" ];
 
-  # pytest-flake8 is currently broken
-  # re-enable after it has been fixed
-  # https://github.com/NixOS/nixpkgs/issues/39206
-  patches = [ ./disable-flake8.patch ];
-
-  postBuild = ''
-    make -C doc
-  '';
+  postBuild = "make -C doc";
 
   checkPhase = "py.test src/vulnix";
 
@@ -50,7 +48,7 @@ pythonPackages.buildPythonApplication rec {
   meta = with stdenv.lib; {
     description = "NixOS vulnerability scanner";
     homepage = https://github.com/flyingcircusio/vulnix;
-    license = licenses.bsd2;
+    license = licenses.bsd3;
     maintainers = with maintainers; [ ckauhaus plumps ];
   };
 }

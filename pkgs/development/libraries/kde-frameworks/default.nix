@@ -145,6 +145,7 @@ let
       kpackage = callPackage ./kpackage {};
       kpty = callPackage ./kpty.nix {};
       kunitconversion = callPackage ./kunitconversion.nix {};
+      syndication = callPackage ./syndication.nix {};
 
     # TIER 3
       baloo = callPackage ./baloo.nix {};
@@ -155,6 +156,7 @@ let
       kded = callPackage ./kded.nix {};
       kdesignerplugin = callPackage ./kdesignerplugin.nix {};
       kdesu = callPackage ./kdesu.nix {};
+      kdewebkit = callPackage ./kdewebkit.nix {};
       kemoticons = callPackage ./kemoticons.nix {};
       kglobalaccel = callPackage ./kglobalaccel.nix {};
       kiconthemes = callPackage ./kiconthemes {};
@@ -172,6 +174,7 @@ let
       kxmlgui = callPackage ./kxmlgui.nix {};
       kxmlrpcclient = callPackage ./kxmlrpcclient.nix {};
       plasma-framework = callPackage ./plasma-framework.nix {};
+      kpurpose = callPackage ./purpose.nix {};
 
     # TIER 4
       frameworkintegration = callPackage ./frameworkintegration.nix {};

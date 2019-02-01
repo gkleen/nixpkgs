@@ -1,4 +1,4 @@
-{ lib, python3Packages, gobjectIntrospection, libappindicator-gtk3, libnotify, gtk3, gnome3, xprintidle-ng, wrapGAppsHook, gdk_pixbuf, shared-mime-info, librsvg
+{ lib, python3Packages, gobject-introspection, libappindicator-gtk3, libnotify, gtk3, gnome3, xprintidle-ng, wrapGAppsHook, gdk_pixbuf, shared-mime-info, librsvg
 }:
 
 let inherit (python3Packages) python buildPythonApplication fetchPypi;
@@ -6,17 +6,17 @@ let inherit (python3Packages) python buildPythonApplication fetchPypi;
 in buildPythonApplication rec {
   name = "${pname}-${version}";
   pname = "safeeyes";
-  version = "2.0.5";
+  version = "2.0.8";
   namePrefix = "";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1q52ncqn18wb3d42dzsm7lh301w6g053a685i1cnismvp86amvfl";
+    sha256 = "08acrf9sngjjmplszjxzfq3af9xg4xscga94q0lkck2l1kqckc2l";
   };
 
   buildInputs = [
     gtk3
-    gobjectIntrospection
+    gobject-introspection
     gnome3.defaultIconTheme
     gnome3.adwaita-icon-theme
   ];

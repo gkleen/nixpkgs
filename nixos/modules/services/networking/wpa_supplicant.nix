@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, utils, ... }:
 
 with lib;
 
@@ -8,6 +8,7 @@ let
     ${optionalString cfg.userControlled.enable ''
       ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=${cfg.userControlled.group}
       update_config=1''}
+    ${cfg.extraConfig}
     ${concatStringsSep "\n" (mapAttrsToList (ssid: config: with config; let
       key = if psk != null
         then ''"${psk}"''
@@ -165,6 +166,17 @@ in {
           description = "Members of this group can control wpa_supplicant.";
         };
       };
+      extraConfig = mkOption {
+        type = types.str;
+        default = "";
+        example = ''
+          p2p_disabled=1
+        '';
+        description = ''
+          Extra lines appended to the configuration file.
+          See wpa_supplicant.conf(5) for available options.
+        '';
+      };
     };
   };
 
@@ -181,7 +193,7 @@ in {
     # FIXME: start a separate wpa_supplicant instance per interface.
     systemd.services.wpa_supplicant = let
       ifaces = cfg.interfaces;
-      deviceUnit = interface: [ "sys-subsystem-net-devices-${interface}.device" ];
+      deviceUnit = interface: [ "sys-subsystem-net-devices-${utils.escapeSystemdPath interface}.device" ];
     in {
       description = "WPA Supplicant";
 

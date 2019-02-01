@@ -7,34 +7,33 @@ let
   encDevs = filter (dev: dev.encrypted.enable) fileSystems;
   keyedEncDevs = filter (dev: dev.encrypted.keyFile != null) encDevs;
   keylessEncDevs = filter (dev: dev.encrypted.keyFile == null) encDevs;
-  isIn = needle: haystack: filter (p: p == needle) haystack != [];
   anyEncrypted =
     fold (j: v: v || j.encrypted.enable) false encDevs;
 
   encryptedFSOptions = {
 
-    encrypted = {
+    options.encrypted = {
       enable = mkOption {
         default = false;
         type = types.bool;
         description = "The block device is backed by an encrypted one, adds this device as a initrd luks entry.";
       };
 
-      blkDev = mkOption {
+      options.blkDev = mkOption {
         default = null;
         example = "/dev/sda1";
         type = types.nullOr types.str;
         description = "Location of the backing encrypted device.";
       };
 
-      label = mkOption {
+      options.label = mkOption {
         default = null;
         example = "rootfs";
         type = types.nullOr types.str;
         description = "Label of the unlocked encrypted device. Set <literal>fileSystems.&lt;name?&gt;.device</literal> to <literal>/dev/mapper/&lt;label&gt;</literal> to mount the unlocked device.";
       };
 
-      keyFile = mkOption {
+      options.keyFile = mkOption {
         default = null;
         example = "/mnt-root/root/.swapkey";
         type = types.nullOr types.str;
@@ -48,10 +47,10 @@ in
 
   options = {
     fileSystems = mkOption {
-      options = [encryptedFSOptions];
+      type = with lib.types; loaOf (submodule encryptedFSOptions);
     };
     swapDevices = mkOption {
-      options = [encryptedFSOptions];
+      type = with lib.types; listOf (submodule encryptedFSOptions);
     };
   };
 

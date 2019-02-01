@@ -1,34 +1,45 @@
 { stdenv
+, lib
 , fetchurl
 , unzip
+, makeDesktopItem
 , jre
 }:
 
+let
+  desktopItem = makeDesktopItem {
+    name = "jmol";
+    exec = "jmol";
+    desktopName = "JMol";
+    genericName = "Molecular Modeler";
+    mimeType = "chemical/x-pdb;chemical/x-mdl-molfile;chemical/x-mol2;chemical/seq-aa-fasta;chemical/seq-na-fasta;chemical/x-xyz;chemical/x-mdl-sdf;";
+    categories = "Graphics;Education;Science;Chemistry;";
+  };
+in
 stdenv.mkDerivation rec {
-  version = "${baseVersion}.${patchVersion}";
-  baseVersion = "14.29";
-  patchVersion = "12";
+  version = "14.29.29";
   pname = "jmol";
   name = "${pname}-${version}";
 
-  src = fetchurl {
+  src = let 
+    baseVersion = "${lib.versions.major version}.${lib.versions.minor version}";
+  in fetchurl {
     url = "mirror://sourceforge/jmol/Jmol/Version%20${baseVersion}/Jmol%20${version}/Jmol-${version}-binary.tar.gz";
-    sha256 = "1ndq9am75janshrnk26334z1nmyh3k4bp20napvf2zv0lfp8k3bv";
+    sha256 = "0j3075lwagfvwzyh0mas9pj2fm8zdqn5ak0w0byz8s57azsrc3w4";
   };
 
-  buildInputs = [
-    jre
-  ];
+  patchPhase = ''
+    sed -i -e "4s:.*:command=${jre}/bin/java:" -e "10s:.*:jarpath=$out/share/jmol/Jmol.jar:" -e "11,21d" jmol
+  '';
 
   installPhase = ''
-    mkdir -p "$out/share/jmol"
-    mkdir -p "$out/bin"
+    mkdir -p "$out/share/jmol" "$out/bin"
 
     ${unzip}/bin/unzip jsmol.zip -d "$out/share/"
 
-    sed -i -e 's|command=java|command=${jre}/bin/java|' jmol.sh
     cp *.jar jmol.sh "$out/share/jmol"
-    ln -s $out/share/jmol/jmol.sh "$out/bin/jmol"
+    cp -r ${desktopItem}/share/applications $out/share
+    cp jmol $out/bin
   '';
 
   enableParallelBuilding = true;
@@ -38,7 +49,6 @@ stdenv.mkDerivation rec {
      homepage = https://sourceforge.net/projects/jmol;
      license = licenses.lgpl2;
      platforms = platforms.all;
-     maintainers = with maintainers; [ timokau ];
+     maintainers = with maintainers; [ timokau mounium ];
   };
 }
-

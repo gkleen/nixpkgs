@@ -1,4 +1,4 @@
-{ stdenv, callPackage, fetchurl, makeFontsConf, gnome2 }:
+{ stdenv, callPackage, makeFontsConf, gnome2 }:
 
 let
   mkStudio = opts: callPackage (import ./common.nix opts) {
@@ -8,61 +8,50 @@ let
     inherit (gnome2) GConf gnome_vfs;
   };
   stableVersion = {
-    version = "3.1.2.0"; # "Android Studio 3.1.2"
-    build = "173.4720617";
-    sha256Hash = "1h9f4pkyqxkqxampi8v035czg5d4g6lp4bsrnq5mgpwhjwkr1whk";
+    version = "3.3.0.20"; # "Android Studio 3.3"
+    build = "182.5199772";
+    sha256Hash = "0dracganibnkyapn2pk2qqnxpwmii57371ycri4nccaci9v9pcjw";
   };
-  latestVersion = {
-    version = "3.2.0.11"; # "Android Studio 3.2 Canary 12"
-    build = "181.4729833";
-    sha256Hash = "1b976m59d230pl35ajhdic46cw8qmnykkbrg3l7am7zmih0zk64c";
+  betaVersion = {
+    version = "3.4.0.12"; # "Android Studio 3.4 Beta 3"
+    build = "183.5256591";
+    sha256Hash = "1yab2sgabgk3wa3wrzv9z1dc2k7x0079v0mlwrp32jwx8r9byvcw";
+  };
+  latestVersion = { # canary & dev
+    version = "3.5.0.2"; # "Android Studio 3.5 Canary 3"
+    build = "183.5256920";
+    sha256Hash = "09bd80ld21hq743xjacsq0nkxwl5xzr253p86n71n580yn4rgmlb";
   };
 in rec {
-  # Old alias
-  preview = beta;
+  # Old alias (TODO @primeos: Remove after 19.03 is branched off):
+  preview = throw ''
+    The attributes "android-studio-preview" and "androidStudioPackages.preview"
+    are now deprecated and will be removed soon, please use
+    "androidStudioPackages.beta" instead. This attribute corresponds to the
+    beta channel, if you want the latest release you can use
+    "androidStudioPackages.dev" or "androidStudioPackages.canary" instead
+    (currently, there is no difference between both channels).
+  '';
 
-  # Attributes are named by the corresponding release channels
+  # Attributes are named by their corresponding release channels
 
   stable = mkStudio (stableVersion // {
+    channel = "stable";
     pname = "android-studio";
-    #pname = "android-studio-stable"; # TODO: Rename and provide symlink
-
-    meta = with stdenv.lib; {
-      description = "The Official IDE for Android (stable channel)";
-      longDescription = ''
-        Android Studio is the official IDE for Android app development, based on
-        IntelliJ IDEA.
-      '';
-      homepage = https://developer.android.com/studio/index.html;
-      license = licenses.asl20;
-      platforms = [ "x86_64-linux" ];
-      maintainers = with maintainers; [ primeos ];
-    };
   });
 
-  beta = mkStudio (stableVersion // {
-    pname = "android-studio-preview";
-    #pname = "android-studio-beta"; # TODO: Rename and provide symlink
-
-    meta = stable.meta // {
-      description = "The Official IDE for Android (beta channel)";
-      homepage = https://developer.android.com/studio/preview/index.html;
-    };
+  beta = mkStudio (betaVersion // {
+    channel = "beta";
+    pname = "android-studio-beta";
   });
 
   dev = mkStudio (latestVersion // {
+    channel = "dev";
     pname = "android-studio-dev";
-
-    meta = beta.meta // {
-      description = "The Official IDE for Android (dev channel)";
-    };
   });
 
   canary = mkStudio (latestVersion // {
+    channel = "canary";
     pname = "android-studio-canary";
-
-    meta = beta.meta // {
-      description = "The Official IDE for Android (canary channel)";
-    };
   });
 }

@@ -159,7 +159,7 @@ rec {
       context = name: ''while evaluating the module argument `${name}' in "${key}":'';
       extraArgs = builtins.listToAttrs (map (name: {
         inherit name;
-        value = addErrorContext (context name)
+        value = builtins.addErrorContext (context name)
           (args.${name} or config._module.args.${name});
       }) requiredArgs);
 
@@ -192,29 +192,55 @@ rec {
       (concatMap (m: map (config: { inherit (m) file; inherit config; }) (pushDownProperties m.config)) modules);
 
   mergeModules' = prefix: options: configs:
-    listToAttrs (map (name: {
+    let
+     /* byName is like foldAttrs, but will look for attributes to merge in the
+        specified attribute name.
+
+        byName "foo" (module: value: ["module.hidden=${module.hidden},value=${value}"])
+        [
+          {
+            hidden="baz";
+            foo={qux="bar"; gla="flop";};
+          }
+          {
+            hidden="fli";
+            foo={qux="gne"; gli="flip";};
+          }
+        ]
+        ===>
+        {
+          gla = [ "module.hidden=baz,value=flop" ];
+          gli = [ "module.hidden=fli,value=flip" ];
+          qux = [ "module.hidden=baz,value=bar" "module.hidden=fli,value=gne" ];
+        }
+      */
+      byName = attr: f: modules:
+        foldl' (acc: module:
+                acc // (mapAttrs (n: v:
+                                   (acc.${n} or []) ++ f module v
+                                 ) module.${attr}
+                       )
+               ) {} modules;
+      # an attrset 'name' => list of submodules that declare ‘name’.
+      declsByName = byName "options" (module: option:
+          [{ inherit (module) file; options = option; }]
+        ) options;
+      # an attrset 'name' => list of submodules that define ‘name’.
+      defnsByName = byName "config" (module: value:
+          map (config: { inherit (module) file; inherit config; }) (pushDownProperties value)
+        ) configs;
+      # extract the definitions for each loc
+      defnsByName' = byName "config" (module: value:
+          [{ inherit (module) file; inherit value; }]
+        ) configs;
+    in
+    (flip mapAttrs declsByName (name: decls:
       # We're descending into attribute ‘name’.
-      inherit name;
-      value =
         let
           loc = prefix ++ [name];
-          # Get all submodules that declare ‘name’.
-          decls = concatMap (m:
-            if m.options ? ${name}
-              then [ { inherit (m) file; options = m.options.${name}; } ]
-              else []
-            ) options;
-          # Get all submodules that define ‘name’.
-          defns = concatMap (m:
-            if m.config ? ${name}
-              then map (config: { inherit (m) file; inherit config; })
-                (pushDownProperties m.config.${name})
-              else []
-            ) configs;
+          defns = defnsByName.${name} or [];
+          defns' = defnsByName'.${name} or [];
           nrOptions = count (m: isOption m.options) decls;
-          # Extract the definitions for this loc
-          defns' = map (m: { inherit (m) file; value = m.config.${name}; })
-            (filter (m: m.config ? ${name}) configs);
         in
           if nrOptions == length decls then
             let opt = fixupOptionType loc (mergeOptionDecls loc decls);
@@ -226,8 +252,8 @@ rec {
             in
               throw "The option `${showOption loc}' in `${firstOption.file}' is a prefix of options in `${firstNonOption.file}'."
           else
-            mergeModules' loc decls defns;
-    }) (concatMap (m: attrNames m.options) options))
+            mergeModules' loc decls defns
+      ))
     // { _definedNames = map (m: { inherit (m) file; names = attrNames m.config; }) configs; };
 
   /* Merge multiple option declarations into a single declaration.  In
@@ -309,7 +335,8 @@ rec {
           res.mergedValue;
 
     in opt //
-      { value = addErrorContext "while evaluating the option `${showOption loc}':" value;
+      { value = builtins.addErrorContext "while evaluating the option `${showOption loc}':" value;
+        inherit (res.defsFinal') highestPrio;
         definitions = map (def: def.value) res.defsFinal;
         files = map (def: def.file) res.defsFinal;
         inherit (res) isDefined;
@@ -317,7 +344,7 @@ rec {
 
   # Merge definitions of a value of a given type.
   mergeDefinitions = loc: type: defs: rec {
-    defsFinal =
+    defsFinal' =
       let
         # Process mkMerge and mkIf properties.
         defs' = concatMap (m:
@@ -325,15 +352,19 @@ rec {
         ) defs;
 
         # Process mkOverride properties.
-        defs'' = filterOverrides defs';
+        defs'' = filterOverrides' defs';
 
         # Sort mkOrder properties.
         defs''' =
           # Avoid sorting if we don't have to.
-          if any (def: def.value._type or "" == "order") defs''
-          then sortProperties defs''
-          else defs'';
-      in defs''';
+          if any (def: def.value._type or "" == "order") defs''.values
+          then sortProperties defs''.values
+          else defs''.values;
+      in {
+        values = defs''';
+        inherit (defs'') highestPrio;
+      };
+    defsFinal = defsFinal'.values;
 
     # Type-check the remaining definitions, and merge them.
     mergedValue = foldl' (res: def:
@@ -416,13 +447,17 @@ rec {
 
      Note that "z" has the default priority 100.
   */
-  filterOverrides = defs:
+  filterOverrides = defs: (filterOverrides' defs).values;
+
+  filterOverrides' = defs:
     let
-      defaultPrio = 100;
-      getPrio = def: if def.value._type or "" == "override" then def.value.priority else defaultPrio;
+      getPrio = def: if def.value._type or "" == "override" then def.value.priority else defaultPriority;
       highestPrio = foldl' (prio: def: min (getPrio def) prio) 9999 defs;
       strip = def: if def.value._type or "" == "override" then def // { value = def.value.content; } else def;
-    in concatMap (def: if getPrio def == highestPrio then [(strip def)] else []) defs;
+    in {
+      values = concatMap (def: if getPrio def == highestPrio then [(strip def)] else []) defs;
+      inherit highestPrio;
+    };
 
   /* Sort a list of properties.  The sort priority of a property is
      1000 by default, but can be overridden by wrapping the property
@@ -441,22 +476,8 @@ rec {
      optionSet to options of type submodule.  FIXME: remove
      eventually. */
   fixupOptionType = loc: opt:
-    let
-      options = opt.options or
-        (throw "Option `${showOption loc'}' has type optionSet but has no option attribute, in ${showFiles opt.declarations}.");
-      f = tp:
-        let optionSetIn = type: (tp.name == type) && (tp.functor.wrapped.name == "optionSet");
-        in
-        if tp.name == "option set" || tp.name == "submodule" then
-          throw "The option ${showOption loc} uses submodules without a wrapping type, in ${showFiles opt.declarations}."
-        else if optionSetIn "attrsOf" then types.attrsOf (types.submodule options)
-        else if optionSetIn "loaOf"   then types.loaOf   (types.submodule options)
-        else if optionSetIn "listOf"  then types.listOf  (types.submodule options)
-        else if optionSetIn "nullOr"  then types.nullOr  (types.submodule options)
-        else tp;
-    in
-      if opt.type.getSubModules or null == null
-      then opt // { type = f (opt.type or types.unspecified); }
+    if opt.type.getSubModules or null == null
+      then opt // { type = opt.type or types.unspecified; }
       else opt // { type = opt.type.substSubModules opt.options; options = []; };
 
 
@@ -482,7 +503,7 @@ rec {
       inherit priority content;
     };
 
-  mkOptionDefault = mkOverride 1001; # priority of option defaults
+  mkOptionDefault = mkOverride 1500; # priority of option defaults
   mkDefault = mkOverride 1000; # used in config sections of non-user modules to set a default
   mkForce = mkOverride 50;
   mkVMOverride = mkOverride 10; # used by ‘nixos-rebuild build-vm’
@@ -499,6 +520,8 @@ rec {
   mkBefore = mkOrder 500;
   mkAfter = mkOrder 1500;
 
+  # The default priority for things that don't have a priority specified.
+  defaultPriority = 100;
 
   # Convenient property used to transfer all definitions and their
   # properties from one option to another. This property is useful for
@@ -521,10 +544,20 @@ rec {
   #
   mkAliasDefinitions = mkAliasAndWrapDefinitions id;
   mkAliasAndWrapDefinitions = wrap: option:
-    mkMerge
-      (optional (isOption option && option.isDefined)
-        (wrap (mkMerge option.definitions)));
+    mkAliasIfDef option (wrap (mkMerge option.definitions));
 
+  # Similar to mkAliasAndWrapDefinitions but copies over the priority from the
+  # option as well.
+  #
+  # If a priority is not set, it assumes a priority of defaultPriority.
+  mkAliasAndWrapDefsWithPriority = wrap: option:
+    let
+      prio = option.highestPrio or defaultPriority;
+      defsWithPrio = map (mkOverride prio) option.definitions;
+    in mkAliasIfDef option (wrap (mkMerge defsWithPrio));
+
+  mkAliasIfDef = option:
+    mkIf (isOption option && option.isDefined);
 
   /* Compatibility. */
   fixMergeModules = modules: args: evalModules { inherit modules args; check = false; };
@@ -657,22 +690,37 @@ rec {
     use = id;
   };
 
-  doRename = { from, to, visible, warn, use }:
+  /* Like ‘mkAliasOptionModule’, but copy over the priority of the option as well. */
+  mkAliasOptionModuleWithPriority = from: to: doRename {
+    inherit from to;
+    visible = true;
+    warn = false;
+    use = id;
+    withPriority = true;
+  };
+
+  doRename = { from, to, visible, warn, use, withPriority ? false }:
+    { config, options, ... }:
     let
+      fromOpt = getAttrFromPath from options;
       toOf = attrByPath to
         (abort "Renaming error: option `${showOption to}' does not exist.");
     in
-      { config, options, ... }:
-      { options = setAttrByPath from (mkOption {
-          description = "Alias of <option>${showOption to}</option>.";
-          apply = x: use (toOf config);
-        });
-        config = {
-          warnings =
-            let opt = getAttrFromPath from options; in
-            optional (warn && opt.isDefined)
-              "The option `${showOption from}' defined in ${showFiles opt.files} has been renamed to `${showOption to}'.";
-        } // setAttrByPath to (mkAliasDefinitions (getAttrFromPath from options));
-      };
+    {
+      options = setAttrByPath from (mkOption {
+        inherit visible;
+        description = "Alias of <option>${showOption to}</option>.";
+        apply = x: use (toOf config);
+      });
+      config = mkMerge [
+        {
+          warnings = optional (warn && fromOpt.isDefined)
+            "The option `${showOption from}' defined in ${showFiles fromOpt.files} has been renamed to `${showOption to}'.";
+        }
+        (if withPriority
+          then mkAliasAndWrapDefsWithPriority (setAttrByPath to) fromOpt
+          else mkAliasAndWrapDefinitions (setAttrByPath to) fromOpt)
+      ];
+    };
 
 }

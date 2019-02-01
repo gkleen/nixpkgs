@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   name = "libpqxx-${version}";
-  version = "6.2.2";
+  version = "6.2.5";
 
   src = fetchFromGitHub {
     owner = "jtv";
     repo = "libpqxx";
     rev = version;
-    sha256 = "0f7mkl29v6d47kkdpl2gkb9xc5lnih2pq9pk3cq6nc2j6w758yp5";
+    sha256 = "15x9xlj2v66w81j90cb438qkrrcqaq4dqrvhllwyqfz4lprqnhh9";
   };
 
   nativeBuildInputs = [ gnused python2 ];
@@ -18,12 +18,12 @@ stdenv.mkDerivation rec {
     patchShebangs .
   '';
 
-  configureFlags = "--enable-shared";
+  configureFlags = [ "--enable-shared" ];
 
   meta = {
     description = "A C++ library to access PostgreSQL databases";
     homepage = http://pqxx.org/development/libpqxx/;
-    license = lib.licenses.postgresql;
+    license = lib.licenses.bsd3;
     platforms = lib.platforms.linux;
     maintainers = [ lib.maintainers.eelco ];
   };
