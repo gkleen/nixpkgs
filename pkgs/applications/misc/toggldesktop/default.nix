@@ -1,10 +1,10 @@
 { stdenv, fetchzip, buildEnv, makeDesktopItem, runCommand, writeText, pkgconfig
 , cmake, qmake, cacert, jsoncpp, libX11, libXScrnSaver, lua, openssl, poco
-, qtbase, qtwebengine, qtx11extras, sqlite }:
+, qtbase, qtwebengine, qtx11extras, sqlite, wrapQtAppsHook }:
 
 let
   name = "toggldesktop-${version}";
-  version = "7.4.231";
+  version = "7.4.1041";
 
   src = fetchzip {
     url = "https://github.com/toggl/toggldesktop/archive/v${version}.tar.gz";
@@ -89,11 +89,16 @@ let
         --replace ./../../../toggl_api.h toggl_api.h
     '';
 
+    installPhase = ''
+      mkdir -p $out/bin
+      install -m 0755 toggldesktop $out/bin
+    '';
+
     postInstall = ''
       ln -s ${cacert}/etc/ssl/certs/ca-bundle.crt $out/cacert.pem
     '';
 
-    nativeBuildInputs = [ qmake pkgconfig ];
+    nativeBuildInputs = [ qmake pkgconfig wrapQtAppsHook ];
 
     buildInputs = [
       bugsnag-qt
@@ -120,23 +125,19 @@ let
     '';
   };
 
-  toggldesktop-wrapped = runCommand "toggldesktop-wrapped" {} ''
-    mkdir -p $out/bin && ln -s ${toggldesktop}/toggldesktop $_
-  '';
-
   desktopItem = makeDesktopItem rec {
     categories = "Utility;";
     desktopName = "Toggl";
     genericName = desktopName;
     name = "toggldesktop";
-    exec = "${toggldesktop-wrapped}/bin/toggldesktop";
+    exec = "${toggldesktop}/bin/toggldesktop";
     icon = "toggldesktop";
   };
 in
 
 buildEnv {
   inherit name;
-  paths = [ desktopItem toggldesktop-icons toggldesktop-wrapped ];
+  paths = [ desktopItem toggldesktop-icons toggldesktop ];
 
   meta = with stdenv.lib; {
     description = "Client for Toggl time tracking service";
