@@ -4,7 +4,7 @@
 
 let
   name = "toggldesktop-${version}";
-  version = "7.4.1041";
+  version = "7.4.231";
 
   src = fetchzip {
     url = "https://github.com/toggl/toggldesktop/archive/v${version}.tar.gz";
@@ -78,8 +78,7 @@ let
   };
 
   toggldesktop = stdenv.mkDerivation {
-    name = "${name}-unwrapped";
-    inherit src version;
+    inherit src name version;
 
     sourceRoot = "source/src/ui/linux/TogglDesktop";
 
@@ -91,10 +90,12 @@ let
 
     installPhase = ''
       mkdir -p $out/bin
-      install -m 0755 toggldesktop $out/bin
+      install -m0755 toggldesktop $out/bin
     '';
 
-    postInstall = ''
+    postFixup = ''
+      mv $out/bin/.toggldesktop-wrapped $out
+      ln -s $out/.toggldesktop-wrapped $out/bin/.toggldesktop-wrapped
       ln -s ${cacert}/etc/ssl/certs/ca-bundle.crt $out/cacert.pem
     '';
 
