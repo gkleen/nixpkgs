@@ -1925,6 +1925,12 @@
     githubId = 126339;
     name = "Domen Kozar";
   };
+  dominikh = {
+    email = "dominik@honnef.co";
+    github = "dominikh";
+    githubId = 39825;
+    name = "Dominik Honnef";
+  };
   doronbehar = {
     email = "me@doronbehar.com";
     github = "doronbehar";
@@ -2753,6 +2759,12 @@
     github = "ggpeti";
     githubId = 3217744;
     name = "Peter Ferenczy";
+  };
+  gila = {
+    email = "jeffry.molanus@gmail.com";
+    github = "gila";
+    githubId = 15957973;
+    name = "Jeffry Molanus";
   };
   gilligan = {
     email = "tobias.pflug@gmail.com";
@@ -3762,6 +3774,12 @@
     github = "kampfschlaefer";
     name = "Arnold Krille";
   };
+  karantan = {
+    name = "Gasper Vozel";
+    email = "karantan@gmail.com";
+    github = "karantan";
+    githubId = 7062631;
+  };
   karolchmist = {
     email = "info+nix@chmist.com";
     name = "karolchmist";
@@ -3929,6 +3947,11 @@
     github = "kolaente";
     githubId = 13721712;
     name = "Konrad Langenberg";
+  };
+  kolbycrouch = {
+    email = "kjc.devel@gmail.com";
+    github = "kolbycrouch";
+    name = "Kolby Crouch";
   };
   konimex = {
     email = "herdiansyah@netc.eu";
@@ -4828,6 +4851,12 @@
     github = "mikoim";
     githubId = 3958340;
     name = "Eshin Kunishima";
+  };
+  mikesperber = {
+    email = "sperber@deinprogramm.de";
+    github = "mikesperber";
+    githubId = 1387206;
+    name = "Mike Sperber";
   };
   mildlyincompetent = {
     email = "nix@kch.dev";
@@ -6206,6 +6235,12 @@
     github = "rkoe";
     githubId = 2507744;
     name = "Roland Koebler";
+  };
+  rkrzr = {
+    email = "ops+nixpkgs@channable.com";
+    github = "rkrzr";
+    githubId = 82817;
+    name = "Robert Kreuzer";
   };
   rlupton20 = {
     email = "richard.lupton@gmail.com";
