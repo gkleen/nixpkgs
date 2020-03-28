@@ -3344,9 +3344,9 @@ let
     };
     patches = [
       (fetchpatch {
-        url = "https://patch-diff.githubusercontent.com/raw/andk/cpanpm/pull/133.diff";
+        url = "https://github.com/andk/cpanpm/commit/10da44f1757aff6971e3bc4ed38ab115e738c740.diff";
         name = "patch-YAML-modules-default-for-LoadBlessed-was-changed-to-false";
-        sha256 = "0i8648cwshzzd0b34gyfn68s1vs85d8336ggk2kl99awah1ydsfr";
+        sha256 = "0sr2nxkr1cwavpvpxsqcsryfd5fjv4fkxfihd03jzavv5awj79hp";
       })
     ];
     propagatedBuildInputs = [ ArchiveZip CPANChecksums CPANPerlReleases Expect FileHomeDir LWP LogLog4perl ModuleBuild TermReadKey YAML YAMLLibYAML YAMLSyck ];
@@ -12266,6 +12266,23 @@ let
       homepage = "https://github.com/jberger/Mojo-JWT";
       description = "JSON Web Token the Mojo way";
       license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+      maintainers = [ maintainers.sgo ];
+    };
+  };
+
+  MojoPg = buildPerlPackage {
+    pname = "Mojo-Pg";
+    version = "4.18";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/S/SR/SRI/Mojo-Pg-4.18.tar.gz";
+      sha256 = "31baacc0d6693886b3580e4b3ec6f2d053be8578809c9c1750753576bd1bda3c";
+    };
+    buildInputs = [ TestDeep ];
+    propagatedBuildInputs = [ DBDPg Mojolicious SQLAbstract ];
+    meta = {
+      homepage = "https://github.com/mojolicious/mojo-pg";
+      description = "Mojolicious <3 PostgreSQL";
+      license = stdenv.lib.licenses.artistic2;
       maintainers = [ maintainers.sgo ];
     };
   };
