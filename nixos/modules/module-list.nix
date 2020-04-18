@@ -65,6 +65,7 @@
   ./hardware/usb-wwan.nix
   ./hardware/onlykey.nix
   ./hardware/wooting.nix
+  ./hardware/uinput.nix
   ./hardware/video/amdgpu.nix
   ./hardware/video/amdgpu-pro.nix
   ./hardware/video/ati.nix
@@ -237,6 +238,7 @@
   ./services/backup/zfs-replication.nix
   ./services/backup/znapzend.nix
   ./services/cluster/hadoop/default.nix
+  ./services/cluster/k3s/default.nix
   ./services/cluster/kubernetes/addons/dns.nix
   ./services/cluster/kubernetes/addons/dashboard.nix
   ./services/cluster/kubernetes/addon-manager.nix
@@ -294,7 +296,6 @@
   ./services/desktops/deepin/deepin.nix
   ./services/desktops/dleyna-renderer.nix
   ./services/desktops/dleyna-server.nix
-  ./services/desktops/pantheon/contractor.nix
   ./services/desktops/pantheon/files.nix
   ./services/desktops/flatpak.nix
   ./services/desktops/geoclue2.nix
@@ -368,6 +369,7 @@
   ./services/hardware/thermald.nix
   ./services/hardware/undervolt.nix
   ./services/hardware/vdr.nix
+  ./services/hardware/xow.nix
   ./services/logging/SystemdJournal2Gelf.nix
   ./services/logging/awstats.nix
   ./services/logging/fluentd.nix
@@ -642,6 +644,7 @@
   ./services/networking/lldpd.nix
   ./services/networking/logmein-hamachi.nix
   ./services/networking/mailpile.nix
+  ./services/networking/magic-wormhole-mailbox-server.nix
   ./services/networking/matterbridge.nix
   ./services/networking/mjpg-streamer.nix
   ./services/networking/minidlna.nix
@@ -652,6 +655,7 @@
   ./services/networking/miredo.nix
   ./services/networking/mstpd.nix
   ./services/networking/mtprotoproxy.nix
+  ./services/networking/mullvad-vpn.nix
   ./services/networking/murmur.nix
   ./services/networking/mxisd.nix
   ./services/networking/namecoind.nix
@@ -680,6 +684,7 @@
   ./services/networking/ostinato.nix
   ./services/networking/owamp.nix
   ./services/networking/pdnsd.nix
+  ./services/networking/pixiecore.nix
   ./services/networking/polipo.nix
   ./services/networking/powerdns.nix
   ./services/networking/pdns-recursor.nix

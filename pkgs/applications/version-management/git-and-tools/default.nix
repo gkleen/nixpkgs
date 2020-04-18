@@ -30,9 +30,7 @@ let
 
   diff-so-fancy = callPackage ./diff-so-fancy { };
 
-  gh = callPackage ./gh {
-    inherit (darwin.apple_sdk.frameworks) Security;
-  };
+  gh = callPackage ./gh { };
 
   ghq = callPackage ./ghq { };
 
@@ -69,6 +67,8 @@ let
 
   # support for bugzilla
   git-bz = callPackage ./git-bz { };
+
+  git-cinnabar = callPackage ./git-cinnabar { };
 
   git-codeowners = callPackage ./git-codeowners { };
 
@@ -167,25 +167,29 @@ let
 
   gita = python3Packages.callPackage ./gita {};
 
+  gitbatch = callPackage ./gitbatch { };
+
   gitflow = callPackage ./gitflow { };
 
   gitstatus = callPackage ./gitstatus { };
 
   grv = callPackage ./grv { };
 
-  hub = callPackage ./hub {
-    inherit (darwin) Security;
-  };
+  hub = callPackage ./hub { };
 
   lab = callPackage ./lab { };
 
   lefthook = callPackage ./lefthook { };
+
+  legit = callPackage ./legit { };
 
   pass-git-helper = python3Packages.callPackage ./pass-git-helper { };
 
   pre-commit = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.pre-commit;
 
   qgit = qt5.callPackage ./qgit { };
+
+  scmpuff = callPackage ./scmpuff { };
 
   stgit = callPackage ./stgit { };
 

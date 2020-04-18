@@ -55,7 +55,7 @@ in
 
         <screen>
         <prompt># </prompt>ssh-keygen -t rsa -N "" -f /etc/secrets/initrd/ssh_host_rsa_key
-        <prompt># </prompt>ssh-keygen -t ed25519 -N "" -f /etc/secrets/initrd/ssh_host_ed_25519_key
+        <prompt># </prompt>ssh-keygen -t ed25519 -N "" -f /etc/secrets/initrd/ssh_host_ed25519_key
         </screen>
 
         <warning>
@@ -138,7 +138,7 @@ in
         assertion = cfg.hostKeys != [];
         message = ''
           You must now pre-generate the host keys for initrd SSH.
-          See the boot.inird.network.ssh.hostKeys documentation
+          See the boot.initrd.network.ssh.hostKeys documentation
           for instructions.
         '';
       }

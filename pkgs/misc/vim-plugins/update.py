@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -p nix-prefetch-git -p python3 nix -i python3
+#!nix-shell -p nix-prefetch-git -p python3 -p python3Packages.GitPython nix -i python3
 
 # format:
 # $ nix run nixpkgs.python3Packages.black -c black update.py
@@ -15,17 +15,21 @@ import json
 import os
 import subprocess
 import sys
+import time
 import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from functools import wraps
 from multiprocessing.dummy import Pool
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 from urllib.parse import urljoin, urlparse
 from tempfile import NamedTemporaryFile
+
+import git
 
 ATOM_ENTRY = "{http://www.w3.org/2005/Atom}entry"  # " vim gets confused here
 ATOM_LINK = "{http://www.w3.org/2005/Atom}link"  # "
@@ -36,17 +40,12 @@ DEFAULT_IN = ROOT.joinpath("vim-plugin-names")
 DEFAULT_OUT = ROOT.joinpath("generated.nix")
 DEPRECATED = ROOT.joinpath("deprecated.json")
 
-import time
-from functools import wraps
-
 
 def retry(ExceptionToCheck: Any, tries: int = 4, delay: float = 3, backoff: float = 2):
     """Retry calling the decorated function using an exponential backoff.
-
     http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
     original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
     (BSD licensed)
-
     :param ExceptionToCheck: the exception on which to retry
     :param tries: number of times to try (not retry) before giving up
     :param delay: initial delay between retries in seconds
@@ -74,9 +73,12 @@ def retry(ExceptionToCheck: Any, tries: int = 4, delay: float = 3, backoff: floa
 
 
 class Repo:
-    def __init__(self, owner: str, name: str, alias: str) -> None:
+    def __init__(
+        self, owner: str, name: str, branch: str, alias: Optional[str]
+    ) -> None:
         self.owner = owner
         self.name = name
+        self.branch = branch
         self.alias = alias
         self.redirect: Dict[str, str] = {}
 
@@ -90,7 +92,7 @@ class Repo:
     def has_submodules(self) -> bool:
         try:
             urllib.request.urlopen(
-                self.url("blob/master/.gitmodules"), timeout=10
+                self.url(f"blob/{self.branch}/.gitmodules"), timeout=10
             ).close()
         except urllib.error.HTTPError as e:
             if e.code == 404:
@@ -101,7 +103,7 @@ class Repo:
 
     @retry(urllib.error.URLError, tries=4, delay=3, backoff=2)
     def latest_commit(self) -> Tuple[str, datetime]:
-        commit_url = self.url("commits/master.atom")
+        commit_url = self.url(f"commits/{self.branch}.atom")
         with urllib.request.urlopen(commit_url, timeout=10) as req:
             self.check_for_redirect(commit_url, req)
             xml = req.read()
@@ -218,12 +220,16 @@ def get_current_plugins() -> List[Plugin]:
 
 
 def prefetch_plugin(
-    user: str, repo_name: str, alias: str, cache: "Cache"
+    user: str,
+    repo_name: str,
+    branch: str,
+    alias: Optional[str],
+    cache: "Optional[Cache]" = None,
 ) -> Tuple[Plugin, Dict[str, str]]:
-    repo = Repo(user, repo_name, alias)
+    repo = Repo(user, repo_name, branch, alias)
     commit, date = repo.latest_commit()
     has_submodules = repo.has_submodules()
-    cached_plugin = cache[commit]
+    cached_plugin = cache[commit] if cache else None
     if cached_plugin is not None:
         cached_plugin.name = alias or repo_name
         cached_plugin.date = date
@@ -239,6 +245,11 @@ def prefetch_plugin(
         Plugin(alias or repo_name, commit, has_submodules, sha256, date=date),
         repo.redirect,
     )
+
+
+def fetch_plugin_from_pluginline(plugin_line: str) -> Plugin:
+    plugin, _ = prefetch_plugin(*parse_plugin_line(plugin_line))
+    return plugin
 
 
 def print_download_error(plugin: str, ex: Exception):
@@ -277,17 +288,20 @@ def check_results(
         sys.exit(1)
 
 
-def parse_plugin_line(line: str) -> Tuple[str, str, Optional[str]]:
+def parse_plugin_line(line: str) -> Tuple[str, str, str, Optional[str]]:
+    branch = "master"
+    alias = None
     name, repo = line.split("/")
-    try:
+    if " as " in repo:
         repo, alias = repo.split(" as ")
-        return (name, repo, alias.strip())
-    except ValueError:
-        # no alias defined
-        return (name, repo.strip(), None)
+        alias = alias.strip()
+    if "@" in repo:
+        repo, branch = repo.split("@")
+
+    return (name.strip(), repo.strip(), branch.strip(), alias)
 
 
-def load_plugin_spec(plugin_file: str) -> List[Tuple[str, str, Optional[str]]]:
+def load_plugin_spec(plugin_file: str) -> List[Tuple[str, str, str, Optional[str]]]:
     plugins = []
     with open(plugin_file) as f:
         for line in f:
@@ -354,12 +368,12 @@ class Cache:
 
 
 def prefetch(
-    args: Tuple[str, str, str], cache: Cache
+    args: Tuple[str, str, str, Optional[str]], cache: Cache
 ) -> Tuple[str, str, Union[Exception, Plugin], dict]:
-    assert len(args) == 3
-    owner, repo, alias = args
+    assert len(args) == 4
+    owner, repo, branch, alias = args
     try:
-        plugin, redirect = prefetch_plugin(owner, repo, alias, cache)
+        plugin, redirect = prefetch_plugin(owner, repo, branch, alias, cache)
         cache[plugin.commit] = plugin
         return (owner, repo, plugin, redirect)
     except Exception as e:
@@ -379,7 +393,6 @@ def generate_nix(plugins: List[Tuple[str, str, Plugin]], outfile: str):
         f.write(
             """
 { lib, buildVimPluginFrom2Nix, fetchFromGitHub, overrides ? (self: super: {}) }:
-
 let
   packages = ( self:
 {"""
@@ -413,9 +426,13 @@ in lib.fix' (lib.extends overrides packages)
     print(f"updated {outfile}")
 
 
-def rewrite_input(input_file: Path, output_file: Path, redirects: dict):
+def rewrite_input(
+    input_file: Path, redirects: Dict[str, str] = None, append: Tuple = ()
+):
     with open(input_file, "r") as f:
         lines = f.readlines()
+
+    lines.extend(append)
 
     if redirects:
         lines = [redirects.get(line, line) for line in lines]
@@ -424,31 +441,15 @@ def rewrite_input(input_file: Path, output_file: Path, redirects: dict):
         with open(DEPRECATED, "r") as f:
             deprecations = json.load(f)
         for old, new in redirects.items():
-            old_name = old.split("/")[1].split(" ")[0].strip("\n")
-            new_name = new.split("/")[1].split(" ")[0].strip("\n")
-            if old_name != new_name:
-                deprecations[old_name] = {
-                    "new": new_name,
+            old_plugin = fetch_plugin_from_pluginline(old)
+            new_plugin = fetch_plugin_from_pluginline(new)
+            if old_plugin.normalized_name != new_plugin.normalized_name:
+                deprecations[old_plugin.normalized_name] = {
+                    "new": new_plugin.normalized_name,
                     "date": cur_date_iso,
                 }
         with open(DEPRECATED, "w") as f:
             json.dump(deprecations, f, indent=4, sort_keys=True)
-
-        print(
-            f"""\
-Redirects have been detected and {input_file} has been updated. Please take the
-following steps:
-    1. Go ahead and commit just the updated expressions as you intended to do:
-            git add {output_file}
-            git commit -m "vimPlugins: Update"
-    2. Run this script again so these changes will be reflected in the
-    generated expressions:
-            ./update.py
-    3. Commit {input_file} along with deprecations and generated expressions:
-            git add {output_file} {input_file} {DEPRECATED}
-            git commit -m "vimPlugins: Update redirects"
-        """
-        )
 
     lines = sorted(lines, key=str.casefold)
 
@@ -464,6 +465,13 @@ def parse_args():
         )
     )
     parser.add_argument(
+        "--add",
+        dest="add_plugins",
+        default=[],
+        action="append",
+        help="Plugin to add to vimPlugins from Github in the form owner/repo",
+    )
+    parser.add_argument(
         "--input-names",
         "-i",
         dest="input_file",
@@ -477,32 +485,77 @@ def parse_args():
         default=DEFAULT_OUT,
         help="Filename to save generated nix code",
     )
-
+    parser.add_argument(
+        "--proc",
+        "-p",
+        dest="proc",
+        type=int,
+        default=30,
+        help="Number of concurrent processes to spawn.",
+    )
     return parser.parse_args()
 
 
-def main() -> None:
+def commit(repo: git.Repo, message: str, files: List[Path]) -> None:
+    files_staged = repo.index.add([str(f.resolve()) for f in files])
 
+    if files_staged:
+        print(f'committing to nixpkgs "{message}"')
+        repo.index.commit(message)
+    else:
+        print("no changes in working tree to commit")
+
+
+def get_update(input_file: str, outfile: str, proc: int):
+    cache: Cache = Cache(get_current_plugins())
+    _prefetch = functools.partial(prefetch, cache=cache)
+
+    def update() -> dict:
+        plugin_names = load_plugin_spec(input_file)
+
+        try:
+            pool = Pool(processes=proc)
+            results = pool.map(_prefetch, plugin_names)
+        finally:
+            cache.store()
+
+        plugins, redirects = check_results(results)
+
+        generate_nix(plugins, outfile)
+
+        return redirects
+
+    return update
+
+
+def main():
     args = parse_args()
-    plugin_names = load_plugin_spec(args.input_file)
-    current_plugins = get_current_plugins()
-    cache = Cache(current_plugins)
+    nixpkgs_repo = git.Repo(ROOT, search_parent_directories=True)
+    update = get_update(args.input_file, args.outfile, args.proc)
 
-    prefetch_with_cache = functools.partial(prefetch, cache=cache)
+    redirects = update()
+    rewrite_input(args.input_file, redirects)
+    commit(nixpkgs_repo, "vimPlugins: update", [args.outfile])
 
-    try:
-        # synchronous variant for debugging
-        # results = list(map(prefetch_with_cache, plugin_names))
-        pool = Pool(processes=30)
-        results = pool.map(prefetch_with_cache, plugin_names)
-    finally:
-        cache.store()
+    if redirects:
+        update()
+        commit(
+            nixpkgs_repo,
+            "vimPlugins: resolve github repository redirects",
+            [args.outfile, args.input_file, DEPRECATED],
+        )
 
-    plugins, redirects = check_results(results)
-
-    generate_nix(plugins, args.outfile)
-
-    rewrite_input(args.input_file, args.outfile, redirects)
+    for plugin_line in args.add_plugins:
+        rewrite_input(args.input_file, append=(plugin_line + "\n",))
+        update()
+        plugin = fetch_plugin_from_pluginline(plugin_line)
+        commit(
+            nixpkgs_repo,
+            "vimPlugins.{name}: init at {version}".format(
+                name=plugin.normalized_name, version=plugin.version
+            ),
+            [args.outfile, args.input_file],
+        )
 
 
 if __name__ == "__main__":
