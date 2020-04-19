@@ -247,7 +247,7 @@ in
           "--server-settings=${serverSettingsFile}"
           (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
           (optionalString cfg.dynamicMods "--mod-directory=${stateDir}/mods")
-          (optionalString (cfg.whitelist != null) "--server-whitelist=${whitelistFile}")
+          (optionalString (cfg.whitelist != null) "--server-whitelist=${whitelistFile} --use-server-whitelist=true")
         ];
 
         # Sandboxing
