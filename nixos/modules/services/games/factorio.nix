@@ -196,22 +196,41 @@ in
           Server whitelist
         '';
       };
+      dynamicMods = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Manage mods in state dir
+        '';
+      };
     };
   };
 
   config = mkIf cfg.enable {
+    assertions = [
+      { assertion = !cfg.dynamicMods || cfg.mods == [];
+        message = ''
+          dynamicMods conflicts with mods
+        '';
+      }
+    ];
+    
     systemd.services.factorio = {
       description   = "Factorio headless server";
       wantedBy      = [ "multi-user.target" ];
       after         = [ "network.target" ];
 
-      preStart = toString [
-        "test -e ${stateDir}/saves/${cfg.saveName}.zip"
-        "||"
-        "${cfg.package}/bin/factorio"
-          "--config=${cfg.configFile}"
-          "--create=${mkSavePath cfg.saveName}"
-          (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
+      preStart = concatStringsSep " " [
+        (optionalString cfg.dynamicMods "mkdir -p ${stateDir}/mods")
+        (toString [
+          "test -e ${stateDir}/saves/${cfg.saveName}.zip"
+          "||"
+          "${cfg.package}/bin/factorio"
+            "--config=${cfg.configFile}"
+            "--create=${mkSavePath cfg.saveName}"
+            (optionalString cfg.dynamicMods "--mod-directory=${stateDir}/mods")
+            (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
+        )
       ];
 
       serviceConfig = {
@@ -227,6 +246,7 @@ in
           "--start-server=${mkSavePath cfg.saveName}"
           "--server-settings=${serverSettingsFile}"
           (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
+          (optionalString cfg.dynamicMods "--mod-directory=${stateDir}/mods")
           (optionalString (cfg.whitelist != null) "--server-whitelist=${whitelistFile}")
         ];
 
