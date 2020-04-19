@@ -57,7 +57,7 @@ let
       };
       headless = {
         stable        = bdist { sha256 = "1pr39nm23fj83jy272798gbl9003rgi4vgsi33f2iw3dk3x15kls"; version = "0.17.79"; };
-        experimental  = bdist { sha256 = "1pr39nm23fj83jy272798gbl9003rgi4vgsi33f2iw3dk3x15kls"; version = "0.17.79"; };
+        experimental  = bdist { sha256 = "1ni71p60cz1x07gj5syyamyk1k4d4xfsvdmd4p334w556ka9mvaf"; version = "0.18.18"; };
       };
       demo = {
         stable        = bdist { sha256 = "07qknasaqvzl9vy1fglm7xmdi7ynhmslrb0a209fhbfs0s7qqlgi"; version = "0.17.79"; };
