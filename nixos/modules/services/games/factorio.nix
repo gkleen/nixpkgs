@@ -39,6 +39,7 @@ let
   } // cfg.extraSettings;
   serverSettingsFile = pkgs.writeText "server-settings.json" (builtins.toJSON (filterAttrsRecursive (n: v: v != null) serverSettings));
   modDir = pkgs.factorio-utils.mkModDirDrv cfg.mods;
+  whitelistFile = pkgs.writeText "whitelist.json" (builtins.toJSON cfg.whitelist);
 in
 {
   options = {
@@ -188,6 +189,13 @@ in
           Autosave interval in minutes.
         '';
       };
+      whitelist = mkOption {
+        type = types.nullOr (types.listOf types.str);
+        default = null;
+        description = ''
+          Server whitelist
+        '';
+      };
     };
   };
 
@@ -219,6 +227,7 @@ in
           "--start-server=${mkSavePath cfg.saveName}"
           "--server-settings=${serverSettingsFile}"
           (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
+          (optionalString (cfg.whitelist != null) "--server-whitelist=${whitelistFile}")
         ];
 
         # Sandboxing
