@@ -220,7 +220,7 @@ in
       wantedBy      = [ "multi-user.target" ];
       after         = [ "network.target" ];
 
-      preStart = concatStringsSep " " [
+      preStart = concatStringsSep "\n" [
         (optionalString cfg.dynamicMods "mkdir -p ${stateDir}/mods")
         (toString [
           "test -e ${stateDir}/saves/${cfg.saveName}.zip"
@@ -238,7 +238,7 @@ in
         KillSignal = "SIGINT";
         DynamicUser = true;
         StateDirectory = cfg.stateDirName;
-        UMask = "0007";
+        UMask = "0077";
         ExecStart = toString [
           "${cfg.package}/bin/factorio"
           "--config=${cfg.configFile}"
