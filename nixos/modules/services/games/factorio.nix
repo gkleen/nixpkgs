@@ -230,7 +230,7 @@ in
             "--create=${mkSavePath cfg.saveName}"
             (optionalString cfg.dynamicMods "--mod-directory=${stateDir}/mods")
             (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
-        )
+        ])
       ];
 
       serviceConfig = {
