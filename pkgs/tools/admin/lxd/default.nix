@@ -5,17 +5,18 @@
 , writeShellScriptBin, apparmor-profiles, apparmor-parser
 , criu
 , bash
+, installShellFiles
 }:
 
 buildGoPackage rec {
   pname = "lxd";
-  version = "4.0.0";
+  version = "4.0.1";
 
   goPackagePath = "github.com/lxc/lxd";
 
   src = fetchurl {
     url = "https://github.com/lxc/lxd/releases/download/${pname}-${version}/${pname}-${version}.tar.gz";
-    sha256 = "00kydp6aysggng9a7m0q3zj3591yk6jgcibbqxx4ki20pd4vmqnb";
+    sha256 = "0sxkyjayn7yyiy9kvbdlpkl58lwsl2rhlxnncg628f2kad2zgkdx";
   };
 
   preBuild = ''
@@ -39,11 +40,10 @@ buildGoPackage rec {
       '')
     ]}
 
-    mkdir -p "$bin/share/bash-completion/completions/"
-    cp -av go/src/github.com/lxc/lxd/scripts/bash/lxd-client "$bin/share/bash-completion/completions/lxc"
+    installShellCompletion --bash go/src/github.com/lxc/lxd/scripts/bash/lxd-client
   '';
 
-  nativeBuildInputs = [ pkgconfig makeWrapper ];
+  nativeBuildInputs = [ installShellFiles pkgconfig makeWrapper ];
   buildInputs = [ lxc acl libcap libco-canonical.dev dqlite.dev
                   raft-canonical.dev sqlite-replication udev.dev ];
 

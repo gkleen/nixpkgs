@@ -45,11 +45,6 @@ let
 
     async_kernel_p4 = callPackage ../development/ocaml-modules/async_kernel { };
 
-    async_shell =
-      if lib.versionOlder "4.03" ocaml.version
-      then janeStreet.async_shell
-      else callPackage ../development/ocaml-modules/async_shell { };
-
     async_unix_p4 = callPackage ../development/ocaml-modules/async_unix { };
 
     async_p4 =
@@ -74,6 +69,8 @@ let
     bigarray-compat = callPackage ../development/ocaml-modules/bigarray-compat { };
 
     bigstringaf = callPackage ../development/ocaml-modules/bigstringaf { };
+
+    bigstring = callPackage ../development/ocaml-modules/bigstring { };
 
     biocaml = callPackage ../development/ocaml-modules/biocaml { };
 
@@ -233,6 +230,8 @@ let
     dune = callPackage ../development/tools/ocaml/dune { };
 
     dune_2 = callPackage ../development/tools/ocaml/dune/2.nix { };
+
+    dune-build-info = callPackage ../development/ocaml-modules/dune-build-info { };
 
     dune-configurator = callPackage ../development/ocaml-modules/dune-configurator { };
 
@@ -560,6 +559,10 @@ let
 
     mirage-stack = callPackage ../development/ocaml-modules/mirage-stack { };
 
+    mirage-time = callPackage ../development/ocaml-modules/mirage-time { };
+
+    mirage-time-unix = callPackage ../development/ocaml-modules/mirage-time/unix.nix { };
+
     mlgmp =  callPackage ../development/ocaml-modules/mlgmp { };
 
     mlgmpidl =  callPackage ../development/ocaml-modules/mlgmpidl { };
@@ -589,8 +592,6 @@ let
     parmap = callPackage ../development/ocaml-modules/parmap { };
 
     comparelib = callPackage ../development/ocaml-modules/comparelib { };
-
-    core_extended_p4 = callPackage ../development/ocaml-modules/core_extended { };
 
     core_kernel_p4 = callPackage ../development/ocaml-modules/core_kernel { };
 
@@ -765,9 +766,7 @@ let
 
     textutils_p4 = callPackage ../development/ocaml-modules/textutils { };
 
-    tls = callPackage ../development/ocaml-modules/tls {
-      lwt = ocaml_lwt;
-    };
+    tls = callPackage ../development/ocaml-modules/tls { };
 
     type_conv_108_08_00 = callPackage ../development/ocaml-modules/type_conv/108.08.00.nix { };
     type_conv_109_60_01 = callPackage ../development/ocaml-modules/type_conv/109.60.01.nix { };
@@ -925,16 +924,9 @@ let
     uucp = callPackage ../development/ocaml-modules/uucp { };
     uunf = callPackage ../development/ocaml-modules/uunf { };
 
-    uri =
-      if lib.versionAtLeast ocaml.version "4.3"
-      then callPackage ../development/ocaml-modules/uri { }
-      else callPackage ../development/ocaml-modules/uri/legacy.nix { };
+    uri = callPackage ../development/ocaml-modules/uri { };
 
     uri-sexp = callPackage ../development/ocaml-modules/uri/sexp.nix { };
-
-    uri_p4 = callPackage ../development/ocaml-modules/uri/legacy.nix {
-      legacyVersion = true;
-    };
 
     uuseg = callPackage ../development/ocaml-modules/uuseg { };
     uutf = callPackage ../development/ocaml-modules/uutf { };
@@ -978,12 +970,20 @@ let
     # Jane Street
 
     janePackage =
-      if lib.versionOlder "4.07" ocaml.version
+      if lib.versionOlder "4.08" ocaml.version
+      then callPackage ../development/ocaml-modules/janestreet/janePackage_0_13.nix {}
+      else if lib.versionOlder "4.07" ocaml.version
       then callPackage ../development/ocaml-modules/janestreet/janePackage_0_12.nix {}
       else callPackage ../development/ocaml-modules/janestreet/janePackage.nix {};
 
     janeStreet =
-    if lib.versionOlder "4.07" ocaml.version
+    if lib.versionOlder "4.08" ocaml.version
+    then import ../development/ocaml-modules/janestreet/0.13.nix {
+      inherit ctypes janePackage num octavius re;
+      inherit (pkgs) openssl;
+      ppxlib = ppxlib.override { version = "0.12.0"; };
+    }
+    else if lib.versionOlder "4.07" ocaml.version
     then import ../development/ocaml-modules/janestreet/0.12.nix {
       inherit ctypes janePackage num octavius ppxlib re;
       inherit (pkgs) openssl;
@@ -1192,13 +1192,6 @@ let
       then callPackage ../development/ocaml-modules/janestreet/textutils.nix {}
       else textutils_p4;
 
-    core_extended =
-      if lib.versionOlder "4.03" ocaml.version
-      then janeStreet.core_extended
-      else if lib.versionOlder "4.02" ocaml.version
-      then callPackage ../development/ocaml-modules/janestreet/core-extended.nix {}
-      else core_extended_p4;
-
     async_kernel =
       if lib.versionOlder "4.03" ocaml.version
       then janeStreet.async_kernel
@@ -1231,11 +1224,6 @@ let
       else if lib.versionOlder "4.02" ocaml.version
       then callPackage ../development/ocaml-modules/janestreet/async.nix {}
       else async_p4;
-
-    async_ssl =
-      if lib.versionOlder "4.03" ocaml.version
-      then janeStreet.async_ssl
-      else callPackage ../development/ocaml-modules/janestreet/async_ssl.nix { };
 
     # Apps / from all-packages
 

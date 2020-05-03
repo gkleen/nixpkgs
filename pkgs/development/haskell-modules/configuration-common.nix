@@ -592,6 +592,12 @@ self: super: {
   elm-server = markBroken super.elm-server;
   elm-yesod = markBroken super.elm-yesod;
 
+  # https://github.com/Euterpea/Euterpea2/issues/40
+  Euterpea = appendPatch super.Euterpea (pkgs.fetchpatch {
+    url = "https://github.com/Euterpea/Euterpea2/pull/38.patch";
+    sha256 = "13g462qmj8c7if797gnyvf8h0cddmm3xy0pjldw48w8f8sr4qsj0";
+  });
+
   # https://github.com/athanclark/sets/issues/2
   sets = dontCheck super.sets;
 
@@ -1055,45 +1061,14 @@ self: super: {
   # https://github.com/haskell-hvr/hgettext/issues/14
   hgettext = doJailbreak super.hgettext;
 
-  # 2.23.0 supports GHC 8.x and up
-  haddock = super.haddock_2_22_0;
-  # haddock-api-2.22.0: Break out of “QuickCheck ==2.11.*, hspec >=2.4.4 && <2.6”
-  haddock-api = dontHaddock (doJailbreak (super.haddock-api_2_22_0));
-
   # The test suite is broken. Break out of "base-compat >=0.9.3 && <0.10, hspec >=2.4.4 && <2.5".
   haddock-library = doJailbreak (dontCheck super.haddock-library);
+  haddock-library_1_9_0 = doJailbreak (dontCheck super.haddock-library_1_9_0);
 
   # Generate shell completion.
   cabal2nix = generateOptparseApplicativeCompletion "cabal2nix" super.cabal2nix;
-
-  stack =
-    let
-      stackWithOverrides =
-        super.stack.override {
-          # stack-2.1.3.1 requires pantry-0.2.0.0.
-          pantry = self.pantry_0_2_0_0;
-        };
-    in
-    generateOptparseApplicativeCompletion
-      "stack"
-      (appendPatches stackWithOverrides [
-        # This PR fixes stack up to be able to build with Cabal-3.  This patch
-        # can probably be dropped when the next stack release is made after
-        # 2.1.3.1.
-        (pkgs.fetchpatch {
-          url = "https://github.com/commercialhaskell/stack/pull/5156.diff";
-          sha256 = "0knk6f9fh1b4fxkhvx5gfrwclal4vi2va4zy34gpmwnjr7knf42y";
-          excludes = [
-            "snapshot-lts-12.yaml"
-            "snapshot-nightly.yaml"
-            "snapshot.yaml"
-          ];
-        })
-        # This patch fixes stack up to be able to build various GHC-8.8 changes.
-        # This can hopefully be dropped when the next stack release is made
-        # after 2.1.3.1 (assuming the next stack release uses GHC-8.8).
-        ./patches/stack-ghc882-support.patch
-      ]);
+  stack = generateOptparseApplicativeCompletion "stack" (super.stack.overrideScope (self: super: { http-download = self.http-download_0_2_0_0; }));
+  http-download_0_2_0_0 = dontCheck super.http-download_0_2_0_0;
 
   # musl fixes
   # dontCheck: use of non-standard strptime "%s" which musl doesn't support; only used in test
@@ -1449,11 +1424,8 @@ self: super: {
   cryptonite = dontCheck super.cryptonite;
 
   # The test suite depends on an impure cabal-install installation in
-  # $HOME, which we don't have in our build sandbox, and it is keeping
-  # up with the most recent Cabal version.
-  cabal-install-parsers = dontCheck (super.cabal-install-parsers.overrideScope (self: super: {
-    Cabal = self.Cabal_3_2_0_0;
-  }));
+  # $HOME, which we don't have in our build sandbox.
+  cabal-install-parsers = dontCheck super.cabal-install-parsers;
 
   # haskell-ci-0.8 needs cabal-install-parsers ==0.1, but we have 0.2.
   haskell-ci = doJailbreak super.haskell-ci;
@@ -1499,10 +1471,21 @@ self: super: {
     polysemy = self.polysemy_1_3_0_0;
   };
 
-  # Fixed at head, but hasn't cut a release in awhile.
-  darcs = doJailbreak super.darcs;
-
   # Test suite requires running a database server. Testing is done upstream.
   hasql-pool = dontCheck super.hasql-pool;
+
+  # This bumps optparse-applicative to <0.16 in the cabal file, as otherwise
+  # the version bounds are not satisfied.  This can be removed if the PR at
+  # https://github.com/ananthakumaran/webify/pull/27 is merged and a new
+  # release of webify is published.
+  webify = appendPatch super.webify (pkgs.fetchpatch {
+    url = "https://github.com/ananthakumaran/webify/pull/27/commits/6d653e7bdc1ffda75ead46851b5db45e87cb2aa0.patch";
+    sha256 = "sha256:0xbfhzhzg94b4r5qy5dg1c40liswwpqarrc2chcwgfbfnrmwkfc2";
+  });
+
+  # Depends on selective >= 0.4, but the default of selective is 0.3
+  headed-megaparsec = super.headed-megaparsec.override {
+    selective = self.selective_0_4_1;
+  };
 
 } // import ./configuration-tensorflow.nix {inherit pkgs haskellLib;} self super

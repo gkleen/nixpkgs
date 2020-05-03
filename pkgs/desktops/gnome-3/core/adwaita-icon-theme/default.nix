@@ -17,6 +17,8 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ pkgconfig intltool iconnamingutils gtk3 ];
 
+  dontDropIconThemeCache = true;
+
   # remove a tree of dirs with no files within
   postInstall = '' rm -rf "$out/locale" '';
 
@@ -29,6 +31,6 @@ stdenv.mkDerivation rec {
 
   meta = with stdenv.lib; {
     platforms = with platforms; linux ++ darwin;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
   };
 }

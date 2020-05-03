@@ -9,17 +9,18 @@
 , libseccomp
 , systemd
 , go-md2man
+, nixosTests
 }:
 
 buildGoPackage rec {
   pname = "podman";
-  version = "1.9.0";
+  version = "1.9.1";
 
   src = fetchFromGitHub {
     owner = "containers";
     repo = "libpod";
     rev = "v${version}";
-    sha256 = "19y48lpf7pvw5f5pzpknn92rq9xwbrpvi8mj7mc4dby6skqadrk4";
+    sha256 = "0dr5vd52fnjwx3zn2nj2nlvkbvh5bg579nf3qw8swrn8i1jwxd6j";
   };
 
   goPackagePath = "github.com/containers/libpod";
@@ -44,6 +45,8 @@ buildGoPackage rec {
     installShellCompletion --zsh completions/zsh/_podman
     MANDIR=$man/share/man make install.man
   '';
+
+  passthru.tests.podman = nixosTests.podman;
 
   meta = with stdenv.lib; {
     homepage = "https://podman.io/";
