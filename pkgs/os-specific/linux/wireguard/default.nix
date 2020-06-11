@@ -7,11 +7,11 @@ assert stdenv.lib.versionOlder kernel.version "5.6";
 
 stdenv.mkDerivation rec {
   pname = "wireguard";
-  version = "1.0.20200429";
+  version = "1.0.20200520";
 
   src = fetchzip {
     url = "https://git.zx2c4.com/wireguard-linux-compat/snapshot/wireguard-linux-compat-${version}.tar.xz";
-    sha256 = "161srq06qa6ag2lycqz19mfms4ha2pmwn778jhvi96729rmivjkd";
+    sha256 = "1zggpm0zh6m30b9mchj3bg3z721k346r5m5a130inp779s4xm0sm";
   };
 
   hardeningDisable = [ "pic" ];

@@ -5,11 +5,11 @@
 
 stdenv.mkDerivation rec {
   pname = "gnome-tetravex";
-  version = "3.36.0";
+  version = "3.36.3";
 
   src = fetchurl {
     url = "mirror://gnome/sources/gnome-tetravex/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "1xbd0flh77v3x0dh4dsfspykwb6rwvga7kqwn1fq7gk421mq6n52";
+    sha256 = "0y1kc9j740088ffj4rd49w4f2pkn8w6paids5g1dv609sfpzyips";
   };
 
   passthru = {

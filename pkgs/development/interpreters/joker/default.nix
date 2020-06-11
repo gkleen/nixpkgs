@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "joker";
-  version = "0.15.0";
+  version = "0.15.4";
 
   src = fetchFromGitHub {
     rev = "v${version}";
     owner = "candid82";
     repo = "joker";
-    sha256 = "03lbvxmkn0rr7yv7kj6c4dh4zayiwbhrkqbz2m22dw568rjbp8az";
+    sha256 = "1ad6cdqadd1zs9zh85zyhdiiv6ir28k28w034vzsx5zaipvy4kml";
   };
 
-  modSha256 = "1mylgim9nm0v5wybgzi74nqzmvzwzws0027wzl86dbj5id83ab9v";
+  vendorSha256 = "031ban30kx84r54fj9aq96pwkz9nqh4p9yzs4l8i1wqmy52rldvl";
 
   preBuild = ''
     go generate ./...

@@ -2,20 +2,20 @@
 
 buildGoPackage rec {
   pname = "rclone";
-  version = "1.51.0";
+  version = "1.52.0";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "v${version}";
-    sha256 = "0z4kaq6wnj5dgl52g7f86phxlvnk5pbpda7prgh3hahpyhxj0z7d";
+    sha256 = "0v0f3pv8qgk8ggrhm4p9brra1ppj53b51jhgh5xi0rhgpxss0d6r";
   };
 
   goPackagePath = "github.com/rclone/rclone";
 
   subPackages = [ "." ];
 
-  outputs = [ "bin" "out" "man" ];
+  outputs = [ "out" "man" ];
 
   nativeBuildInputs = [ installShellFiles ];
 
@@ -23,12 +23,12 @@ buildGoPackage rec {
     let
       rcloneBin =
         if stdenv.buildPlatform == stdenv.hostPlatform
-        then "$bin"
+        then "$out"
         else stdenv.lib.getBin buildPackages.rclone;
     in
       ''
         installManPage $src/rclone.1
-        for shell in bash zsh; do
+        for shell in bash zsh fish; do
           ${rcloneBin}/bin/rclone genautocomplete $shell rclone.$shell
           installShellCompletion rclone.$shell
         done

@@ -30,18 +30,20 @@ let
 
 in buildPythonApplication rec {
   pname = "xpra";
-  version = "3.0.8";
+  version = "4.0.2";
 
   src = fetchurl {
     url = "https://xpra.org/src/${pname}-${version}.tar.xz";
-    sha256 = "0d78bn7s03nwnyc4ryznxaivbg55kvsb26q75p8747j3562s9p2b";
+    sha256 = "1cs39jzi59hkl421xmhi549ndmdfzkg0ap45f4nlsn9zr9zwmp3x";
   };
 
   patches = [
     (substituteAll {
       src = ./fix-paths.patch;
       inherit (xorg) xkeyboardconfig;
+      inherit libfakeXinerama;
     })
+    ./fix-41106.patch
   ];
 
   postPatch = ''
@@ -83,7 +85,6 @@ in buildPythonApplication rec {
     "--with-Xdummy"
     "--without-strict"
     "--with-gtk3"
-    "--without-gtk2"
     # Override these, setup.py checks for headers in /usr/* paths
     "--with-pam"
     "--with-vsock"

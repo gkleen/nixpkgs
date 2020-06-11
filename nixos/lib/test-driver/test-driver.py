@@ -143,7 +143,7 @@ class Logger:
         self.logfile = os.environ.get("LOGFILE", "/dev/null")
         self.logfile_handle = codecs.open(self.logfile, "wb")
         self.xml = XMLGenerator(self.logfile_handle, encoding="utf-8")
-        self.queue: "Queue[Dict[str, str]]" = Queue(1000)
+        self.queue: "Queue[Dict[str, str]]" = Queue()
 
         self.xml.startDocument()
         self.xml.startElement("logfile", attrs={})
@@ -369,7 +369,7 @@ class Machine:
             q = q.replace("'", "\\'")
             return self.execute(
                 (
-                    "su -l {} -c "
+                    "su -l {} --shell /bin/sh -c "
                     "$'XDG_RUNTIME_DIR=/run/user/`id -u` "
                     "systemctl --user {}'"
                 ).format(user, q)
@@ -391,11 +391,11 @@ class Machine:
     def execute(self, command: str) -> Tuple[int, str]:
         self.connect()
 
-        out_command = "( {} ); echo '|!EOF' $?\n".format(command)
+        out_command = "( {} ); echo '|!=EOF' $?\n".format(command)
         self.shell.send(out_command.encode())
 
         output = ""
-        status_code_pattern = re.compile(r"(.*)\|\!EOF\s+(\d+)")
+        status_code_pattern = re.compile(r"(.*)\|\!=EOF\s+(\d+)")
 
         while True:
             chunk = self.shell.recv(4096).decode(errors="ignore")
@@ -598,11 +598,8 @@ class Machine:
                 shutil.copytree(host_src, host_intermediate)
             else:
                 shutil.copy(host_src, host_intermediate)
-            self.succeed("sync")
             self.succeed(make_command(["mkdir", "-p", vm_target.parent]))
             self.succeed(make_command(["cp", "-r", vm_intermediate, vm_target]))
-        # Make sure the cleanup is synced into VM
-        self.succeed("sync")
 
     def copy_from_vm(self, source: str, target_dir: str = "") -> None:
         """Copy a file from the VM (specified by an in-VM source path) to a path
@@ -620,7 +617,6 @@ class Machine:
             # Copy the file to the shared directory inside VM
             self.succeed(make_command(["mkdir", "-p", vm_shared_temp]))
             self.succeed(make_command(["cp", "-r", vm_src, vm_intermediate]))
-            self.succeed("sync")
             abs_target = out_dir / target_dir / vm_src.name
             abs_target.parent.mkdir(exist_ok=True, parents=True)
             # Copy the file from the shared directory outside VM
@@ -628,8 +624,6 @@ class Machine:
                 shutil.copytree(intermediate, abs_target)
             else:
                 shutil.copy(intermediate, abs_target)
-        # Make sure the cleanup is synced into VM
-        self.succeed("sync")
 
     def dump_tty_contents(self, tty: str) -> None:
         """Debugging: Dump the contents of the TTY<n>

@@ -30,13 +30,13 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "gnome-music";
-  version = "3.36.1";
+  version = "3.36.3";
 
   format = "other";
 
   src = fetchurl {
     url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "0cn33r9v2raizq1b8s7s0kb506y91iarc0knm0sljcsqs4qgd03v";
+    sha256 = "0ds225fd0zl0zpjc2wmzg4fwivqbqsyiqpnf9pzlqpwrz10d5y2l";
   };
 
   nativeBuildInputs = [
@@ -92,6 +92,9 @@ python3.pkgs.buildPythonApplication rec {
   '';
 
   doCheck = false;
+
+  # handle setup hooks better
+  strictDeps = false;
 
   passthru = {
     updateScript = gnome3.updateScript {

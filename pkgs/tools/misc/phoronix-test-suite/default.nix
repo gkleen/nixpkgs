@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "phoronix-test-suite";
-  version = "9.4.1";
+  version = "9.6.1";
 
   src = fetchurl {
     url = "https://phoronix-test-suite.com/releases/${pname}-${version}.tar.gz";
-    sha256 = "1c33c8aihsfdxaqkwy4isrvmjam5j5rdz98vv2apy73638vx3q04";
+    sha256 = "1qnci0bipzq68mwfgmm7kcxjxcpfdrqf705am2jsj1mfd82y7yla";
   };
 
   buildInputs = [ php ];

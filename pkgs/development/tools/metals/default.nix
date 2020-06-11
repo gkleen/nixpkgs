@@ -2,7 +2,7 @@
 
 let
   baseName = "metals";
-  version = "0.8.4";
+  version = "0.9.0";
   deps = stdenv.mkDerivation {
     name = "${baseName}-deps-${version}";
     buildCommand = ''
@@ -15,7 +15,7 @@ let
     '';
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash     = "1r8aff082m3kh6wy5diyvq8bzg5x4dp1da9sfz223ii0kc1yp6w5";
+    outputHash     = "116q2jzqlmdhkqvjg31b9ib8w1k7rlr8gmjcr7z32idpn16hqg59";
   };
 in
 stdenv.mkDerivation rec {
@@ -31,6 +31,13 @@ stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/bin
 
+    # This variant is not targeted at any particular client, clients are
+    # expected to declare their supported features in initialization options.
+    makeWrapper ${jre}/bin/java $out/bin/metals \
+      --prefix PATH : ${lib.makeBinPath [ jdk ]} \
+      --add-flags "${extraJavaOpts} -cp $CLASSPATH scala.meta.metals.Main"
+
+    # Further variants targeted at clients with featuresets pre-set.
     makeWrapper ${jre}/bin/java $out/bin/metals-emacs \
       --prefix PATH : ${lib.makeBinPath [ jdk ]} \
       --add-flags "${extraJavaOpts} -Dmetals.client=emacs -cp $CLASSPATH scala.meta.metals.Main"

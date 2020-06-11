@@ -3114,6 +3114,19 @@ let
     };
   };
 
+  ConfigProperties = buildPerlPackage {
+    pname = "Config-Properties";
+    version = "1.80";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/S/SA/SALVA/Config-Properties-1.80.tar.gz";
+      sha256 = "5d04395be7e14e970a03ea952fb7629ae304d97c031f90cc1c29bd0a6a62fc40";
+    };
+    meta = {
+      description = "Read and write property files";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
   ConfigSimple = buildPerlPackage {
     pname = "Config-Simple";
     version = "4.58";
@@ -3221,6 +3234,19 @@ let
       description = "Encoding and decoding of base32 strings";
       license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
       maintainers = [ maintainers.sgo ];
+    };
+  };
+
+  ConvertBencode = buildPerlPackage rec {
+    pname = "Convert-Bencode";
+    version = "1.03";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/O/OR/ORCLEV/${pname}-${version}.tar.gz";
+      sha256 = "0v2ywj18px67mg97xnrdq9mnlzgqvj92pr2g47g9c9b9cpw3v7r6";
+    };
+    meta = {
+      description = "Functions for converting to/from bencoded strings";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
     };
   };
 
@@ -4363,6 +4389,22 @@ let
       sha256 = "0y4wls4jlwd6prvd77szymddhq9sfj06kaqnk4frlvd0zh83djxb";
     };
     buildInputs = [ DebugShowStuff ];
+  };
+
+  DataULID = buildPerlPackage {
+    pname = "Data-ULID";
+    version = "1.0.0";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/B/BA/BALDUR/Data-ULID-1.0.0.tar.gz";
+      sha256 = "4d757475893dbad5165f0a65c446d38b47f39019d36f77da9d29c98cbf27206f";
+    };
+    propagatedBuildInputs = [ DateTime EncodeBase32GMP MathRandomSecure MathBigIntGMP ];
+    meta = {
+      homepage = "https://metacpan.org/release/Data-ULID";
+      description = "Universally Unique Lexicographically Sortable Identifier";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+      maintainers = with maintainers; [ sgo ];
+    };
   };
 
   DataUniqid = buildPerlPackage {
@@ -6363,6 +6405,23 @@ let
     meta = {
       description = "Character encodings in Perl";
       license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  EncodeBase32GMP = buildPerlPackage {
+    pname = "Encode-Base32-GMP";
+    version = "0.02";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/J/JW/JWANG/Encode-Base32-GMP-0.02.tar.gz";
+      sha256 = "454206fa7d82e55e03274698732341b607150f00e8e2aec58f35326a030832dc";
+    };
+    buildInputs = [ TestBase ];
+    propagatedBuildInputs = [ MathGMPz ];
+    meta = {
+      homepage = "https://metacpan.org/release/Encode-Base32-GMP";
+      description = "High speed Base32 encoding using GMP with BigInt and MD5 support";
+      license = stdenv.lib.licenses.mit;
+      maintainers = with maintainers; [ sgo ];
     };
   };
 
@@ -11305,6 +11364,23 @@ let
     meta = {
       description = "High speed arbitrary size integer math";
       license = with stdenv.lib.licenses; [ lgpl21Plus ];
+    };
+  };
+
+  MathGMPz = buildPerlPackage {
+    pname = "Math-GMPz";
+    version = "0.48";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/S/SI/SISYPHUS/Math-GMPz-0.48.tar.gz";
+      sha256 = "f4459ed32fb9bb793e2504fd442c515fd468a4a34d2a1f98e46ca41e275c73cb";
+    };
+    buildInputs = [ pkgs.gmp ];
+    NIX_CFLAGS_LINK = "-L${pkgs.gmp.out}/lib -lgmp";
+    meta = {
+      homepage = "https://github.com/sisyphus/math-gmpz";
+      description = "Perl interface to the GMP integer functions";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+      maintainers = with maintainers; [ sgo ];
     };
   };
 
@@ -16996,6 +17072,20 @@ let
     };
   };
 
+  StringInterpolate = buildPerlPackage {
+    pname = "String-Interpolate";
+    version = "0.32";
+    src = fetchurl {
+      url = mirror://cpan/authors/id/N/NE/NEILB/String-Interpolate-0.32.tar.gz;
+      sha256 = "15fwbpz3jdpdgmz794iw9hz2caxrnrw9pdwprxxkanpm92cdhaf7";
+    };
+    meta = with stdenv.lib; {
+      # https://metacpan.org/pod/String::Interpolate
+      description = "String::Interpolate - Wrapper for builtin the Perl interpolation engine.";
+      license = licenses.gpl1Plus;
+    };
+  };
+
   StringMkPasswd = buildPerlPackage {
     pname = "String-MkPasswd";
     version = "0.05";
@@ -17039,6 +17129,20 @@ let
     meta = {
       # http://cpansearch.perl.org/src/ROSCH/String-ShellQuote-1.04/README
       license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  StringSimilarity = buildPerlPackage {
+    pname = "String-Similarity";
+    version = "1.04";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/M/ML/MLEHMANN/String-Similarity-1.04.tar.gz";
+      sha256 = "0i9j3hljxw7j6yiii9nsscfj009vw6zv1q8cxwd75jxvj0idm3hz";
+    };
+    doCheck = true;
+    meta = {
+      license = with stdenv.lib.licenses; [ gpl2 ];
+      description = "Calculate the similarity of two strings";
     };
   };
 
@@ -21186,6 +21290,22 @@ let
     src = fetchurl {
       url = "mirror://cpan/authors/id/T/TJ/TJMATHER/XML-RegExp-0.04.tar.gz";
       sha256 = "0m7wj00a2kik7wj0azhs1zagwazqh3hlz4255n75q21nc04r06fz";
+    };
+  };
+
+  XMLRPCLite = buildPerlPackage {
+    pname = "XMLRPC-Lite";
+    version = "0.717";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/P/PH/PHRED/XMLRPC-Lite-0.717.tar.gz";
+      sha256 = "0925md6jhzgpsibwgny4my461b2wngm8dhxlcry8pbqzrgrab7rs";
+    };
+    propagatedBuildInputs = [ SOAPLite ];
+    # disable tests that require network
+    preCheck = "rm t/{26-xmlrpc.t,37-mod_xmlrpc.t}";
+    meta = {
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+      description = "Client and server implementation of XML-RPC protocol";
     };
   };
 
