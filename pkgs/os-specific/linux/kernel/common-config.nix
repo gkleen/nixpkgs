@@ -206,8 +206,8 @@ let
       B43_PHY_HT            = option yes;
       BCMA_HOST_PCI         = option yes;
       RTW88                 = whenAtLeast "5.2" module;
-      RTW88_8822BE          = whenAtLeast "5.2" yes;
-      RTW88_8822CE          = whenAtLeast "5.2" yes;
+      RTW88_8822BE          = mkMerge [ (whenBetween "5.2" "5.8" yes) (whenAtLeast "5.8" module) ];
+      RTW88_8822CE          = mkMerge [ (whenBetween "5.2" "5.8" yes) (whenAtLeast "5.8" module) ];
     };
 
     fb = {
@@ -639,11 +639,21 @@ let
       # enabled by default in x86_64 but not arm64, so we do that here
       HIDRAW               = yes;
 
+      HID_ACRUX_FF       = yes;
+      DRAGONRISE_FF      = yes;
+      HOLTEK_FF          = yes;
+      SONY_FF            = yes;
+      SMARTJOYPLUS_FF    = yes;
+      THRUSTMASTER_FF    = yes;
+      ZEROPLUS_FF        = yes;
+
       MODULE_COMPRESS    = yes;
       MODULE_COMPRESS_XZ = yes;
       KERNEL_XZ          = yes;
 
       SYSVIPC            = yes;  # System-V IPC
+
+      AIO                = yes;  # POSIX asynchronous I/O
 
       UNIX               = yes;  # Unix domain sockets.
 

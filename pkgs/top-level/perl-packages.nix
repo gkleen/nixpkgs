@@ -3614,7 +3614,7 @@ let
       sha256 = "3cc7126d5841107237a9be2dc5c7fbc167cf3c4b4ce34678a8448b850757014c";
     };
     propagatedBuildInputs = [ ClassMix ];
-    perlPreHook = stdenv.lib.optionalString stdenv.isi686 "export LD=$CC"; # fix undefined reference to `__stack_chk_fail_local'
+    perlPreHook = stdenv.lib.optionalString (stdenv.isi686 || stdenv.isDarwin) "export LD=$CC";
   };
 
   CryptIDEA = buildPerlPackage {
@@ -3734,7 +3734,7 @@ let
       sha256 = "93ebdfaaefcfe9ab683f0121c85f24475d8197f0bcec46018219e4111434dde3";
     };
     propagatedBuildInputs = [ DigestSHA1 ];
-    perlPreHook = stdenv.lib.optionalString stdenv.isi686 "export LD=$CC"; # fix undefined reference to `__stack_chk_fail_local'
+    perlPreHook = stdenv.lib.optionalString (stdenv.isi686 || stdenv.isDarwin) "export LD=$CC";
   };
 
   CryptRijndael = buildPerlPackage {
@@ -13707,9 +13707,16 @@ let
       url = "mirror://cpan/authors/id/D/DA/DANBERR/Net-DBus-1.2.0.tar.gz";
       sha256 = "e7a1ac9ef4a1235b3fdbd5888f86c347182306467bd79abc9b0756a64b441cbc";
     };
-    nativeBuildInputs = [ pkgs.buildPackages.pkgconfig ];
+    nativeBuildInputs = [ buildPackages.pkgconfig ];
     buildInputs = [ pkgs.dbus TestPod TestPodCoverage ];
     propagatedBuildInputs = [ XMLTwig ];
+
+    # https://gitlab.com/berrange/perl-net-dbus/-/merge_requests/19
+    patches = (fetchpatch {
+      url = "https://gitlab.com/berrange/perl-net-dbus/-/commit/6bac8f188fb06e5e5edd27aee672d66b7c28caa4.patch";
+      sha256 = "19nf4xn9xhyd0sd2az9iliqldjj0k6ah2dmkyqyvq4rp2d9k5jgb";
+    });
+
     meta = {
       homepage = "http://www.freedesktop.org/wiki/Software/dbus";
       description = "Extension for the DBus bindings";
