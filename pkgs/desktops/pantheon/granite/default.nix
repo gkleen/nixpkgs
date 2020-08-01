@@ -1,5 +1,6 @@
 { stdenv
 , fetchFromGitHub
+, nix-update-script
 , python3
 , meson
 , ninja
@@ -17,7 +18,7 @@
 
 stdenv.mkDerivation rec {
   pname = "granite";
-  version = "5.4.0";
+  version = "5.5.0";
 
   outputs = [ "out" "dev" ];
 
@@ -25,11 +26,11 @@ stdenv.mkDerivation rec {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "0acicv3f9gksb352v88lwap8ailjsxdrfknl2xql7blasbjzl2q0";
+    sha256 = "13qfhq8xndikk6kmybibs6a4ddyp6mhvbsp2yy4qr7aiiyxf7mna";
   };
 
   passthru = {
-    updateScript = pantheon.updateScript {
+    updateScript = nix-update-script {
       attrPath = "pantheon.${pname}";
     };
   };

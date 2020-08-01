@@ -96,6 +96,7 @@ self: super: builtins.intersectAttrs super {
 
   # profiling is disabled to allow C++/C mess to work, which is fixed in GHC 8.8
   cachix = disableLibraryProfiling super.cachix;
+  hercules-ci-agent = disableLibraryProfiling super.hercules-ci-agent;
 
   # avoid compiling twice by providing executable as a separate output (with small closure size)
   niv = enableSeparateBinOutput super.niv;
@@ -442,6 +443,9 @@ self: super: builtins.intersectAttrs super {
                             [ pkgs.darwin.apple_sdk.frameworks.OpenCL ];
   });
 
+  # requires an X11 display in test suite
+  gi-gtk-declarative = dontCheck super.gi-gtk-declarative;
+
   # depends on 'hie' executable
   lsp-test = dontCheck super.lsp-test;
 
@@ -714,11 +718,6 @@ self: super: builtins.intersectAttrs super {
 
   # break infinite recursion with base-orphans
   primitive = dontCheck super.primitive;
-
-  # dhall's tests access the network.
-  dhall_1_29_0 = dontCheck super.dhall_1_29_0;
-  dhall_1_31_1 = dontCheck super.dhall_1_31_1;
-  dhall_1_32_0 = dontCheck super.dhall_1_32_0;
 
   cut-the-crap =
     let path = pkgs.stdenv.lib.makeBinPath [ pkgs.ffmpeg_3 ];

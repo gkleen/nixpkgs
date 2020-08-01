@@ -40,6 +40,7 @@ with lib.maintainers; {
       cstrahan
       Frostman
       kalbasit
+      mdlayher
       mic92
       orivej
       rvolosatovs
@@ -53,6 +54,7 @@ with lib.maintainers; {
       hedning
       jtojnar
       worldofpeace
+      dasj19
     ];
     scope = "Maintain GNOME desktop environment and platform.";
   };

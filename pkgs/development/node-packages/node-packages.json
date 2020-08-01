@@ -90,7 +90,6 @@
 , "indium"
 , "insect"
 , "ionic"
-, "ios-deploy"
 , { "iosevka-build-deps": "../../data/fonts/iosevka" }
 , "jake"
 , "javascript-typescript-langserver"
@@ -115,6 +114,7 @@
 , {"lumo-build-deps": "../interpreters/clojurescript/lumo" }
 , "madoko"
 , "markdown-link-check"
+, "mastodon-bot"
 , "mathjax"
 , "meat"
 , "meguca"
@@ -142,9 +142,13 @@
 , "prettier"
 , "pscid"
 , "pulp"
+, "purescript-language-server"
 , "purescript-psa"
+, "purty"
+, "pyright"
 , "react-native-cli"
 , "react-tools"
+, "redoc-cli"
 , "reveal.js"
 , "rollup"
 , { "rust-analyzer-build-deps": "../../misc/vscode-extensions/rust-analyzer/build-deps" }

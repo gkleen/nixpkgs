@@ -30,12 +30,12 @@ let
     download_limit = cfg.downloadLimit;
     upload_limit = cfg.uploadLimit;
     lan_encrypt_data = cfg.encryptLAN;
-  } // optionalAttrs cfg.enableWebUI {
+  } // optionalAttrs (cfg.directoryRoot != "") { directory_root = cfg.directoryRoot; }
+    // optionalAttrs cfg.enableWebUI {
     webui = { listen = "${cfg.httpListenAddr}:${toString cfg.httpListenPort}"; } //
       (optionalAttrs (cfg.httpLogin != "") { login = cfg.httpLogin; }) //
       (optionalAttrs (cfg.httpPass != "") { password = cfg.httpPass; }) //
-      (optionalAttrs (cfg.apiKey != "") { api_key = cfg.apiKey; }) //
-      (optionalAttrs (cfg.directoryRoot != "") { directory_root = cfg.directoryRoot; });
+      (optionalAttrs (cfg.apiKey != "") { api_key = cfg.apiKey; });
   } // optionalAttrs (sharedFoldersRecord != []) {
     shared_folders = sharedFoldersRecord;
   }));
@@ -109,8 +109,8 @@ in
 
       httpListenAddr = mkOption {
         type = types.str;
-        default = "0.0.0.0";
-        example = "1.2.3.4";
+        default = "[::1]";
+        example = "0.0.0.0";
         description = ''
           HTTP address to bind to.
         '';
