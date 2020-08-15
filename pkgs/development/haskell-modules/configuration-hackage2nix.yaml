@@ -2560,6 +2560,8 @@ extra-packages:
   - deepseq == 1.3.0.1                  # required to build Cabal with GHC 6.12.3
   - dhall == 1.29.0                     # required for spago 0.14.0.
   - doctemplates == 0.8                 # required by pandoc-2.9.x
+  - gi-gdk == 3.0.23                    # required for gi-pango 1.0.23
+  - gi-gtk == 3.0.35                    # required for gi-pango 1.0.23
   - generic-deriving == 1.10.5.*        # new versions don't compile with GHC 7.10.x
   - ghc-check == 0.3.0.1                # only version compatible with ghcide 0.2.0
   - ghc-tcplugins-extra ==0.3.2         # required for polysemy-plugin 0.2.5.0
@@ -2993,6 +2995,7 @@ broken-packages:
   - AMI
   - ampersand
   - amqp-conduit
+  - amqp-streamly
   - analyze
   - analyze-client
   - anansi-pandoc
@@ -3908,6 +3911,7 @@ broken-packages:
   - collections-api
   - collections-base-instances
   - colonnade
+  - Color
   - color-counter
   - colorless
   - colorless-http-client
@@ -4084,6 +4088,7 @@ broken-packages:
   - CoreDump
   - CoreErlang
   - CoreFoundation
+  - corenlp-parser
   - Coroutine
   - coroutine-enumerator
   - coroutine-iteratee
@@ -4164,6 +4169,12 @@ broken-packages:
   - crystalfontz
   - cse-ghc-plugin
   - csg
+  - csound-catalog
+  - csound-expression
+  - csound-expression-dynamic
+  - csound-expression-opcodes
+  - csound-expression-typed
+  - csound-sampler
   - CSPM-cspm
   - CSPM-FiringRules
   - CSPM-Frontend
@@ -4192,6 +4203,7 @@ broken-packages:
   - curve25519
   - curves
   - custom-prelude
+  - cut-the-crap
   - CV
   - cv-combinators
   - cypher
@@ -4242,6 +4254,7 @@ broken-packages:
   - data-filepath
   - data-fin
   - data-fin-simple
+  - data-fix-cse
   - data-flagset
   - data-forest
   - data-ivar
@@ -4396,6 +4409,7 @@ broken-packages:
   - dgim
   - dgs
   - dhall-check
+  - dhall-docs
   - dhall-fly
   - dhall-nix
   - dhall-text
@@ -4713,6 +4727,7 @@ broken-packages:
   - EnumMap
   - enummapmap
   - enummapset-th
+  - env-extra
   - env-parser
   - envstatus
   - epanet-haskell
@@ -4744,10 +4759,6 @@ broken-packages:
   - EsounD
   - espial
   - ess
-  - essence-of-live-coding
-  - essence-of-live-coding-gloss
-  - essence-of-live-coding-pulse
-  - essence-of-live-coding-quickcheck
   - estimators
   - EstProgress
   - estreps
@@ -5308,28 +5319,6 @@ broken-packages:
   - ghcprofview
   - ght
   - gi-cairo-again
-  - gi-ggit
-  - gi-girepository
-  - gi-graphene
-  - gi-gsk
-  - gi-gst
-  - gi-gstaudio
-  - gi-gstbase
-  - gi-gstpbutils
-  - gi-gsttag
-  - gi-gstvideo
-  - gi-gtkosxapplication
-  - gi-gtksource
-  - gi-handy
-  - gi-harfbuzz
-  - gi-ibus
-  - gi-notify
-  - gi-ostree
-  - gi-pangocairo
-  - gi-poppler
-  - gi-secret
-  - gi-vte
-  - gi-wnck
   - giak
   - Gifcurry
   - ginsu
@@ -5544,6 +5533,8 @@ broken-packages:
   - gtfs
   - gtfs-realtime
   - gtk-serialized-event
+  - gtk-sni-tray
+  - gtk-strut
   - gtk-toy
   - gtk2hs-hello
   - gtk2hs-rpn
@@ -6785,6 +6776,7 @@ broken-packages:
   - inilist
   - initialize
   - inject-function
+  - inline-asm
   - inline-java
   - inline-r
   - inserts
@@ -7575,6 +7567,9 @@ broken-packages:
   - marxup
   - masakazu-bot
   - MASMGen
+  - massiv
+  - massiv-io
+  - massiv-test
   - master-plan
   - matchable
   - matchable-th
@@ -8197,6 +8192,7 @@ broken-packages:
   - om-actor
   - om-elm
   - om-fail
+  - om-http-logging
   - omaketex
   - ombra
   - Omega
@@ -8493,6 +8489,7 @@ broken-packages:
   - pg-store
   - pg-transact
   - pgdl
+  - pgf2
   - pgsql-simple
   - pgstream
   - phasechange
@@ -8579,6 +8576,7 @@ broken-packages:
   - plat
   - platinum-parsing
   - PlayingCards
+  - plex
   - plist
   - plist-buddy
   - plocketed
@@ -9346,6 +9344,7 @@ broken-packages:
   - scgi
   - schedevr
   - schedule-planner
+  - scheduler
   - schedyield
   - schema
   - schemas
@@ -9406,6 +9405,7 @@ broken-packages:
   - secure-sockets
   - secureUDP
   - sednaDBXML
+  - seitz-symbol
   - selectors
   - SelectSequencesFromMSA
   - selenium
@@ -10001,6 +10001,8 @@ broken-packages:
   - streamproc
   - strelka
   - strict-data
+  - strict-lens
+  - strict-optics
   - strict-tuple-lens
   - StrictBench
   - StrictCheck
@@ -10079,6 +10081,7 @@ broken-packages:
   - swearjure
   - swf
   - swift-lda
+  - swiss-ephemeris
   - sws
   - syb-extras
   - syb-with-class-instances-text
@@ -10137,6 +10140,7 @@ broken-packages:
   - Tablify
   - tabloid
   - tabs
+  - taffybar
   - tag-bits
   - tag-stream
   - tagged-exception-core
@@ -10247,6 +10251,7 @@ broken-packages:
   - test-simple
   - testbench
   - testCom
+  - testcontainers
   - TestExplode
   - testloop
   - testpack
