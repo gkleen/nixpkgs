@@ -1674,6 +1674,8 @@ in
 
   dante = callPackage ../servers/dante { };
 
+  dapr-cli = callPackage ../development/tools/dapr/cli {};
+
   dasher = callPackage ../applications/accessibility/dasher { };
 
   datamash = callPackage ../tools/misc/datamash { };
@@ -15451,6 +15453,14 @@ in
                                           CoreText IOSurface ImageIO OpenGL GLUT;
   };
 
+  vtk_9 = libsForQt5.callPackage ../development/libraries/vtk/9.x.nix {
+    inherit (darwin) libobjc;
+    inherit (darwin.apple_sdk.libs) xpc;
+    inherit (darwin.apple_sdk.frameworks) Cocoa CoreServices DiskArbitration
+                                          IOKit CFNetwork Security ApplicationServices
+                                          CoreText IOSurface ImageIO OpenGL GLUT;
+  };
+
   vulkan-headers = callPackage ../development/libraries/vulkan-headers { };
   vulkan-loader = callPackage ../development/libraries/vulkan-loader { };
   vulkan-tools = callPackage ../tools/graphics/vulkan-tools { };
@@ -17411,6 +17421,14 @@ in
     ];
   };
 
+  linux_zen = callPackage ../os-specific/linux/kernel/linux-zen.nix {
+    kernelPatches = [
+      kernelPatches.bridge_stp_helper
+      kernelPatches.request_key_helper
+      kernelPatches.export_kernel_fpu_functions."5.3"
+    ];
+  };
+
   /* Linux kernel modules are inherently tied to a specific kernel.  So
      rather than provide specific instances of those packages for a
      specific kernel, we have a function that builds those packages
@@ -17690,6 +17708,9 @@ in
   linux-libre = callPackage ../os-specific/linux/kernel/linux-libre.nix {};
   linuxPackages_latest-libre = recurseIntoAttrs (linuxPackagesFor linux_latest-libre);
   linux_latest-libre = linux-libre.override { linux = linux_latest; };
+
+  # zen-kernel
+  linuxPackages_zen = recurseIntoAttrs (linuxPackagesFor pkgs.linux_zen);
 
   # A function to build a manually-configured kernel
   linuxManualConfig = makeOverridable (callPackage ../os-specific/linux/kernel/manual-config.nix {});
