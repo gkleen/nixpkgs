@@ -67,10 +67,12 @@ mapAliases ({
   buildGo112Module = throw "buildGo112Module has been removed"; # added 2020-04-26
   bundler_HEAD = bundler; # added 2015-11-15
   cantarell_fonts = cantarell-fonts; # added 2018-03-03
+  cargo-tree = throw "cargo-tree has been removed, use the builtin `cargo tree` command instead."; # added 2020-08-20
   casperjs = throw "casperjs has been removed, it was abandoned by upstream and broken.";
   catfish = xfce.catfish; # added 2019-12-22
   cgmanager = throw "cgmanager was deprecated by lxc and therefore removed from nixpkgs."; # added 2020-06-05
   checkbashism = checkbashisms; # added 2016-08-16
+  chronos = throw "chronos has been removed from nixpkgs, as it was unmaintained"; # added 2020-08-15
   cide = throw "deprecated in 2019-09-11: abandoned by upstream";
   cinepaint = throw "cinepaint has been removed from nixpkgs, as it was unmaintained"; # added 2019-12-10
   cifs_utils = cifs-utils; # added 2016-08
@@ -138,6 +140,10 @@ mapAliases ({
   fontconfig-ultimate = throw ''
     fontconfig-ultimate has been removed. The repository has been archived upstream and activity has ceased for several years.
     https://github.com/bohoomil/fontconfig-ultimate/issues/171.
+  '';
+  fontconfig-penultimate = throw ''
+    fontconfig-penultimate has been removed.
+    It was a fork of the abandoned fontconfig-ultimate.
   '';
   # 2020-07-21
   fontconfig_210 = throw ''
@@ -281,8 +287,10 @@ mapAliases ({
   m3d-linux = m33-linux; # added 2016-08-13
   man_db = man-db; # added 2016-05
   manpages = man-pages; # added 2015-12-06
+  marathon = throw "marathon has been removed from nixpkgs, as it's unmaintained"; # added 2020-08-15
   mariadb-client = hiPrio mariadb.client; #added 2019.07.28
   matcha = throw "matcha was renamed to matcha-gtk-theme"; # added 2020-05-09
+  mathics = throw "mathics has been removed from nixpkgs, as it's unmaintained"; # added 2020-08-15
   matrique = spectral; # added 2020-01-27
   mbedtls_1_3 = throw "mbedtls_1_3 is end of life, see https://tls.mbed.org/kb/how-to/upgrade-2.0"; # added 2019-12-08
   mess = mame; # added 2019-10-30
@@ -297,6 +305,7 @@ mapAliases ({
   # floating point textures patents are expired,
   # so package reduced to alias
   mesa_drivers = mesa.drivers;
+  mesos = throw "mesos has been removed from nixpkgs, as it's unmaintained"; # added 2020-08-15
   midoriWrapper = midori; # added 2015-01
   mist = throw "mist has been removed as the upstream project has been abandoned, see https://github.com/ethereum/mist#mist-browser-deprecated"; # added 2020-08-15
   mlt-qt5 = libsForQt5.mlt;  # added 2015-12-19

@@ -184,6 +184,8 @@ in {
 
   aioamqp = callPackage ../development/python-modules/aioamqp { };
 
+  aiojobs = callPackage ../development/python-modules/aiojobs { };
+
   aioredis = callPackage ../development/python-modules/aioredis { };
 
   aiorun = callPackage ../development/python-modules/aiorun { };
@@ -763,6 +765,8 @@ in {
   filterpy = callPackage ../development/python-modules/filterpy { };
 
   filemagic = callPackage ../development/python-modules/filemagic { };
+
+  finalfusion = callPackage ../development/python-modules/finalfusion { };
 
   fints = callPackage ../development/python-modules/fints { };
 
@@ -2050,10 +2054,12 @@ in {
 
   binwalk = callPackage ../development/python-modules/binwalk {
     pyqtgraph = null;
+    matplotlib = null;
   };
 
   binwalk-full = appendToName "full" (self.binwalk.override {
     pyqtgraph = self.pyqtgraph;
+    matplotlib = self.matplotlib;
   });
 
   bitmath = callPackage ../development/python-modules/bitmath { };
@@ -3364,6 +3370,10 @@ in {
   python-mapnik = callPackage ../development/python-modules/python-mapnik { };
 
   measurement = callPackage ../development/python-modules/measurement {};
+
+  mercurial = disabledIf (!isPy3k) (toPythonModule (pkgs.mercurial.override {
+    python3Packages = self;
+  }));
 
   midiutil = callPackage ../development/python-modules/midiutil {};
 
@@ -4742,8 +4752,6 @@ in {
 
   markdown-macros = callPackage ../development/python-modules/markdown-macros { };
 
-  mathics = callPackage ../development/python-modules/mathics { };
-
   matplotlib = let
     path = if isPy3k then ../development/python-modules/matplotlib/default.nix else
       ../development/python-modules/matplotlib/2.nix;
@@ -4843,6 +4851,8 @@ in {
     callPackage ../development/python-modules/mock/2.nix { }
   else
     callPackage ../development/python-modules/mock { };
+
+  mocket = callPackage ../development/python-modules/mocket { };
 
   mock-open = callPackage ../development/python-modules/mock-open { };
 
@@ -5946,6 +5956,8 @@ in {
 
   rdflib = callPackage ../development/python-modules/rdflib { };
 
+  rdflib-jsonld = callPackage ../development/python-modules/rdflib-jsonld { };
+
   isodate = callPackage ../development/python-modules/isodate { };
 
   owslib = callPackage ../development/python-modules/owslib { };
@@ -6552,6 +6564,8 @@ in {
 
   stevedore = callPackage ../development/python-modules/stevedore {};
 
+  svglib = callPackage ../development/python-modules/svglib { };
+
   text-unidecode = callPackage ../development/python-modules/text-unidecode { };
 
   Theano = callPackage ../development/python-modules/Theano rec {
@@ -7154,6 +7168,8 @@ in {
   pluggy = callPackage ../development/python-modules/pluggy {};
 
   xcffib = callPackage ../development/python-modules/xcffib {};
+
+  xpybutil = callPackage ../development/python-modules/xpybutil {};
 
   pafy = callPackage ../development/python-modules/pafy { };
 
