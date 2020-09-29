@@ -1,7 +1,8 @@
 { stdenv
 , fetchFromGitHub
-, pkgconfig
+, pkg-config
 , cairo
+, fluidsynth
 , libX11
 , libjack2
 , liblo
@@ -11,20 +12,18 @@
 
 stdenv.mkDerivation rec {
   pname = "mamba";
-  version = "1.3";
+  version = "1.5";
 
   src = fetchFromGitHub {
     owner = "brummer10";
     repo = "Mamba";
     rev = "v${version}";
-    sha256 = "1wa3f9c4l239mpxa7nxx8hajy4icn40vpvaxq5l1qzskl74w072d";
+    sha256 = "1l74ckqqrccgsdy430pfsbv4fbzny7zivx399bi2jk1lv06p4h9a";
     fetchSubmodules = true;
   };
 
-  patches = [ ./fix-build.patch ];
-
-  nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ cairo libX11 libjack2 liblo libsigcxx libsmf ];
+  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [ cairo fluidsynth libX11 libjack2 liblo libsigcxx libsmf ];
 
   makeFlags = [ "PREFIX=$(out)" ];
 

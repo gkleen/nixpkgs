@@ -4,15 +4,15 @@
 { stdenv, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
-  version = "2020-09-03";
+  version = "2020-09-20";
   pname = "oh-my-zsh";
-  rev = "87edf16e05598505927410f6b06bbc5a6003805b";
+  rev = "93c837fec8e9fe61509b9dff9e909e84f7ebe32d";
 
   src = fetchFromGitHub {
     inherit rev;
     owner = "ohmyzsh";
     repo = "ohmyzsh";
-    sha256 = "0c13vkh9w3sxdy12b17yqa676cp83jb3a4pwc2xx2xggcxpn72by";
+    sha256 = "1ww50c1xf64z1m0sy30xaf2adr87cqr5yyv9jrqr227j97vrwj04";
   };
 
   installPhase = ''

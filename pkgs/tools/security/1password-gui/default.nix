@@ -2,17 +2,22 @@
 , fetchurl
 , appimageTools
 , makeWrapper
-, electron
+, electron_9
 , openssl
 }:
 
+let
+  electron = electron_9;
+
+in
+
 stdenv.mkDerivation rec {
   pname = "1password";
-  version = "0.8.4";
+  version = "0.8.7";
 
   src = fetchurl {
     url = "https://onepassword.s3.amazonaws.com/linux/appimage/${pname}-${version}.AppImage";
-    sha256 = "04rjlyi465pkg75pql3rfzmfj9zf8pfnxynz110x1wkqnvqmsxgw";
+    sha256 = "1101q5yavzl8imf8gqa3h929gcyy6lh7dy2dw0zs52qdcrb4z49j";
   };
 
   nativeBuildInputs = [ makeWrapper ];
