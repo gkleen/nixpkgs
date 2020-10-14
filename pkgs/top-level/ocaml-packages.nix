@@ -322,6 +322,10 @@ let
       inherit (pkgs) gnuplot;
     };
 
+    gsl = callPackage ../development/ocaml-modules/gsl {
+      inherit (pkgs) gsl;
+    };
+
     hacl_x25519 = callPackage ../development/ocaml-modules/hacl_x25519 { };
 
     herelib = callPackage ../development/ocaml-modules/herelib { };
@@ -992,6 +996,10 @@ let
     yaml = callPackage ../development/ocaml-modules/yaml { };
 
     yojson = callPackage ../development/ocaml-modules/yojson { };
+
+    z3 = callPackage ../development/ocaml-modules/z3 {
+      inherit (pkgs) z3;
+    };
 
     zarith = callPackage ../development/ocaml-modules/zarith { };
 

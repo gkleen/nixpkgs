@@ -46,6 +46,7 @@ mapAliases ({
   arduino_core = arduino-core;  # added 2015-02-04
   arora = throw "arora has been removed."; # added 2020-09-09
   asciidocFull = asciidoc-full;  # added 2014-06-22
+  asterisk_15 = throw "Asterisk 15 is end of life and has been removed."; # added 2020-10-07
   at_spi2_atk = at-spi2-atk; # added 2018-02-25
   at_spi2_core = at-spi2-core; # added 2018-02-25
   avldrums-lv2 = x42-avldrums; # added 2020-03-29
@@ -67,6 +68,7 @@ mapAliases ({
   buildGo112Package = throw "buildGo112Package has been removed"; # added 2020-04-26
   buildGo112Module = throw "buildGo112Module has been removed"; # added 2020-04-26
   bundler_HEAD = bundler; # added 2015-11-15
+  caddy1 = throw "caddy 1.x has been removed from nixpkgs, as it's unmaintained: https://github.com/caddyserver/caddy/blob/master/.github/SECURITY.md#supported-versions"; # added 2020-10-02
   cantarell_fonts = cantarell-fonts; # added 2018-03-03
   cargo-tree = throw "cargo-tree has been removed, use the builtin `cargo tree` command instead."; # added 2020-08-20
   casperjs = throw "casperjs has been removed, it was abandoned by upstream and broken.";
@@ -97,6 +99,7 @@ mapAliases ({
   d1x_rebirth = dxx-rebirth; # added 2018-04-25
   d2x_rebirth = dxx-rebirth; # added 2018-04-25
   dat = nodePackages.dat;
+  dbvisualizer = throw "dbvisualizer has been remove from nixpkgs, as it's unmaintained"; # added 2020-09-20
   dbus_daemon = dbus.daemon; # added 2018-04-25
   dbus_glib = dbus-glib; # added 2018-02-25
   dbus_libs = dbus; # added 2018-04-25
@@ -553,6 +556,7 @@ mapAliases ({
   source-han-serif-traditional-chinese = source-han-serif;
 
   net_snmp = net-snmp; # added 2019-12-21
+  oracleXE = throw "oracleXE has been removed, as it's heavily outdated and unmaintained."; # added 2020-10-09
   spaceOrbit = space-orbit; # addewd 2016-05-23
   speech_tools = speech-tools; # added 2018-04-25
   speedtest_cli = speedtest-cli;  # added 2015-02-17
@@ -597,6 +601,7 @@ mapAliases ({
   tex-gyre-schola-math = tex-gyre-math.schola; # added 2018-04-03
   tex-gyre-termes-math = tex-gyre-math.termes; # added 2018-04-03
   tftp_hpa = tftp-hpa; # added 2015-04-03
+  timescale-prometheus = promscale; # added 2020-09-29
   tomcat85 = tomcat8; # added 2020-03-11
   torbrowser = tor-browser-bundle-bin; # added 2017-04-05
   torch = throw "torch has been removed, as the upstream project has been abandoned"; # added 2020-03-28
@@ -658,6 +663,8 @@ mapAliases ({
   youtubeDL = youtube-dl;  # added 2014-10-26
   zdfmediathk = mediathekview; # added 2019-01-19
   gnome_user_docs = gnome-user-docs; # added 2019-11-20
+  # spidermonkey is not ABI upwards-ompatible, so only allow this for nix-shell
+  spidermonkey = spidermonkey_78; # added 2020-10-09
 
   # TODO(ekleog): add ‘wasm’ alias to ‘ocamlPackages.wasm’ after 19.03
   # branch-off
@@ -734,4 +741,7 @@ mapAliases ({
   /* Cleanup before 21.03 */
   riot-desktop = throw "riot-desktop is now element-desktop!";
   riot-web = throw "riot-web is now element-web";
+
+  ant-dracula-theme = throw "ant-dracula-theme is now dracula-theme, and theme name is Dracula instead of Ant-Dracula.";
+
 })

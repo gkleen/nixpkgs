@@ -175,6 +175,7 @@
   ./programs/xfs_quota.nix
   ./programs/xonsh.nix
   ./programs/xss-lock.nix
+  ./programs/xwayland.nix
   ./programs/yabar.nix
   ./programs/zmap.nix
   ./programs/zsh/oh-my-zsh.nix
@@ -185,6 +186,7 @@
   ./rename.nix
   ./security/acme.nix
   ./security/apparmor.nix
+  ./security/apparmor-suid.nix
   ./security/audit.nix
   ./security/auditd.nix
   ./security/ca.nix
@@ -330,6 +332,7 @@
   ./services/desktops/tumbler.nix
   ./services/desktops/zeitgeist.nix
   ./services/development/bloop.nix
+  ./services/development/blackfire.nix
   ./services/development/hoogle.nix
   ./services/development/jupyter/default.nix
   ./services/development/jupyterhub/default.nix
@@ -439,6 +442,7 @@
   ./services/misc/dysnomia.nix
   ./services/misc/disnix.nix
   ./services/misc/docker-registry.nix
+  ./services/misc/domoticz.nix
   ./services/misc/errbot.nix
   ./services/misc/etcd.nix
   ./services/misc/ethminer.nix
@@ -463,6 +467,7 @@
   ./services/misc/irkerd.nix
   ./services/misc/jackett.nix
   ./services/misc/jellyfin.nix
+  ./services/misc/klipper.nix
   ./services/misc/logkeys.nix
   ./services/misc/leaps.nix
   ./services/misc/lidarr.nix

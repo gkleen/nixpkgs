@@ -6,7 +6,7 @@
 
 let
   release_version = "11.0.0";
-  candidate = "rc2";
+  candidate = "rc5";
   version = "${release_version}${candidate}"; # differentiating these (variables) is important for RCs
   targetConfig = stdenv.targetPlatform.config;
 
@@ -15,7 +15,7 @@ let
     inherit sha256;
   };
 
-  clang-tools-extra_src = fetch "clang-tools-extra" "0bg2a9nmkdbj5qfd0vvqj8bgchcx1yzmylxxgvh8y5hhj4fz13fs";
+  clang-tools-extra_src = fetch "clang-tools-extra" "0slqx5430pc699idabqnq34s9n0y2fq6q8z8hn5wakbi93dal71r";
 
   tools = stdenv.lib.makeExtensible (tools: let
     callPackage = newScope (tools // { inherit stdenv cmake libxml2 python3 isl release_version version fetch; });
@@ -24,6 +24,7 @@ let
       mkdir "$rsrc"
       ln -s "${cc}/lib/clang/${release_version}/include" "$rsrc"
       ln -s "${targetLlvmLibraries.compiler-rt.out}/lib" "$rsrc/lib"
+      ln -s "${targetLlvmLibraries.compiler-rt.out}/share" "$rsrc/share"
       echo "-resource-dir=$rsrc" >> $out/nix-support/cc-cflags
     '' + stdenv.lib.optionalString (stdenv.targetPlatform.isLinux && tools.clang-unwrapped ? gcc && !(stdenv.targetPlatform.useLLVM or false)) ''
       echo "--gcc-toolchain=${tools.clang-unwrapped.gcc}" >> $out/nix-support/cc-cflags

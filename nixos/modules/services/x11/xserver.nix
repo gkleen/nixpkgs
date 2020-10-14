@@ -136,6 +136,7 @@ let
           fi
         done
 
+        echo '${cfg.filesSection}' >> $out
         echo 'EndSection' >> $out
 
         echo "$config" >> $out
@@ -364,6 +365,13 @@ in
           The contents of the configuration file of the X server
           (<filename>xorg.conf</filename>).
         '';
+      };
+
+      filesSection = mkOption {
+        type = types.lines;
+        default = "";
+        example = ''FontPath "/path/to/my/fonts"'';
+        description = "Contents of the first <literal>Files</literal> section of the X server configuration file.";
       };
 
       deviceSection = mkOption {
@@ -708,7 +716,7 @@ in
 
     system.extraDependencies = singleton (pkgs.runCommand "xkb-validated" {
       inherit (cfg) xkbModel layout xkbVariant xkbOptions;
-      nativeBuildInputs = [ pkgs.xkbvalidate ];
+      nativeBuildInputs = with pkgs.buildPackages; [ xkbvalidate ];
       preferLocalBuild = true;
     } ''
       xkbvalidate "$xkbModel" "$layout" "$xkbVariant" "$xkbOptions"
