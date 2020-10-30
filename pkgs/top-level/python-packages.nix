@@ -6517,6 +6517,8 @@ in {
 
   setuptools-lint = callPackage ../development/python-modules/setuptools-lint { };
 
+  setuptools-rust = callPackage ../development/python-modules/setuptools-rust { };
+
   setuptools_scm = callPackage ../development/python-modules/setuptools_scm { };
 
   setuptools-scm-git-archive = callPackage ../development/python-modules/setuptools-scm-git-archive { };
@@ -6639,6 +6641,8 @@ in {
   smugline = callPackage ../development/python-modules/smugline { };
 
   smugpy = callPackage ../development/python-modules/smugpy { };
+
+  snack = toPythonModule (pkgs.newt.override { inherit (self) python; });
 
   snakebite = callPackage ../development/python-modules/snakebite { };
 
@@ -7813,6 +7817,8 @@ in {
   zigpy-xbee = callPackage ../development/python-modules/zigpy-xbee { };
 
   zigpy-zigate = callPackage ../development/python-modules/zigpy-zigate { };
+
+  zigpy-znp = callPackage ../development/python-modules/zigpy-znp { };
 
   zimports = callPackage ../development/python-modules/zimports { };
 
