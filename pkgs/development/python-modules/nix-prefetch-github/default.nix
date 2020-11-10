@@ -15,11 +15,11 @@
 
 buildPythonPackage rec {
   pname = "nix-prefetch-github";
-  version = "3.0";
+  version = "4.0.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-EN+EbVXUaf+id5UsK4EBm/9k9FYaH79g08kblvW60XA=";
+    sha256 = "asfRohjOgYxMV/wprKvxUD328GVJQkAYnuAkE09kKgs=";
   };
 
   propagatedBuildInputs = [
