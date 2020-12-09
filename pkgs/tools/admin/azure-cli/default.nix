@@ -1,21 +1,23 @@
-{ stdenv, lib, python, fetchFromGitHub, installShellFiles }:
+{ stdenv, lib, python3, fetchFromGitHub, installShellFiles }:
 
 let
-  version = "2.14.0";
+  version = "2.15.1";
   src = fetchFromGitHub {
     owner = "Azure";
     repo = "azure-cli";
     rev = "azure-cli-${version}";
-    sha256 = "0rihxkdckfkqzrr3jc8jpdpjg3pgz5jymyz19lpva8qqln7cmzpy";
+    sha256 = "05vwaafb6yzvrhig0gjkb4803yj6qr00gqh41rws9520899f2m9d";
   };
 
   # put packages that needs to be overriden in the py package scope
-  py = import ./python-packages.nix { inherit stdenv python lib src version; };
+  py = import ./python-packages.nix {
+    inherit stdenv lib src version;
+    python = python3;
+  };
 in
 py.pkgs.toPythonApplication (py.pkgs.buildAzureCliPackage {
   pname = "azure-cli";
   inherit version src;
-  disabled = python.isPy27; # namespacing assumes PEP420, which isn't compat with py2
 
   sourceRoot = "source/src/azure-cli";
 

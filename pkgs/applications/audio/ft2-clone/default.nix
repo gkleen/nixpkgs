@@ -9,13 +9,13 @@
 
 stdenv.mkDerivation rec {
   pname = "ft2-clone";
-  version = "1.37";
+  version = "1.41_fix";
 
   src = fetchFromGitHub {
     owner = "8bitbubsy";
     repo = "ft2-clone";
     rev = "v${version}";
-    sha256 = "1lhpzd46mpr3bq13qhd0bq724db5fhc8jplfb684c2q7sc4v92nk";
+    sha256 = "0c7jli79ckachl5n2rbhc4yzml8nc36pl9yzxcwgaz544q8pzmaa";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -32,7 +32,9 @@ stdenv.mkDerivation rec {
     homepage = "https://16-bits.org/ft2.php";
     license = licenses.bsd3;
     maintainers = with maintainers; [ fgaz ];
-    platforms = platforms.all;
+    # From HOW-TO-COMPILE.txt:
+    # > This code is NOT big-endian compatible
+    platforms = platforms.littleEndian;
   };
 }
 

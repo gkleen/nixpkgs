@@ -14,12 +14,16 @@
 , self
 , configd
 , autoreconfHook
+, autoconf-archive
 , python-setup-hook
 , nukeReferences
 # For the Python package set
 , packageOverrides ? (self: super: {})
-, buildPackages
-, pythonForBuild ? buildPackages.${"python${sourceVersion.major}${sourceVersion.minor}"}
+, pkgsBuildBuild
+, pkgsBuildHost
+, pkgsBuildTarget
+, pkgsHostHost
+, pkgsTargetTarget
 , sourceVersion
 , sha256
 , passthruFun
@@ -35,6 +39,7 @@
 # Not using optimizations on Darwin
 # configure: error: llvm-profdata is required for a --enable-optimizations build but could not be found.
 , enableOptimizations ? (!stdenv.isDarwin)
+, pythonAttr ? "python${sourceVersion.major}${sourceVersion.minor}"
 }:
 
 # Note: this package is used for bootstrapping fetchurl, and thus
@@ -52,6 +57,8 @@ assert bluezSupport -> bluez != null;
 with stdenv.lib;
 
 let
+  buildPackages = pkgsBuildHost;
+  inherit (passthru) pythonForBuild;
 
   passthru = passthruFun rec {
     inherit self sourceVersion packageOverrides;
@@ -60,13 +67,20 @@ let
     executable = libPrefix;
     pythonVersion = with sourceVersion; "${major}.${minor}";
     sitePackages = "lib/${libPrefix}/site-packages";
-    inherit hasDistutilsCxxPatch pythonForBuild;
+    inherit hasDistutilsCxxPatch;
+    pythonOnBuildForBuild = pkgsBuildBuild.${pythonAttr};
+    pythonOnBuildForHost = pkgsBuildHost.${pythonAttr};
+    pythonOnBuildForTarget = pkgsBuildTarget.${pythonAttr};
+    pythonOnHostForHost = pkgsHostHost.${pythonAttr};
+    pythonOnTargetForTarget = pkgsTargetTarget.${pythonAttr} or {};
   };
 
   version = with sourceVersion; "${major}.${minor}.${patch}${suffix}";
 
   nativeBuildInputs = optionals (!stdenv.isDarwin) [
     autoreconfHook
+  ] ++ optionals (!stdenv.isDarwin && passthru.pythonAtLeast "3.10") [
+    autoconf-archive # needed for AX_CHECK_COMPILE_FLAG
   ] ++ [
     nukeReferences
   ] ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
@@ -81,8 +95,6 @@ let
     ++ optionals stdenv.isDarwin [ configd ]);
 
   hasDistutilsCxxPatch = !(stdenv.cc.isGNU or false);
-
-  inherit pythonForBuild;
 
   pythonForBuildInterpreter = if stdenv.hostPlatform == stdenv.buildPlatform then
     "$out/bin/python"

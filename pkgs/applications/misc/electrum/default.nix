@@ -19,7 +19,7 @@
 }:
 
 let
-  version = "4.0.3";
+  version = "4.0.6";
 
   # electrum is not compatible with dnspython 2.0.0 yet
   # use the latest 1.x release instead
@@ -43,7 +43,7 @@ let
     owner = "spesmilo";
     repo = "electrum";
     rev = version;
-    sha256 = "1r40i0v7nm35m3pzbd0l5z4qphl13s31l9v5njmyvpfjirdmhjbv";
+    sha256 = "0mdbg2sq56nv0hx0rrcbgrv1lv89nqc6cqigivgk665hhjm4v5kq";
 
     extraPostFetch = ''
       mv $out ./all
@@ -58,7 +58,7 @@ py.pkgs.buildPythonApplication {
 
   src = fetchurl {
     url = "https://download.electrum.org/${version}/Electrum-${version}.tar.gz";
-    sha256 = "0q891fgzxvyzjxfczynx92hvclfs8i3nr5nr9sgbvz13hsg4s6lg";
+    sha256 = "0sp8p720g3rqnh52ddhaw2v4hjgpxcwbackw9qc1g9xac1q0942d";
   };
 
   postUnpack = ''
@@ -154,6 +154,6 @@ py.pkgs.buildPythonApplication {
     homepage = "https://electrum.org/";
     license = licenses.mit;
     platforms = platforms.all;
-    maintainers = with maintainers; [ ehmry joachifm np ];
+    maintainers = with maintainers; [ ehmry joachifm np prusnak ];
   };
 }
