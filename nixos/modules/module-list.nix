@@ -860,7 +860,6 @@
   ./services/web-apps/documize.nix
   ./services/web-apps/dokuwiki.nix
   ./services/web-apps/engelsystem.nix
-  ./services/web-apps/frab.nix
   ./services/web-apps/gerrit.nix
   ./services/web-apps/gotify-server.nix
   ./services/web-apps/grocy.nix
@@ -877,6 +876,7 @@
   ./services/web-apps/moodle.nix
   ./services/web-apps/nextcloud.nix
   ./services/web-apps/nexus.nix
+  ./services/web-apps/plantuml-server.nix
   ./services/web-apps/pgpkeyserver-lite.nix
   ./services/web-apps/matomo.nix
   ./services/web-apps/moinmoin.nix

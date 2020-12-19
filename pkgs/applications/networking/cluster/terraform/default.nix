@@ -42,6 +42,7 @@ let
         description =
           "Tool for building, changing, and versioning infrastructure";
         homepage = "https://www.terraform.io/";
+        changelog = "https://github.com/hashicorp/terraform/blob/v${version}/CHANGELOG.md";
         license = licenses.mpl20;
         maintainers = with maintainers; [
           Chili-Man
@@ -135,15 +136,6 @@ let
     "recurseForDerivations"
   ];
 in rec {
-  terraform_0_11 = pluggable (generic {
-    version = "0.11.14";
-    sha256 = "1bzz5wy13gh8j47mxxp6ij6yh20xmxd9n5lidaln3mf1bil19dmc";
-    patches = [ ./provider-path.patch ];
-    passthru = { inherit plugins; };
-  });
-
-  terraform_0_11-full = terraform_0_11.full;
-
   terraform_0_12 = pluggable (generic {
     version = "0.12.29";
     sha256 = "18i7vkvnvfybwzhww8d84cyh93xfbwswcnwfrgvcny1qwm8rsaj8";
@@ -165,9 +157,9 @@ in rec {
   });
 
   terraform_0_14 = pluggable (generic {
-    version = "0.14.0";
-    sha256 = "0pbglnvb6cx8zrz791lfa67dmjqfsyysbxm2083b1lhlmbybi9ax";
-    vendorSha256 = "1gxhdj98np482jm76aj6zbbmkn7vfk8b878hzz59iywgbdr1r4m1";
+    version = "0.14.3";
+    sha256 = "0w2j1phjv989bspbyvkhr25bdz1zjch3zggwk2lgjyk77mdw5h20";
+    vendorSha256 = "03dg703pw3h98vfvi2mnd2lw0mv6hlhvmc1l7ngrqdyv54cmihnp";
     patches = [ ./provider-path.patch ];
     passthru = { inherit plugins; };
   });
@@ -180,7 +172,7 @@ in rec {
     mainTf = writeText "main.tf" ''
       resource "random_id" "test" {}
     '';
-    terraform = terraform_0_11.withPlugins (p: [ p.random ]);
+    terraform = terraform_0_12.withPlugins (p: [ p.random ]);
     test =
       runCommand "terraform-plugin-test" { buildInputs = [ terraform ]; } ''
         set -e

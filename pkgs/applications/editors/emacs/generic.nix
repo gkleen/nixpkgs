@@ -42,7 +42,12 @@ assert withXwidgets -> withGTK3 && webkitgtk != null;
 
 let
 
-in stdenv.mkDerivation {
+in stdenv.mkDerivation (lib.optionalAttrs nativeComp {
+  NATIVE_FULL_AOT = "1";
+  LIBRARY_PATH = "${lib.getLib stdenv.cc.libc}/lib";
+} // lib.optionalAttrs stdenv.isDarwin {
+  CFLAGS = "-DMAC_OS_X_VERSION_MAX_ALLOWED=101200";
+} // {
   inherit pname version patches;
 
   src = fetchurl {
@@ -87,10 +92,6 @@ in stdenv.mkDerivation {
     ''))
     ""
   ];
-
-  CFLAGS = "-DMAC_OS_X_VERSION_MAX_ALLOWED=101200";
-
-  LIBRARY_PATH = if nativeComp then "${lib.getLib stdenv.cc.libc}/lib" else "";
 
   nativeBuildInputs = [ pkgconfig makeWrapper ]
     ++ lib.optionals srcRepo [ autoreconfHook texinfo ]
@@ -141,8 +142,7 @@ in stdenv.mkDerivation {
 
     siteVersionDir=`ls $out/share/emacs | grep -v site-lisp | head -n 1`
 
-    rm -rf $out/var
-    rm -rf $siteVersionDir
+    rm -r $out/share/emacs/$siteVersionDir/site-lisp
   '' + lib.optionalString withCsrc ''
     for srcdir in src lisp lwlib ; do
       dstdir=$out/share/emacs/$siteVersionDir/$srcdir
@@ -156,6 +156,11 @@ in stdenv.mkDerivation {
     mv nextstep/Emacs.app $out/Applications
   '' + lib.optionalString (nativeComp && withNS) ''
     ln -snf $out/lib/emacs/*/native-lisp $out/Applications/Emacs.app/Contents/native-lisp
+  '' + lib.optionalString nativeComp ''
+    mkdir -p $out/share/emacs/native-lisp
+    $out/bin/emacs --batch \
+      --eval "(add-to-list 'comp-eln-load-path \"$out/share/emacs/native-lisp\")" \
+      -f batch-native-compile $out/share/emacs/site-lisp/site-start.el
   '';
 
   postFixup = lib.concatStringsSep "\n" [
@@ -196,4 +201,4 @@ in stdenv.mkDerivation {
       separately.
     '';
   };
-}
+})

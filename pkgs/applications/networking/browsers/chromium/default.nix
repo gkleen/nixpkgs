@@ -15,6 +15,7 @@
 , enablePepperFlash ? false
 , enableWideVine ? false
 , enableVaapi ? false # Disabled by default due to unofficial support
+, ungoogled ? false # Whether to build chromium or ungoogled-chromium
 , cupsSupport ? true
 , pulseSupport ? config.pulseaudio or stdenv.isLinux
 , commandLineArgs ? ""
@@ -33,7 +34,7 @@ let
 
     mkChromiumDerivation = callPackage ./common.nix ({
       inherit channel gnome gnomeSupport gnomeKeyringSupport proprietaryCodecs
-              cupsSupport pulseSupport;
+              cupsSupport pulseSupport ungoogled;
       gnChromium = gn.overrideAttrs (oldAttrs: {
         inherit (upstream-info.deps.gn) version;
         src = fetchgit {
@@ -42,24 +43,28 @@ let
       });
     });
 
-    browser = callPackage ./browser.nix { inherit channel enableWideVine; };
+    browser = callPackage ./browser.nix { inherit channel enableWideVine ungoogled; };
 
     plugins = callPackage ./plugins.nix {
       inherit enablePepperFlash;
     };
+
+    ungoogled-chromium = callPackage ./ungoogled.nix {};
   };
 
   pkgSuffix = if channel == "dev" then "unstable" else channel;
   pkgName = "google-chrome-${pkgSuffix}";
-  chromeSrc = fetchurl {
-    urls = map (repo: "${repo}/${pkgName}/${pkgName}_${version}-1_amd64.deb") [
-      "https://dl.google.com/linux/chrome/deb/pool/main/g"
-      "http://95.31.35.30/chrome/pool/main/g"
-      "http://mirror.pcbeta.com/google/chrome/deb/pool/main/g"
-      "http://repo.fdzh.org/chrome/deb/pool/main/g"
-    ];
-    sha256 = chromium.upstream-info.sha256bin64;
-  };
+  chromeSrc = if channel == "ungoogled-chromium"
+    then throw "Google Chrome is not supported for the ungoogled-chromium channel."
+    else fetchurl {
+      urls = map (repo: "${repo}/${pkgName}/${pkgName}_${version}-1_amd64.deb") [
+        "https://dl.google.com/linux/chrome/deb/pool/main/g"
+        "http://95.31.35.30/chrome/pool/main/g"
+        "http://mirror.pcbeta.com/google/chrome/deb/pool/main/g"
+        "http://repo.fdzh.org/chrome/deb/pool/main/g"
+      ];
+      sha256 = chromium.upstream-info.sha256bin64;
+    };
 
   mkrpath = p: "${lib.makeSearchPathOutput "lib" "lib64" p}:${lib.makeLibraryPath p}";
   widevineCdm = stdenv.mkDerivation {
@@ -113,7 +118,9 @@ let
     };
   };
 
-  suffix = if channel != "stable" then "-" + channel else "";
+  suffix = if (channel == "stable" || channel == "ungoogled-chromium")
+    then ""
+    else "-" + channel;
 
   sandboxExecutableName = chromium.browser.passthru.sandboxExecutableName;
 
@@ -133,7 +140,8 @@ let
     else browser;
 
 in stdenv.mkDerivation {
-  name = "chromium${suffix}-${version}";
+  name = lib.optionalString ungoogled "ungoogled-"
+    + "chromium${suffix}-${version}";
   inherit version;
 
   buildInputs = [

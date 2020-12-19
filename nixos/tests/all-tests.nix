@@ -49,7 +49,10 @@ in
   cadvisor = handleTestOn ["x86_64-linux"] ./cadvisor.nix {};
   cage = handleTest ./cage.nix {};
   cagebreak = handleTest ./cagebreak.nix {};
-  cassandra = handleTest ./cassandra.nix {};
+  cassandra_2_1 = handleTest ./cassandra.nix { testPackage = pkgs.cassandra_2_1; };
+  cassandra_2_2 = handleTest ./cassandra.nix { testPackage = pkgs.cassandra_2_2; };
+  cassandra_3_0 = handleTest ./cassandra.nix { testPackage = pkgs.cassandra_3_0; };
+  cassandra_3_11 = handleTest ./cassandra.nix { testPackage = pkgs.cassandra_3_11; };
   ceph-multi-node = handleTestOn ["x86_64-linux"] ./ceph-multi-node.nix {};
   ceph-single-node = handleTestOn ["x86_64-linux"] ./ceph-single-node.nix {};
   certmgr = handleTest ./certmgr.nix {};
@@ -88,6 +91,7 @@ in
   docker-edge = handleTestOn ["x86_64-linux"] ./docker-edge.nix {};
   docker-registry = handleTest ./docker-registry.nix {};
   docker-tools = handleTestOn ["x86_64-linux"] ./docker-tools.nix {};
+  docker-tools-cross = handleTestOn ["x86_64-linux" "aarch64-linux"] ./docker-tools-cross.nix {};
   docker-tools-overlay = handleTestOn ["x86_64-linux"] ./docker-tools-overlay.nix {};
   documize = handleTest ./documize.nix {};
   dokuwiki = handleTest ./dokuwiki.nix {};
@@ -164,6 +168,7 @@ in
   initrd-network-openvpn = handleTest ./initrd-network-openvpn {};
   initrd-network-ssh = handleTest ./initrd-network-ssh {};
   initrdNetwork = handleTest ./initrd-network.nix {};
+  initrd-secrets = handleTest ./initrd-secrets.nix {};
   installer = handleTest ./installer.nix {};
   iodine = handleTest ./iodine.nix {};
   ipfs = handleTest ./ipfs.nix {};
@@ -195,6 +200,7 @@ in
   lidarr = handleTest ./lidarr.nix {};
   lightdm = handleTest ./lightdm.nix {};
   limesurvey = handleTest ./limesurvey.nix {};
+  locate = handleTest ./locate.nix {};
   login = handleTest ./login.nix {};
   loki = handleTest ./loki.nix {};
   lsd = handleTest ./lsd.nix {};
@@ -205,6 +211,7 @@ in
   magic-wormhole-mailbox-server = handleTest ./magic-wormhole-mailbox-server.nix {};
   magnetico = handleTest ./magnetico.nix {};
   mailcatcher = handleTest ./mailcatcher.nix {};
+  mailhog = handleTest ./mailhog.nix {};
   mariadb-galera-mariabackup = handleTest ./mysql/mariadb-galera-mariabackup.nix {};
   mariadb-galera-rsync = handleTest ./mysql/mariadb-galera-rsync.nix {};
   matomo = handleTest ./matomo.nix {};
@@ -371,6 +378,7 @@ in
   telegraf = handleTest ./telegraf.nix {};
   tiddlywiki = handleTest ./tiddlywiki.nix {};
   timezone = handleTest ./timezone.nix {};
+  tinc = handleTest ./tinc {};
   tinydns = handleTest ./tinydns.nix {};
   tor = handleTest ./tor.nix {};
   # traefik test relies on docker-containers
@@ -404,6 +412,7 @@ in
   xterm = handleTest ./xterm.nix {};
   yabar = handleTest ./yabar.nix {};
   yggdrasil = handleTest ./yggdrasil.nix {};
+  yq = handleTest ./yq.nix {};
   zfs = handleTest ./zfs.nix {};
   zigbee2mqtt = handleTest ./zigbee2mqtt.nix {};
   zoneminder = handleTest ./zoneminder.nix {};

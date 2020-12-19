@@ -504,7 +504,7 @@ in {
 
   awesome-slugify = callPackage ../development/python-modules/awesome-slugify { };
 
-  awkward = callPackage ../development/python-modules/awkward { };
+  awkward0 = callPackage ../development/python-modules/awkward0 { };
   awkward1 = callPackage ../development/python-modules/awkward1 { };
 
   aws-adfs = callPackage ../development/python-modules/aws-adfs { };
@@ -1175,6 +1175,8 @@ in {
 
   cirq = callPackage ../development/python-modules/cirq { };
 
+  ciscomobilityexpress = callPackage ../development/python-modules/ciscomobilityexpress { };
+
   ciso8601 = callPackage ../development/python-modules/ciso8601 { };
 
   citeproc-py = callPackage ../development/python-modules/citeproc-py { };
@@ -1389,12 +1391,12 @@ in {
   cryptacular = callPackage ../development/python-modules/cryptacular { };
 
   cryptography = if isPy27 then
-    callPackage ../development/python-modules/cryptography/2.9.nix { }
+    callPackage ../development/python-modules/cryptography/3.3.nix { }
   else
     callPackage ../development/python-modules/cryptography { };
 
   cryptography_vectors = if isPy27 then
-    callPackage ../development/python-modules/cryptography/vectors-2.9.nix { }
+    callPackage ../development/python-modules/cryptography/vectors-3.3.nix { }
   else
     callPackage ../development/python-modules/cryptography/vectors.nix { };
 
@@ -2070,7 +2072,10 @@ in {
 
   feedgenerator = callPackage ../development/python-modules/feedgenerator { inherit (pkgs) glibcLocales; };
 
-  feedparser = callPackage ../development/python-modules/feedparser { };
+  feedparser = if isPy3k then
+    callPackage ../development/python-modules/feedparser { }
+  else
+    callPackage ../development/python-modules/feedparser/5.nix { };
 
   fenics = callPackage ../development/libraries/science/math/fenics {
     inherit (pkgs) pkg-config;
@@ -3646,7 +3651,24 @@ in {
 
   macropy = callPackage ../development/python-modules/macropy { };
 
-  maestral = callPackage ../development/python-modules/maestral { };
+  maestral = callPackage ../development/python-modules/maestral {
+
+    # https://github.com/SamSchott/maestral/issues/250#issuecomment-739510048
+    survey = self.survey.overridePythonAttrs (old: rec {
+      version = "2.2.1";
+      src = old.src.override {
+        inherit version;
+        sha256 = "sha256-7ubWkqk1vyaJDLMOuKwUx2Bjziyi3HqpaQq4pKp4Z+0=";
+      };
+    });
+    watchdog = self.watchdog.overridePythonAttrs (old: rec {
+      version = "0.10.3";
+      src = old.src.override {
+        inherit version;
+        sha256 = "4214e1379d128b0588021880ccaf40317ee156d4603ac388b9adcf29165e0c04";
+      };
+    });
+  };
 
   magic = callPackage ../development/python-modules/magic { };
 
@@ -4769,6 +4791,8 @@ in {
 
   pre-commit = callPackage ../development/python-modules/pre-commit { };
 
+  pre-commit-hooks = callPackage ../development/python-modules/pre-commit-hooks { };
+
   preggy = callPackage ../development/python-modules/preggy { };
 
   premailer = callPackage ../development/python-modules/premailer { };
@@ -4777,7 +4801,10 @@ in {
 
   pretend = callPackage ../development/python-modules/pretend { };
 
-  prettytable = callPackage ../development/python-modules/prettytable { };
+  prettytable = if isPy3k then
+    callPackage ../development/python-modules/prettytable { }
+  else
+    callPackage ../development/python-modules/prettytable/1.nix { };
 
   priority = callPackage ../development/python-modules/priority { };
 
@@ -5227,8 +5254,6 @@ in {
 
   pyipp = callPackage ../development/python-modules/pyipp { };
 
-  pyjade = callPackage ../development/python-modules/pyjade { };
-
   pyjet = callPackage ../development/python-modules/pyjet { };
 
   pyjks = callPackage ../development/python-modules/pyjks { };
@@ -5464,6 +5489,8 @@ in {
   pyptlib = callPackage ../development/python-modules/pyptlib { };
 
   pypubsub = callPackage ../development/python-modules/pypubsub { };
+
+  pypugjs = callPackage ../development/python-modules/pypugjs { };
 
   pyqrcode = callPackage ../development/python-modules/pyqrcode { };
 
@@ -5797,7 +5824,7 @@ in {
 
   pytest-pep257 = callPackage ../development/python-modules/pytest-pep257 { };
 
-  pytestpep8 = callPackage ../development/python-modules/pytest-pep8 { };
+  pytestpep8 = throw "pytestpep8 was removed because it is abandoned and no longer compatible with pytest v6.0"; # added 2020-12-10
 
   pytest-pylint = callPackage ../development/python-modules/pytest-pylint { };
 
@@ -6192,7 +6219,7 @@ in {
 
   pyzufall = callPackage ../development/python-modules/pyzufall { };
 
-  qasm2image = callPackage ../development/python-modules/qasm2image { };
+  qasm2image = throw "qasm2image is no longer maintained (since November 2018), and is not compatible with the latest pythonPackages.qiskit versions."; # added 2020-12-09
 
   qdarkstyle = callPackage ../development/python-modules/qdarkstyle { };
 
@@ -7117,6 +7144,8 @@ in {
 
   sure = callPackage ../development/python-modules/sure { };
 
+  survey = callPackage ../development/python-modules/survey { };
+
   suseapi = callPackage ../development/python-modules/suseapi { };
 
   svg2tikz = callPackage ../development/python-modules/svg2tikz { };
@@ -7175,7 +7204,9 @@ in {
 
   telegram = callPackage ../development/python-modules/telegram { };
 
-  telethon = callPackage ../development/python-modules/telethon { };
+  telethon = callPackage ../development/python-modules/telethon {
+    inherit (pkgs) openssl;
+  };
 
   telethon-session-sqlalchemy = callPackage ../development/python-modules/telethon-session-sqlalchemy { };
 
@@ -7412,7 +7443,10 @@ in {
 
   trackpy = callPackage ../development/python-modules/trackpy { };
 
-  traitlets = callPackage ../development/python-modules/traitlets { };
+  traitlets = if pythonOlder "3.7" then
+    callPackage ../development/python-modules/traitlets/4.nix { }
+  else
+    callPackage ../development/python-modules/traitlets { };
 
   traits = callPackage ../development/python-modules/traits { };
 
@@ -7596,9 +7630,9 @@ in {
 
   update-dotdee = callPackage ../development/python-modules/update-dotdee { };
 
-  uproot = callPackage ../development/python-modules/uproot { };
+  uproot3 = callPackage ../development/python-modules/uproot3 { };
 
-  uproot-methods = callPackage ../development/python-modules/uproot-methods { };
+  uproot3-methods = callPackage ../development/python-modules/uproot3-methods { };
 
   uptime = callPackage ../development/python-modules/uptime { };
 
@@ -7693,6 +7727,8 @@ in {
   vispy = callPackage ../development/python-modules/vispy { };
 
   vmprof = callPackage ../development/python-modules/vmprof { };
+
+  vncdo = callPackage ../development/python-modules/vncdo { };
 
   vobject = callPackage ../development/python-modules/vobject { };
 
@@ -7804,6 +7840,8 @@ in {
   worldengine = callPackage ../development/python-modules/worldengine { };
 
   wptserve = callPackage ../development/python-modules/wptserve { };
+
+  wrapio = callPackage ../development/python-modules/wrapio { };
 
   wrapt = callPackage ../development/python-modules/wrapt { };
 
