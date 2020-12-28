@@ -63,7 +63,6 @@ in
   clickhouse = handleTest ./clickhouse.nix {};
   cloud-init = handleTest ./cloud-init.nix {};
   cockroachdb = handleTestOn ["x86_64-linux"] ./cockroachdb.nix {};
-  codimd = handleTest ./codimd.nix {};
   consul = handleTest ./consul.nix {};
   containers-bridge = handleTest ./containers-bridge.nix {};
   containers-custom-pkgs.nix = handleTest ./containers-custom-pkgs.nix {};
@@ -147,6 +146,7 @@ in
   handbrake = handleTestOn ["x86_64-linux"] ./handbrake.nix {};
   haproxy = handleTest ./haproxy.nix {};
   hardened = handleTest ./hardened.nix {};
+  hedgedoc = handleTest ./hedgedoc.nix {};
   installed-tests = pkgs.recurseIntoAttrs (handleTest ./installed-tests {});
   oci-containers = handleTestOn ["x86_64-linux"] ./oci-containers.nix {};
   # 9pnet_virtio used to mount /nix partition doesn't support
@@ -280,6 +280,7 @@ in
   openssh = handleTest ./openssh.nix {};
   openstack-image-metadata = (handleTestOn ["x86_64-linux"] ./openstack-image.nix {}).metadata or {};
   openstack-image-userdata = (handleTestOn ["x86_64-linux"] ./openstack-image.nix {}).userdata or {};
+  image-contents = handleTest ./image-contents.nix {};
   orangefs = handleTest ./orangefs.nix {};
   os-prober = handleTestOn ["x86_64-linux"] ./os-prober.nix {};
   osrm-backend = handleTest ./osrm-backend.nix {};
@@ -323,6 +324,7 @@ in
   redis = handleTest ./redis.nix {};
   redmine = handleTest ./redmine.nix {};
   restic = handleTest ./restic.nix {};
+  ripgrep = handleTest ./ripgrep.nix {};
   robustirc-bridge = handleTest ./robustirc-bridge.nix {};
   roundcube = handleTest ./roundcube.nix {};
   rspamd = handleTest ./rspamd.nix {};
@@ -338,6 +340,7 @@ in
   scala = handleTest ./scala.nix {};
   sddm = handleTest ./sddm.nix {};
   service-runner = handleTest ./service-runner.nix {};
+  shadow = handleTest ./shadow.nix {};
   shadowsocks = handleTest ./shadowsocks {};
   shattered-pixel-dungeon = handleTest ./shattered-pixel-dungeon.nix {};
   shiori = handleTest ./shiori.nix {};

@@ -7,22 +7,11 @@ in
 rec {
   firefox = common rec {
     pname = "firefox";
-    ffversion = "83.0";
+    ffversion = "84.0.1";
     src = fetchurl {
       url = "mirror://mozilla/firefox/releases/${ffversion}/source/firefox-${ffversion}.source.tar.xz";
-      sha512 = "3va5a9471677jfzkhqp8xkba45n0bcpphbabhqbcbnps6p85m3y98pl5jy9q7cpq3a6gxc4ax7bp90yz2nfvfq7i64iz397xpprri2a";
+      sha512 = "0sl93h7pjiznabv6865pdbal08nlqncnv3g40l02mgwbphjh5iqrr1bz14khaf58h4v1la090cj7z0gmd0c10xfrx6z7wngm152zz75";
     };
-
-    patches = [
-      # Fix compilation on aarch64 with newer rust version
-      # See https://bugzilla.mozilla.org/show_bug.cgi?id=1677690
-      # and https://bugzilla.redhat.com/show_bug.cgi?id=1897675
-      (fetchpatch {
-        name = "aarch64-simd-bgz-1677690.patch";
-        url = "https://github.com/mozilla/gecko-dev/commit/71597faac0fde4f608a60dd610d0cefac4972cc3.patch";
-        sha256 = "1f61nsgbv2c2ylgjs7wdahxrrlgc19gjy5nzs870zr1g832ybwin";
-      })
-    ];
 
     meta = {
       description = "A web browser built from Firefox source tree";

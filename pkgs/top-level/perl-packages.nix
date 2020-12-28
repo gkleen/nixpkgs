@@ -12558,10 +12558,10 @@ let
 
   MetaCPANClient = buildPerlPackage {
     pname = "MetaCPAN-Client";
-    version = "2.028000";
+    version = "2.029000";
     src = fetchurl {
-      url = "mirror://cpan/authors/id/M/MI/MICKEY/MetaCPAN-Client-2.028000.tar.gz";
-      sha256 = "1fcafd1504e838ea37fa1769c751e096fe6ac7bba41c5f62959b156ea27d319a";
+      url = "mirror://cpan/authors/id/M/MI/MICKEY/MetaCPAN-Client-2.029000.tar.gz";
+      sha256 = "0z75qzrr6r9ijp469majavq8la2jbgn1dq02vdm5m6ip7f887n65";
     };
 
     # Most tests are online, so we only include offline tests
@@ -13495,6 +13495,22 @@ let
       homepage = "https://github.com/jhthorsen/mojo-redis";
       description = "Redis driver based on Mojo::IOLoop";
       license = stdenv.lib.licenses.artistic2;
+      maintainers = [ maintainers.sgo ];
+    };
+  };
+
+  MojoSAML = buildPerlModule {
+    pname = "Mojo-SAML";
+    version = "0.07";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/J/JB/JBERGER/Mojo-SAML-0.07.tar.gz";
+      sha256 = "03biykpz281z9nmd846jlxwzbaqlqwvh987aw9spl7bgvfn4rhkj";
+    };
+    buildInputs = [ ModuleBuildTiny ];
+    propagatedBuildInputs = [ CryptOpenSSLRSA CryptOpenSSLX509 DataGUID Mojolicious XMLCanonicalizeXML ];
+    meta = {
+      description = "A SAML2 toolkit using the Mojo toolkit";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
       maintainers = [ maintainers.sgo ];
     };
   };
@@ -22885,6 +22901,21 @@ let
     meta = {
       description = "XCB bindings for X";
       license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+    };
+  };
+
+  XMLCanonicalizeXML = buildPerlPackage {
+    pname = "XML-CanonicalizeXML";
+    version = "0.10";
+    src = fetchurl {
+      url = "mirror://cpan/authors/id/S/SJ/SJZASADA/XML-CanonicalizeXML-0.10.tar.gz";
+      sha256 = "1vl6wbqmq91mc0hkgfwlndbxcv2jm01hj7kpzprw3d6bh144ca77";
+    };
+    buildInputs = [ pkgs.libxml2 ];
+    meta = {
+      description = "Perl extension for inclusive (1.0 and 1.1) and exclusive canonicalization of XML using libxml2";
+      license = with stdenv.lib.licenses; [ artistic1 gpl1Plus ];
+      maintainers = [ maintainers.sgo ];
     };
   };
 

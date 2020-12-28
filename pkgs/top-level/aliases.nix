@@ -46,12 +46,22 @@ mapAliases ({
   ammonite-repl = ammonite; # added 2017-05-02
   amsn = throw "amsn has been removed due to being unmaintained."; # added 2020-12-09
   antimicro = throw "antimicro has been removed as it was broken, see antimicroX instead."; # added 2020-08-06
+  apacheKafka_0_9 = throw "kafka 0.9 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_0_10 = throw "kafka 0.10 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_0_11 = throw "kafka 0.11 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_1_0 = throw "kafka 1.0 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_1_1 = throw "kafka 1.1 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_2_0 = throw "kafka 2.0 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_2_1 = throw "kafka 2.1 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_2_2 = throw "kafka 2.2 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
+  apacheKafka_2_3 = throw "kafka 2.3 is no longer supported. Please upgrade to a newer version."; # added 2020-12-21
   arduino_core = arduino-core;  # added 2015-02-04
   arora = throw "arora has been removed."; # added 2020-09-09
   asciidocFull = asciidoc-full;  # added 2014-06-22
   asterisk_15 = throw "asterisk_15: Asterisk 15 is end of life and has been removed."; # added 2020-10-07
   at_spi2_atk = at-spi2-atk; # added 2018-02-25
   at_spi2_core = at-spi2-core; # added 2018-02-25
+  aucdtect = throw "aucdtect: Upstream no longer provides download urls."; # added 2020-12-26
   avldrums-lv2 = x42-avldrums; # added 2020-03-29
   bar-xft = lemonbar-xft;  # added 2015-01-16
   bashCompletion = bash-completion; # Added 2016-09-28
@@ -88,6 +98,7 @@ mapAliases ({
   clangAnalyzer = clang-analyzer;  # added 2015-02-20
   clawsMail = claws-mail; # added 2016-04-29
   clutter_gtk = clutter-gtk; # added 2018-02-25
+  codimd = hedgedoc; # added 2020-11-29
   compton = picom; # added 2019-12-02
   compton-git = compton; # added 2019-05-20
   conntrack_tools = conntrack-tools; # added 2018-05
@@ -483,12 +494,14 @@ mapAliases ({
   pynagsystemd = throw "pynagsystemd was removed as it was unmaintained and incompatible with recent systemd versions. Instead use its fork check_systemd."; # added 2020-10-24
   qca-qt5 = libsForQt5.qca-qt5;  # added 2015-12-19
   qcsxcad = libsForQt5.qcsxcad;  # added 2020-11-05
+  qr-filetransfer = throw ''"qr-filetransfer" has been renamed to "qrcp"''; # added 2020-12-02
   quake3game = ioquake3; # added 2016-01-14
   qvim = throw "qvim has been removed."; # added 2020-08-31
   qwt6 = libsForQt5.qwt;  # added 2015-12-19
   qtcurve = libsForQt5.qtcurve;  # added 2020-11-07
   qtpfsgui = throw "qtpfsgui is now luminanceHDR"; # added 2019-06-26
   quaternion-git = throw "quaternion-git has been removed in favor of the stable version 'quaternion'"; # added 2020-04-09
+  raspberrypi-tools = throw "raspberrypi-tools has been removed in favor of identical 'libraspberrypi'"; # added 2020-12-24
   rdf4store = throw "rdf4store has been removed from nixpkgs."; # added 2019-12-21
   rdiff_backup = rdiff-backup;  # added 2014-11-23
   rdmd = dtools;  # added 2017-08-19
@@ -560,6 +573,7 @@ mapAliases ({
   smugline = throw "smugline has been removed from nixpkgs, as it's unmaintained and depends on deprecated libraries."; # added 2020-11-04
   slim = throw "slim has been removed. Please use a different display-manager"; # added 2019-11-11
   slimThemes = throw "slimThemes has been removed because slim has been also"; # added 2019-11-11
+  spectral = neochat; # added 2020-12-27
   sundials_3 = throw "sundials_3 was removed in 2020-02. outdated and no longer needed";
 
   # added 2020-02-10
@@ -652,6 +666,7 @@ mapAliases ({
   ucsFonts = ucs-fonts; # added 2016-07-15
   ultrastardx-beta = ultrastardx; # added 2017-08-12
   unicorn-emu = unicorn; # added 2020-10-29
+  unifiStable = unifi6; # added 2020-12-28
   usb_modeswitch = usb-modeswitch; # added 2016-05-10
   usbguard-nox = usbguard; # added 2019-09-04
   utillinux = util-linux; # added 2020-11-24
@@ -700,6 +715,10 @@ mapAliases ({
   gnome_user_docs = gnome-user-docs; # added 2019-11-20
   # spidermonkey is not ABI upwards-ompatible, so only allow this for nix-shell
   spidermonkey = spidermonkey_78; # added 2020-10-09
+  libtorrentRasterbar = libtorrent-rasterbar; # added 2020-12-20
+  libtorrentRasterbar-2_0_x = libtorrent-rasterbar-2_0_x; # added 2020-12-20
+  libtorrentRasterbar-1_2_x = libtorrent-rasterbar-1_2_x; # added 2020-12-20
+  libtorrentRasterbar-1_1_x = libtorrent-rasterbar-1_1_x; # added 2020-12-20
 
   # TODO(ekleog): add ‘wasm’ alias to ‘ocamlPackages.wasm’ after 19.03
   # branch-off
@@ -823,7 +842,7 @@ mapAliases ({
     kwallet-pam kwayland-integration kwin kwrited milou oxygen plasma-browser-integration
     plasma-desktop plasma-integration plasma-nm plasma-pa plasma-vault plasma-workspace
     plasma-workspace-wallpapers polkit-kde-agent powerdevil sddm-kcm
-    systemsettings user-manager xdg-desktop-portal-kde
+    systemsettings xdg-desktop-portal-kde
   ;
   inherit (plasma5.thirdParty)
     plasma-applet-caffeine-plus

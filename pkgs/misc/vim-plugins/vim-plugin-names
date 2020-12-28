@@ -497,6 +497,7 @@ Shougo/vimproc.vim
 Shougo/vimshell.vim
 shumphrey/fugitive-gitlab.vim
 sickill/vim-pasta
+SidOfc/mkdx
 simnalamburt/vim-mundo
 SirVer/ultisnips
 sjl/gundo.vim
@@ -507,6 +508,7 @@ sodapopcan/vim-twiggy
 solarnz/arcanist.vim
 sonph/onehalf
 steelsojka/completion-buffers
+srcery-colors/srcery-vim
 stefandtw/quickfix-reflector.vim
 stephpy/vim-yaml
 sunaku/vim-dasht

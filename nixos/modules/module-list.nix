@@ -47,6 +47,7 @@
   ./hardware/digitalbitbox.nix
   ./hardware/device-tree.nix
   ./hardware/sensor/iio.nix
+  ./hardware/keyboard/zsa.nix
   ./hardware/ksm.nix
   ./hardware/ledger.nix
   ./hardware/logitech.nix
@@ -654,6 +655,8 @@
   ./services/networking/hylafax/default.nix
   ./services/networking/i2pd.nix
   ./services/networking/i2p.nix
+  ./services/networking/icecream/scheduler.nix
+  ./services/networking/icecream/daemon.nix
   ./services/networking/iodine.nix
   ./services/networking/iperf3.nix
   ./services/networking/ircd-hybrid/default.nix
@@ -854,7 +857,6 @@
   ./services/web-apps/atlassian/confluence.nix
   ./services/web-apps/atlassian/crowd.nix
   ./services/web-apps/atlassian/jira.nix
-  ./services/web-apps/codimd.nix
   ./services/web-apps/convos.nix
   ./services/web-apps/cryptpad.nix
   ./services/web-apps/documize.nix
@@ -863,6 +865,7 @@
   ./services/web-apps/gerrit.nix
   ./services/web-apps/gotify-server.nix
   ./services/web-apps/grocy.nix
+  ./services/web-apps/hedgedoc.nix
   ./services/web-apps/icingaweb2/icingaweb2.nix
   ./services/web-apps/icingaweb2/module-monitoring.nix
   ./services/web-apps/ihatemoney
