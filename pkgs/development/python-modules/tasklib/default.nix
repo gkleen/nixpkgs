@@ -8,11 +8,11 @@ wsl_stub = writeShellScriptBin "wsl" "true";
 
 in buildPythonPackage rec {
   pname = "tasklib";
-  version = "2.2.1";
+  version = "2.4.0";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "21525a34469928876b64edf8abf79cf788bb3fa796d4554ba22a68bc1f0693f5";
+    sha256 = "3645594147107c92780e19ac437f09eb8b8eac950209fb92d3f71869a721234e";
   };
 
   propagatedBuildInputs = [

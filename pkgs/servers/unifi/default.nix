@@ -1,4 +1,4 @@
-{ stdenv, dpkg, fetchurl }:
+{ lib, stdenv, dpkg, fetchurl }:
 
 let
   generic = { version, sha256, suffix ? "" }:
@@ -29,7 +29,7 @@ let
       runHook postInstall
     '';
 
-    meta = with stdenv.lib; {
+    meta = with lib; {
       homepage = "http://www.ubnt.com/";
       description = "Controller for Ubiquiti UniFi access points";
       license = licenses.unfree;
@@ -52,7 +52,7 @@ in rec {
   };
 
   unifi6 = generic {
-    version = "6.0.43";
-    sha256 = "1d9pw4f20pr4jb1xb43p7ycafv13ld1h40r05qg82029ml1s7jky";
+    version = "6.4.54";
+    sha256 = "05z0r47p6cl7yi7f9a40xrsr61ndm2904vway59q1acws5i5mm9g";
   };
 }

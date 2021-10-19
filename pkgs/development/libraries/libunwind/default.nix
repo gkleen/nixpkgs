@@ -21,7 +21,7 @@ stdenv.mkDerivation rec {
 
   # Without latex2man, no man pages are installed despite being
   # prebuilt in the source tarball.
-  configureFlags = "LATEX2MAN=${coreutils}/bin/true";
+  configureFlags = [ "LATEX2MAN=${coreutils}/bin/true" ];
 
   propagatedBuildInputs = [ xz ];
 
@@ -33,13 +33,12 @@ stdenv.mkDerivation rec {
 
   doCheck = false; # fails
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://www.nongnu.org/libunwind";
     description = "A portable and efficient API to determine the call-chain of a program";
     maintainers = with maintainers; [ orivej ];
     platforms = platforms.linux;
+    badPlatforms = [ "riscv32-linux" "riscv64-linux" ];
     license = licenses.mit;
   };
-
-  passthru.supportsHost = !stdenv.hostPlatform.isRiscV;
 }

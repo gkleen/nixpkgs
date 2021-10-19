@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, gradle_6, perl, makeWrapper, jdk11, gsettings-desktop-schemas }:
+{ lib, stdenv, fetchFromGitHub, gradle_6, perl, makeWrapper, jdk11, gsettings-desktop-schemas }:
 
 let
   version = "0.9.3-3";
@@ -76,14 +76,11 @@ in stdenv.mkDerivation {
       --set JAVA_HOME ${jdk11}
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "http://www.mucommander.com/";
     description = "Cross-platform file manager";
     license = licenses.gpl3;
     maintainers = with maintainers; [ volth ];
-    # build is broken on MacOS
-    # https://github.com/NixOS/nixpkgs/pull/105784
-    broken = stdenv.isDarwin;
     platforms = platforms.all;
   };
 }

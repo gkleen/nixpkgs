@@ -1,16 +1,16 @@
-{ stdenv, fetchurl, dpkg, wrapGAppsHook, autoPatchelfHook, writeShellScript
-, alsaLib, atk, at-spi2-atk, at-spi2-core, cairo, cups, dbus, expat, fontconfig, freetype
-, gdk-pixbuf, glib, gtk3, libnotify, libX11, libXcomposite, libXcursor, libXdamage, libuuid
-, libXext, libXfixes, libXi, libXrandr, libXrender, libXtst, nspr, nss, libxcb
-, pango, systemd, libXScrnSaver, libcxx, libpulseaudio }:
+{ lib, stdenv, fetchurl, dpkg, wrapGAppsHook, autoPatchelfHook
+, alsa-lib, atk, at-spi2-atk, at-spi2-core, cairo, cups, dbus, expat, fontconfig, freetype
+, gdk-pixbuf, glib, gtk3, libcxx, libdrm, libnotify, libpulseaudio, libuuid, libX11, libxcb
+, libXcomposite, libXcursor, libXdamage, libXext, libXfixes, libXi, libXrandr, libXrender
+, libXScrnSaver, libXtst, mesa, nspr, nss, pango, systemd }:
 
 stdenv.mkDerivation rec {
   pname = "upwork";
-  version = "5.4.7.1";
+  version = "5.6.8.0";
 
   src = fetchurl {
-    url = "https://updates-desktopapp.upwork.com/binaries/v5_4_7_1_81f361962c74427d/${pname}_5.4.7.1_amd64.deb";
-    sha256 = "c443724d37bca942ca126b8b207846a5adb94a92ff9490370f2fe055feee347b";
+    url = "https://upwork-usw2-desktopapp.upwork.com/binaries/v5_6_8_0_836f43f6f6be4149/${pname}_${version}_amd64.deb";
+    sha256 = "b3a52f773d633837882dc107b206006325722ca5d5d5a1e8bdf5453f872e1b6f";
   };
 
   dontWrapGApps = true;
@@ -23,30 +23,31 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     libcxx systemd libpulseaudio
-    stdenv.cc.cc alsaLib atk at-spi2-atk at-spi2-core cairo cups dbus expat fontconfig freetype
-    gdk-pixbuf glib gtk3 libnotify libX11 libXcomposite libuuid
-    libXcursor libXdamage libXext libXfixes libXi libXrandr libXrender
-    libXtst nspr nss libxcb pango systemd libXScrnSaver
+    stdenv.cc.cc alsa-lib atk at-spi2-atk at-spi2-core cairo cups
+    dbus expat fontconfig freetype gdk-pixbuf glib gtk3 libdrm libnotify
+    libuuid libX11 libxcb libXcomposite libXcursor libXdamage libXext libXfixes
+    libXi libXrandr libXrender libXScrnSaver libXtst mesa nspr nss pango systemd
   ];
 
-  libPath = stdenv.lib.makeLibraryPath buildInputs;
+  libPath = lib.makeLibraryPath buildInputs;
 
   unpackPhase = ''
     dpkg-deb -x ${src} ./
   '';
 
   installPhase = ''
+    runHook preInstall
     mv usr $out
     mv opt $out
     sed -e "s|/opt/Upwork|$out/bin|g" -i $out/share/applications/upwork.desktop
-
     makeWrapper $out/opt/Upwork/upwork \
       $out/bin/upwork \
       --prefix XDG_DATA_DIRS : "${gtk3}/share/gsettings-schemas/${gtk3.name}/" \
       --prefix LD_LIBRARY_PATH : ${libPath}
+    runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Online freelancing platform desktop application for time tracking";
     homepage = "https://www.upwork.com/ab/downloads/";
     license = licenses.unfree;

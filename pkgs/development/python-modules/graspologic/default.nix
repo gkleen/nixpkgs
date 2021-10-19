@@ -3,12 +3,12 @@
 , isPy27
 , fetchFromGitHub
 , pytestCheckHook
-, pytestcov
+, pytest-cov
 , hyppo
 , matplotlib
 , networkx
 , numpy
-, scikitlearn
+, scikit-learn
 , scipy
 , seaborn
 }:
@@ -31,13 +31,13 @@ buildPythonPackage rec {
     matplotlib
     networkx
     numpy
-    scikitlearn
+    scikit-learn
     scipy
     seaborn
   ];
 
-  checkInputs = [ pytestCheckHook pytestcov ];
-  pytestFlagsArray = [ "tests" "--ignore=docs" ];
+  checkInputs = [ pytestCheckHook pytest-cov ];
+  pytestFlagsArray = [ "tests" "--ignore=docs" "--ignore=tests/test_sklearn.py" ];
   disabledTests = [ "gridplot_outputs" ];
 
   meta = with lib; {

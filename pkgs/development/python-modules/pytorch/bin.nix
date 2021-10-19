@@ -1,11 +1,10 @@
-{ stdenv
+{ lib, stdenv
 , buildPythonPackage
 , fetchurl
 , isPy37
 , isPy38
 , isPy39
 , python
-, nvidia_x11
 , addOpenGLRunpath
 , future
 , numpy
@@ -17,10 +16,9 @@
 
 let
   pyVerNoDot = builtins.replaceStrings [ "." ] [ "" ] python.pythonVersion;
-  platform = if stdenv.isDarwin then "darwin" else "linux";
   srcs = import ./binary-hashes.nix version;
   unsupported = throw "Unsupported system";
-  version = "1.7.1";
+  version = "1.9.1";
 in buildPythonPackage {
   inherit version;
 
@@ -52,7 +50,7 @@ in buildPythonPackage {
   '';
 
   postFixup = let
-    rpath = stdenv.lib.makeLibraryPath [ stdenv.cc.cc.lib nvidia_x11 ];
+    rpath = lib.makeLibraryPath [ stdenv.cc.cc.lib ];
   in ''
     find $out/${python.sitePackages}/torch/lib -type f \( -name '*.so' -or -name '*.so.*' \) | while read lib; do
       echo "setting rpath for $lib..."
@@ -63,11 +61,12 @@ in buildPythonPackage {
 
   pythonImportsCheck = [ "torch" ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Open source, prototype-to-production deep learning platform";
     homepage = "https://pytorch.org/";
+    changelog = "https://github.com/pytorch/pytorch/releases/tag/v${version}";
     license = licenses.unfree; # Includes CUDA and Intel MKL.
     platforms = platforms.linux;
-    maintainers = with maintainers; [ danieldk ];
+    maintainers = with maintainers; [ junjihashimoto ];
   };
 }

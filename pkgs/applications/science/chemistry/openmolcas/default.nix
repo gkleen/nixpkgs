@@ -1,12 +1,13 @@
-{ stdenv, fetchFromGitLab, cmake, gfortran, perl
+{ lib, stdenv, fetchFromGitLab, cmake, gfortran, perl
 , openblas, hdf5-cpp, python3, texlive
-, armadillo, openmpi, globalarrays, openssh
-, makeWrapper, fetchpatch
+, armadillo, mpi, globalarrays, openssh
+, makeWrapper
 } :
 
 let
-  version = "20.10";
-  gitLabRev = "v${version}";
+  version = "21.06";
+  # The tag keeps moving, fix a hash instead
+  gitLabRev = "dd982ad4bc94dec8ac1e3e99cb6a7dd249ff71de";
 
   python = python3.withPackages (ps : with ps; [ six pyparsing ]);
 
@@ -18,27 +19,31 @@ in stdenv.mkDerivation {
     owner = "Molcas";
     repo = "OpenMolcas";
     rev = gitLabRev;
-    sha256 = "0xr9plgb0cfmxxqmd3wrhvl0hv2jqqfqzxwzs1jysq2m9cxl314v";
+    sha256 = "07dm73n0s7ckif561yb3s9yqxsv39a73kb9qwny4yp39wdvv52hz";
   };
 
   patches = [
     # Required to handle openblas multiple outputs
     ./openblasPath.patch
-];
+  ];
 
-  nativeBuildInputs = [ perl cmake texlive.combined.scheme-minimal makeWrapper ];
-  buildInputs = [
+  nativeBuildInputs = [
+    perl
     gfortran
+    cmake
+    texlive.combined.scheme-minimal
+    makeWrapper
+  ];
+
+  buildInputs = [
     openblas
     hdf5-cpp
     python
     armadillo
-    openmpi
+    mpi
     globalarrays
     openssh
   ];
-
-  enableParallelBuilding = true;
 
   cmakeFlags = [
     "-DOPENMP=ON"
@@ -59,6 +64,10 @@ in stdenv.mkDerivation {
     export PATH=$PATH:$out/bin
   '';
 
+  postInstall = ''
+    mv $out/pymolcas $out/bin
+  '';
+
   postFixup = ''
     # Wrong store path in shebang (no Python pkgs), force re-patching
     sed -i "1s:/.*:/usr/bin/env python:" $out/bin/pymolcas
@@ -67,11 +76,11 @@ in stdenv.mkDerivation {
     wrapProgram $out/bin/pymolcas --set MOLCAS $out
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Advanced quantum chemistry software package";
     homepage = "https://gitlab.com/Molcas/OpenMolcas";
     maintainers = [ maintainers.markuskowa ];
-    license = licenses.lgpl21;
+    license = licenses.lgpl21Only;
     platforms = [ "x86_64-linux" ];
   };
 }

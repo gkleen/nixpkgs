@@ -1,17 +1,17 @@
-{ stdenv, fetchurl, makeDesktopItem, wrapGAppsHook
-, atk, at-spi2-atk, at-spi2-core, alsaLib, cairo, cups, dbus, expat, gdk-pixbuf, glib, gtk3
+{ lib, stdenv, fetchurl, makeDesktopItem, wrapGAppsHook
+, atk, at-spi2-atk, at-spi2-core, alsa-lib, cairo, cups, dbus, expat, gdk-pixbuf, glib, gtk3
 , freetype, fontconfig, nss, nspr, pango, udev, libuuid, libX11, libxcb, libXi
 , libXcursor, libXdamage, libXrandr, libXcomposite, libXext, libXfixes
-, libXrender, libXtst, libXScrnSaver
+, libXrender, libXtst, libXScrnSaver, libxkbcommon, libdrm, mesa
 }:
 
 stdenv.mkDerivation rec {
   pname = "postman";
-  version = "7.36.0";
+  version = "8.10.0";
 
   src = fetchurl {
     url = "https://dl.pstmn.io/download/version/${version}/linux64";
-    sha256 = "1wdbwlli9lzxxcwbc94fybfq6ipzvsv0waqcr1mjqzlfjqaqgrsb";
+    sha256 = "05f3eaa229483a7e1f698e6e2ea2031d37687de540d4fad05ce677ac216db24d";
     name = "${pname}.tar.gz";
   };
 
@@ -33,7 +33,7 @@ stdenv.mkDerivation rec {
     atk
     at-spi2-atk
     at-spi2-core
-    alsaLib
+    alsa-lib
     cairo
     cups
     dbus
@@ -43,10 +43,12 @@ stdenv.mkDerivation rec {
     gtk3
     freetype
     fontconfig
+    mesa
     nss
     nspr
     pango
     udev
+    libdrm
     libuuid
     libX11
     libxcb
@@ -60,6 +62,7 @@ stdenv.mkDerivation rec {
     libXrender
     libXtst
     libXScrnSaver
+    libxkbcommon
   ];
 
   nativeBuildInputs = [ wrapGAppsHook ];
@@ -88,12 +91,12 @@ stdenv.mkDerivation rec {
     patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" _Postman
     for file in $(find . -type f \( -name \*.node -o -name _Postman -o -name \*.so\* \) ); do
       ORIGIN=$(patchelf --print-rpath $file); \
-      patchelf --set-rpath "${stdenv.lib.makeLibraryPath buildInputs}:$ORIGIN" $file
+      patchelf --set-rpath "${lib.makeLibraryPath buildInputs}:$ORIGIN" $file
     done
     popd
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://www.getpostman.com";
     description = "API Development Environment";
     license = licenses.postman;

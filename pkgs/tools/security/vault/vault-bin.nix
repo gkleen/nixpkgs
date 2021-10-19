@@ -1,26 +1,26 @@
-{ stdenv, fetchurl, unzip }:
+{ lib, stdenv, fetchurl, unzip, makeWrapper, gawk, glibc }:
 
 let
-  version = "1.6.0";
+  version = "1.8.2";
 
   sources = let
     base = "https://releases.hashicorp.com/vault/${version}";
   in {
     x86_64-linux = fetchurl {
       url = "${base}/vault_${version}_linux_amd64.zip";
-      sha256 = "0fay6bw31x9kxmc52sh5qp63nfkwji74fbnlx8pj3smz3qnqw143";
+      sha256 = "sha256-10ck1swivx4cfFGQCbAXaAms9vHCDuVhB94Mq1TNhGM=";
     };
     i686-linux = fetchurl {
       url = "${base}/vault_${version}_linux_386.zip";
-      sha256 = "0bjks9lpgl39cq55c9cyc0glhmyxzs37a2an8ynzza94gv5mgcxa";
+      sha256 = "0v8l056xs88mjpcfpi9k8chv0zk7lf80gkj580z3d37h2yr2b1gg";
     };
     x86_64-darwin = fetchurl {
       url = "${base}/vault_${version}_darwin_amd64.zip";
-      sha256 = "0hl1k35x78y0hi3y5xjnzby1ygisqjyvdak7s61m9f363nsr1shh";
+      sha256 = "1xabbndnx85zbhbwid30q0jii41hmwwlqrxz4a0rllqshvmq4fg3";
     };
     aarch64-linux = fetchurl {
       url = "${base}/vault_${version}_linux_arm64.zip";
-      sha256 = "018a5i14x6phhx1axvx0bvqn4ggsimfizs48xbmykgiyfmzkrwgz";
+      sha256 = "00p2540bdhw46licab401vbwdyvp1hkngssx6nh99igj14sl60qa";
     };
   };
 
@@ -30,21 +30,28 @@ in stdenv.mkDerivation {
 
   src = sources.${stdenv.hostPlatform.system} or (throw "unsupported system: ${stdenv.hostPlatform.system}");
 
-  nativeBuildInputs = [ unzip ];
+  nativeBuildInputs = [ makeWrapper unzip ];
 
   sourceRoot = ".";
 
   installPhase = ''
+    runHook preInstall
+
     mkdir -p $out/bin $out/share/bash-completion/completions
     mv vault $out/bin
     echo "complete -C $out/bin/vault vault" > $out/share/bash-completion/completions/vault
+  '' + lib.optionalString stdenv.isLinux ''
+    wrapProgram $out/bin/vault \
+      --prefix PATH : ${lib.makeBinPath [ gawk glibc ]}
+
+    runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://www.vaultproject.io";
     description = "A tool for managing secrets, this binary includes the UI";
     platforms = [ "x86_64-linux" "i686-linux" "x86_64-darwin" "aarch64-linux" ];
     license = licenses.mpl20;
-    maintainers = with maintainers; [ offline psyanticy mkaito ];
+    maintainers = with maintainers; teams.serokell.members ++ [ offline psyanticy Chili-Man ];
   };
 }

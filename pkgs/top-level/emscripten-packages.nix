@@ -10,12 +10,11 @@ rec {
     stdenv = pkgs.emscriptenStdenv;
   }).overrideDerivation
     (old: {
-      nativeBuildInputs = [ autoreconfHook pkgconfig ];
+      nativeBuildInputs = [ pkg-config cmake ];
       propagatedBuildInputs = [ zlib ];
-      buildInputs = old.buildInputs ++ [ automake autoconf ];
       configurePhase = ''
         HOME=$TMPDIR
-        emconfigure ./configure --prefix=$out 
+        emcmake cmake . $cmakeFlags -DCMAKE_INSTALL_PREFIX=$out -DCMAKE_INSTALL_INCLUDEDIR=$dev/include
       '';
       checkPhase = ''
         echo "================= testing json_c using node ================="
@@ -26,7 +25,7 @@ rec {
           `pkg-config zlib --cflags` \
           `pkg-config zlib --libs` \
           -I . \
-          .libs/libjson-c.so \
+          libjson-c.a \
           -o ./test1.js
 
         echo "Using node to execute the test which basically outputs an error on stderr which we grep for" 
@@ -49,7 +48,7 @@ rec {
   }).overrideDerivation
     (old: { 
       propagatedBuildInputs = [ zlib ];
-      buildInputs = old.buildInputs ++ [ pkgconfig ];
+      buildInputs = old.buildInputs ++ [ pkg-config ];
 
       # just override it with nothing so it does not fail
       autoreconfPhase = "echo autoreconfPhase not used..."; 
@@ -84,8 +83,8 @@ rec {
     pname = "xmlmirror";
     version = "unstable-2016-06-05";
 
-    buildInputs = [ pkgconfig autoconf automake libtool gnumake libxml2 nodejs openjdk json_c ];
-    nativeBuildInputs = [ pkgconfig zlib ];
+    buildInputs = [ pkg-config autoconf automake libtool gnumake libxml2 nodejs openjdk json_c ];
+    nativeBuildInputs = [ pkg-config zlib ];
 
     src = pkgs.fetchgit {
       url = "https://gitlab.com/odfplugfest/xmlmirror.git";
@@ -136,7 +135,7 @@ rec {
     stdenv = pkgs.emscriptenStdenv;
   }).overrideDerivation
     (old: { 
-      buildInputs = old.buildInputs ++ [ pkgconfig ];
+      buildInputs = old.buildInputs ++ [ pkg-config ];
       # we need to reset this setting!
       NIX_CFLAGS_COMPILE="";
       configurePhase = ''
@@ -163,7 +162,7 @@ rec {
         echo "Compiling a custom test"
         set -x
         emcc -O2 -s EMULATE_FUNCTION_POINTER_CASTS=1 test/example.c -DZ_SOLO \
-        libz.so.${old.version} -I . -o example.js
+        -L. libz.so.${old.version} -I . -o example.js
 
         echo "Using node to execute the test"
         ${pkgs.nodejs}/bin/node ./example.js 
@@ -178,7 +177,7 @@ rec {
         echo "================= /testing zlib using node ================="
       '';
 
-      postPatch = pkgs.stdenv.lib.optionalString pkgs.stdenv.isDarwin ''
+      postPatch = pkgs.lib.optionalString pkgs.stdenv.isDarwin ''
         substituteInPlace configure \
           --replace '/usr/bin/libtool' 'ar' \
           --replace 'AR="libtool"' 'AR="ar"' \

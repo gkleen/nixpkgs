@@ -1,32 +1,26 @@
-{ lib, buildGoModule, fetchFromGitHub, installShellFiles }:
+{ lib, buildGoModule, fetchFromGitHub, installShellFiles, k3sVersion ? "1.20.6-k3s1" }:
 
-let
-  k3sVersion = "1.19.4-k3s1";
-in
 buildGoModule rec {
   pname = "kube3d";
-  version = "3.4.0";
-
-  excludedPackages = "tools";
+  version = "4.4.7";
 
   src = fetchFromGitHub {
     owner = "rancher";
     repo = "k3d";
     rev = "v${version}";
-    sha256 = "1fisbzv786n841pagy7zbanll7k1g5ib805j9azs2s30cfhvi08b";
+    sha256 = "sha256-S1vHmXUCP1ayPo3vvHAbNCqNm1ueJ0jE4NUBvg5P3MU=";
   };
 
   vendorSha256 = null;
 
   nativeBuildInputs = [ installShellFiles ];
 
-  buildFlagsArray = [
-    "-ldflags="
-    "-w"
-    "-s"
-    "-X github.com/rancher/k3d/v3/version.Version=v${version}"
-    "-X github.com/rancher/k3d/v3/version.K3sVersion=v${k3sVersion}"
-  ];
+  excludedPackages = "\\(tools\\|docgen\\)";
+
+  ldflags = let t = "github.com/rancher/k3d/v4/version"; in
+    [
+      "-s" "-w" "-X ${t}.Version=v${version}" "-X ${t}.K3sVersion=v${k3sVersion}"
+    ];
 
   doCheck = false;
 
@@ -37,8 +31,17 @@ buildGoModule rec {
       --zsh <($out/bin/k3d completion zsh)
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    $out/bin/k3d --help
+    $out/bin/k3d version | grep "k3d version v${version}"
+    runHook postInstallCheck
+  '';
+
   meta = with lib; {
     homepage = "https://github.com/rancher/k3d";
+    changelog = "https://github.com/rancher/k3d/blob/v${version}/CHANGELOG.md";
     description = "A helper to run k3s (Lightweight Kubernetes. 5 less than k8s) in a docker container - k3d";
     longDescription = ''
       k3s is the lightweight Kubernetes distribution by Rancher: rancher/k3s
@@ -47,7 +50,7 @@ buildGoModule rec {
       multi-node k3s cluster on a single machine using docker.
     '';
     license = licenses.mit;
-    platforms = platforms.linux;
     maintainers = with maintainers; [ kuznero jlesquembre ngerstle jk ];
+    platforms = platforms.linux;
   };
 }

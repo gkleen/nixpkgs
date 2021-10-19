@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, makeWrapper, python3, alsaUtils, timidity }:
+{ lib, stdenv, fetchurl, makeWrapper, python3, alsa-utils, timidity }:
 
   stdenv.mkDerivation rec {
   version = "20.12";
@@ -9,13 +9,14 @@
     sha256 = "18k0hwlqky5x4y461fxmw77gvz7z8jyrvxicrqphsgvwwinzy732";
   };
 
-  buildInputs = [ makeWrapper python3 alsaUtils timidity ];
+  nativeBuildInputs = [ makeWrapper ];
+  buildInputs = [ python3 alsa-utils timidity ];
 
   patchPhase = ''
-    sed -i 's@/usr/bin/aplaymidi@/${alsaUtils}/bin/aplaymidi@g' mma-splitrec
-    sed -i 's@/usr/bin/aplaymidi@/${alsaUtils}/bin/aplaymidi@g' util/mma-splitrec.py
-    sed -i 's@/usr/bin/arecord@/${alsaUtils}/bin/arecord@g' mma-splitrec
-    sed -i 's@/usr/bin/arecord@/${alsaUtils}/bin/arecord@g' util/mma-splitrec.py
+    sed -i 's@/usr/bin/aplaymidi@/${alsa-utils}/bin/aplaymidi@g' mma-splitrec
+    sed -i 's@/usr/bin/aplaymidi@/${alsa-utils}/bin/aplaymidi@g' util/mma-splitrec.py
+    sed -i 's@/usr/bin/arecord@/${alsa-utils}/bin/arecord@g' mma-splitrec
+    sed -i 's@/usr/bin/arecord@/${alsa-utils}/bin/arecord@g' util/mma-splitrec.py
     sed -i 's@/usr/bin/timidity@/${timidity}/bin/timidity@g' mma-splitrec
     sed -i 's@/usr/bin/timidity@/${timidity}/bin/timidity@g' util/mma-splitrec.py
     find . -type f | xargs sed -i 's@/usr/bin/env python@${python3.interpreter}@g'
@@ -62,8 +63,8 @@
   meta = {
     description = "Creates MIDI tracks for a soloist to perform over from a user supplied file containing chords";
     homepage =  "https://www.mellowood.ca/mma/index.html";
-    license = stdenv.lib.licenses.gpl2;
-    maintainers = [ stdenv.lib.maintainers.magnetophon ];
-    platforms = stdenv.lib.platforms.linux;
+    license = lib.licenses.gpl2;
+    maintainers = [ lib.maintainers.magnetophon ];
+    platforms = lib.platforms.linux;
   };
 }

@@ -1,18 +1,34 @@
-{ lib, buildPythonPackage, fetchPypi
-, aiohttp, zigpy, conftest, asynctest
-, pytestCheckHook }:
+{ lib
+, aiohttp
+, asynctest
+, buildPythonPackage
+, fetchFromGitHub
+, pytestCheckHook
+, zigpy
+}:
 
 buildPythonPackage rec {
   pname = "zha-quirks";
-  version = "0.0.47";
+  version = "0.0.61";
 
-  propagatedBuildInputs = [ aiohttp zigpy ];
-  checkInputs = [ pytestCheckHook conftest asynctest ];
-
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "bf7dbd5d1c1a3849b059e62afcef248b6955f5ceef78f87201ae2fc8420738de";
+  src = fetchFromGitHub {
+    owner = "zigpy";
+    repo = "zha-device-handlers";
+    rev = version;
+    sha256 = "sha256-uDQAXH0p8Ly0ZbwNlkVo1b7fAXSu77U7v3BHd0B1YQk=";
   };
+
+  propagatedBuildInputs = [
+    aiohttp
+    zigpy
+  ];
+
+  checkInputs = [
+    asynctest
+    pytestCheckHook
+  ];
+
+  pythonImportsCheck = [ "zhaquirks" ];
 
   meta = with lib; {
     description = "ZHA Device Handlers are custom quirks implementations for Zigpy";

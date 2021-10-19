@@ -35,9 +35,10 @@ let
     auto_pause = true;
     only_admins_can_pause_the_game = true;
     autosave_only_on_server = true;
-    admins = [];
+    non_blocking_saving = cfg.nonBlockingSaving;
   } // cfg.extraSettings;
   serverSettingsFile = pkgs.writeText "server-settings.json" (builtins.toJSON (filterAttrsRecursive (n: v: v != null) serverSettings));
+  serverAdminsFile = pkgs.writeText "server-adminlist.json" (builtins.toJSON cfg.admins);
   modDir = pkgs.factorio-utils.mkModDirDrv cfg.mods;
   whitelistFile = pkgs.writeText "whitelist.json" (builtins.toJSON cfg.whitelist);
 in
@@ -52,6 +53,16 @@ in
           The port to which the service should bind.
         '';
       };
+
+      admins = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = [ "username" ];
+        description = ''
+          List of player names which will be admin.
+        '';
+      };
+
       openFirewall = mkOption {
         type = types.bool;
         default = false;
@@ -208,6 +219,15 @@ in
           Manage mods in state dir
         '';
       };
+      nonBlockingSaving = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Highly experimental feature, enable only at your own risk of losing your saves.
+          On UNIX systems, server will fork itself to create an autosave.
+          Autosaving on connected Windows clients will be disabled regardless of autosave_only_on_server option.
+        '';
+      };
     };
   };
 
@@ -253,6 +273,7 @@ in
           (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
           (optionalString cfg.dynamicMods "--mod-directory=${stateDir}/mods")
           (optionalString (cfg.whitelist != null) "--server-whitelist=${whitelistFile} --use-server-whitelist=true")
+          (optionalString (cfg.admins != []) "--server-adminlist=${serverAdminsFile}")
         ];
 
         # Sandboxing

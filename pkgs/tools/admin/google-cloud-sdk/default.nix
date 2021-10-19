@@ -21,31 +21,52 @@ let
   sources = name: system: {
     x86_64-darwin = {
       url = "${baseUrl}/${name}-darwin-x86_64.tar.gz";
-      sha256 = "0kldvy63gba5k6ymybnggw3q3rlav1gcbpxiwnv6670lk5qzqdsw";
+      sha256 = "1a17bbvimdqq4k25lprqk9cq3lpfchd65hzjf23ha4imndpbjgqr";
+    };
+
+    aarch64-darwin = {
+      url = "${baseUrl}/${name}-darwin-arm.tar.gz";
+      sha256 = "184k1kv10g4zzzxgmwpakvg5ffxhz01dd01kb5h32mf1j5fid1zh";
     };
 
     x86_64-linux = {
       url = "${baseUrl}/${name}-linux-x86_64.tar.gz";
-      sha256 = "1ifl4skwqhkapfwhymyz7v4jpwpd01n4x3956w5ci8c3zvw8l118";
+      sha256 = "0hhaq5hf5nvaah06h6v8q2hpn8hc815ihsi74dpwg6pmg9h266pr";
+    };
+
+    i686-linux = {
+      url = "${baseUrl}/${name}-linux-x86.tar.gz";
+      sha256 = "14z1nzwc0j3qhbw2ldrskd8zjsslwgsw7pxxq3v0ypc1rjibsql5";
+    };
+
+    aarch64-linux = {
+      url = "${baseUrl}/${name}-linux-arm.tar.gz";
+      sha256 = "0f6xrij2wbx57s4897bi12l9fz3flj1wyibbk7jjg0l5332h4yhr";
     };
   }.${system};
 
 in stdenv.mkDerivation rec {
   pname = "google-cloud-sdk";
-  version = "319.0.0";
+  version = "351.0.0";
 
   src = fetchurl (sources "${pname}-${version}" stdenv.hostPlatform.system);
 
-  buildInputs = [ python makeWrapper ];
+  buildInputs = [ python ];
 
-  nativeBuildInputs = [ jq ];
+  nativeBuildInputs = [ jq makeWrapper ];
 
   patches = [
+    # For kubectl configs, don't store the absolute path of the `gcloud` binary as it can be garbage-collected
     ./gcloud-path.patch
+    # Disable checking for updates for the package
     ./gsutil-disable-updates.patch
+    # Try to use cloud_sql_proxy from SDK only if it actually exists, otherwise, search for one in PATH
+    ./cloud_sql_proxy_path.patch
   ];
 
   installPhase = ''
+    runHook preInstall
+
     mkdir -p $out/google-cloud-sdk
     cp -R * .install $out/google-cloud-sdk/
 
@@ -75,7 +96,8 @@ in stdenv.mkDerivation rec {
 
     # setup bash completion
     mkdir -p $out/share/bash-completion/completions
-    mv $out/google-cloud-sdk/completion.bash.inc $out/share/bash-completion/completions/gcloud.inc
+    mv $out/google-cloud-sdk/completion.bash.inc $out/share/bash-completion/completions/gcloud
+    ln -s $out/share/bash-completion/completions/gcloud $out/share/bash-completion/completions/gsutil
 
     # This directory contains compiled mac binaries. We used crcmod from
     # nixpkgs instead.
@@ -91,15 +113,18 @@ in stdenv.mkDerivation rec {
       jq -c . $path > $path.min
       mv $path.min $path
     done
+
+    runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Tools for the google cloud platform";
     longDescription = "The Google Cloud SDK. This package has the programs: gcloud, gsutil, and bq";
     # This package contains vendored dependencies. All have free licenses.
     license = licenses.free;
     homepage = "https://cloud.google.com/sdk/";
-    maintainers = with maintainers; [ pradyuman stephenmw zimbatm ];
-    platforms = [ "x86_64-linux" "x86_64-darwin" ];
+    maintainers = with maintainers; [ iammrinal0 pradyuman stephenmw zimbatm ];
+    platforms = [ "i686-linux" "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
+    mainProgram = "gcloud";
   };
 }

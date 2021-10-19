@@ -1,15 +1,21 @@
-{ stdenv, lib, buildPythonPackage, fetchPypi, makeWrapper, isPy3k,
-  python, twisted, jinja2, zope_interface, future, sqlalchemy,
-  sqlalchemy_migrate, dateutil, txaio, autobahn, pyjwt, pyyaml, treq,
-  txrequests, pypugjs, boto3, moto, mock, python-lz4, setuptoolsTrial,
-  isort, pylint, flake8, buildbot-worker, buildbot-pkg, buildbot-plugins,
-  parameterized, git, openssh, glibcLocales, nixosTests }:
+{ stdenv, lib, buildPythonPackage, fetchPypi, makeWrapper, isPy3k
+, python, twisted, jinja2, zope_interface, sqlalchemy
+, sqlalchemy_migrate, python-dateutil, txaio, autobahn, pyjwt, pyyaml, unidiff, treq
+, txrequests, pypugjs, boto3, moto, mock, lz4, setuptoolsTrial
+, isort, pylint, flake8, buildbot-worker, buildbot-pkg, buildbot-plugins
+, parameterized, git, openssh, glibcLocales, ldap3, nixosTests
+}:
 
 let
   withPlugins = plugins: buildPythonPackage {
-    name = "${package.name}-with-plugins";
-    phases = [ "installPhase" "fixupPhase" ];
-    buildInputs = [ makeWrapper ];
+    pname = "${package.pname}-with-plugins";
+    inherit (package) version;
+
+    dontUnpack = true;
+    dontBuild = true;
+    doCheck = false;
+
+    nativeBuildInputs = [ makeWrapper ];
     propagatedBuildInputs = plugins ++ package.propagatedBuildInputs;
 
     installPhase = ''
@@ -25,11 +31,11 @@ let
 
   package = buildPythonPackage rec {
     pname = "buildbot";
-    version = "2.9.2";
+    version = "3.3.0";
 
     src = fetchPypi {
       inherit pname version;
-      sha256 = "019xfxjnyfi69d5sm3alvib24g8giqlvc102p8hqg8mfm7hc9z2v";
+      sha256 = "sha256-FST+mCIQpzxc/5iQdsSNBlKxY985v+z6Xeh8ZQRu2FE=";
     };
 
     propagatedBuildInputs = [
@@ -39,11 +45,12 @@ let
       zope_interface
       sqlalchemy
       sqlalchemy_migrate
-      dateutil
+      python-dateutil
       txaio
       autobahn
       pyjwt
       pyyaml
+      unidiff
     ]
       # tls
       ++ twisted.extras.tls;
@@ -55,7 +62,7 @@ let
       boto3
       moto
       mock
-      python-lz4
+      lz4
       setuptoolsTrial
       isort
       pylint
@@ -67,6 +74,9 @@ let
       git
       openssh
       glibcLocales
+      # optional dependency that was accidentally made required for tests
+      # https://github.com/buildbot/buildbot/pull/5857
+      ldap3
     ];
 
     patches = [
@@ -92,12 +102,13 @@ let
     passthru = {
       inherit withPlugins;
       tests.buildbot = nixosTests.buildbot;
+      updateScript = ./update.sh;
     };
 
     meta = with lib; {
       homepage = "https://buildbot.net/";
       description = "An open-source continuous integration framework for automating software build, test, and release processes";
-      maintainers = with maintainers; [ nand0p ryansydnor lopsided98 ];
+      maintainers = with maintainers; [ ryansydnor lopsided98 ];
       license = licenses.gpl2;
     };
   };

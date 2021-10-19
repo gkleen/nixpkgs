@@ -1,8 +1,11 @@
-{ stdenv, fetchFromGitHub, pkgconfig, makeWrapper, makeDesktopItem
-, ncurses, libtermkey, lpeg, lua
+{ lib, stdenv, fetchFromGitHub, pkg-config, makeWrapper, makeDesktopItem
+, ncurses, libtermkey, lua
 , acl ? null, libselinux ? null
 }:
 
+let
+  luaEnv = lua.withPackages(ps: [ ps.lpeg ]);
+in
 stdenv.mkDerivation rec {
   pname = "vis";
   version  = "0.7";
@@ -14,14 +17,13 @@ stdenv.mkDerivation rec {
     owner = "martanne";
   };
 
-  nativeBuildInputs = [ pkgconfig makeWrapper ];
+  nativeBuildInputs = [ pkg-config makeWrapper ];
 
   buildInputs = [
     ncurses
     libtermkey
-    lua
-    lpeg
-  ] ++ stdenv.lib.optionals stdenv.isLinux [
+    luaEnv
+  ] ++ lib.optionals stdenv.isLinux [
     acl
     libselinux
   ];
@@ -30,16 +32,13 @@ stdenv.mkDerivation rec {
     patchShebangs ./configure
   '';
 
-  LUA_CPATH="${lpeg}/lib/lua/${lua.luaversion}/?.so;";
-  LUA_PATH="${lpeg}/share/lua/${lua.luaversion}/?.lua";
-
   postInstall = ''
     mkdir -p "$out/share/applications"
     cp $desktopItem/share/applications/* $out/share/applications
     echo wrapping $out/bin/vis with runtime environment
     wrapProgram $out/bin/vis \
-      --prefix LUA_CPATH ';' "${lpeg}/lib/lua/${lua.luaversion}/?.so" \
-      --prefix LUA_PATH ';' "${lpeg}/share/lua/${lua.luaversion}/?.lua" \
+      --prefix LUA_CPATH ';' "${luaEnv}/lib/lua/${lua.luaversion}/?.so" \
+      --prefix LUA_PATH ';' "${luaEnv}/share/lua/${lua.luaversion}/?.lua" \
       --prefix VIS_PATH : "\$HOME/.config:$out/share/vis"
   '';
 
@@ -51,17 +50,17 @@ stdenv.mkDerivation rec {
     comment = meta.description;
     desktopName = "vis";
     genericName = "Text editor";
-    categories = stdenv.lib.concatStringsSep ";" [
+    categories = lib.concatStringsSep ";" [
       "Application" "Development" "IDE"
     ];
-    mimeType = stdenv.lib.concatStringsSep ";" [
+    mimeType = lib.concatStringsSep ";" [
       "text/plain" "application/octet-stream"
     ];
     startupNotify = "false";
     terminal = "true";
   };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A vim like editor";
     homepage = "https://github.com/martanne/vis";
     license = licenses.isc;

@@ -1,5 +1,5 @@
 { majorVersion, minorVersion, sourceSha256, patchesToFetch ? [] }:
-{ stdenv, lib, fetchurl, cmake, libGLU, libGL, libX11, xorgproto, libXt, libtiff
+{ stdenv, lib, fetchurl, cmake, libGLU, libGL, libX11, xorgproto, libXt, libpng, libtiff
 , fetchpatch
 , enableQt ? false, wrapQtAppsHook, qtbase, qtx11extras, qttools
 , enablePython ? false, pythonInterpreter ? throw "vtk: Python support requested, but no python interpreter was given."
@@ -18,13 +18,13 @@ in stdenv.mkDerivation rec {
   version = "${majorVersion}.${minorVersion}";
 
   src = fetchurl {
-    url = "${meta.homepage}files/release/${majorVersion}/VTK-${version}.tar.gz";
+    url = "https://www.vtk.org/files/release/${majorVersion}/VTK-${version}.tar.gz";
     sha256 = sourceSha256;
   };
 
   nativeBuildInputs = [ cmake ];
 
-  buildInputs = [ libtiff ]
+  buildInputs = [ libpng libtiff ]
     ++ optionals enableQt [ qtbase qtx11extras qttools ]
     ++ optionals stdenv.isLinux [
       libGLU
@@ -57,6 +57,8 @@ in stdenv.mkDerivation rec {
     export LD_LIBRARY_PATH="$(pwd)/lib";
   '';
 
+  dontWrapQtApps = true;
+
   # Shared libraries don't work, because of rpath troubles with the current
   # nixpkgs cmake approach. It wants to call a binary at build time, just
   # built and requiring one of the shared objects.
@@ -65,13 +67,17 @@ in stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DCMAKE_C_FLAGS=-fPIC"
     "-DCMAKE_CXX_FLAGS=-fPIC"
-    "-DVTK_USE_SYSTEM_TIFF=1"
+    "-D${if lib.versionOlder version "9.0" then "VTK_USE_SYSTEM_PNG" else "VTK_MODULE_USE_EXTERNAL_vtkpng"}=ON"
+    "-D${if lib.versionOlder version "9.0" then "VTK_USE_SYSTEM_TIFF" else "VTK_MODULE_USE_EXTERNAL_vtktiff"}=1"
     "-DOPENGL_INCLUDE_DIR=${libGL}/include"
     "-DCMAKE_INSTALL_LIBDIR=lib"
     "-DCMAKE_INSTALL_INCLUDEDIR=include"
     "-DCMAKE_INSTALL_BINDIR=bin"
+  ] ++ optionals enableQt [
+    "-D${if lib.versionOlder version "9.0" then "VTK_Group_Qt:BOOL=ON" else "VTK_GROUP_ENABLE_Qt:STRING=YES"}"
+  ] ++ optionals (enableQt && lib.versionOlder version "8.0") [
+    "-DVTK_QT_VERSION=5"
   ]
-    ++ optionals enableQt [ "-DVTK_Group_Qt:BOOL=ON" ]
     ++ optionals stdenv.isDarwin [ "-DOPENGL_INCLUDE_DIR=${OpenGL}/Library/Frameworks" ]
     ++ optionals enablePython [
       "-DVTK_WRAP_PYTHON:BOOL=ON"
@@ -84,13 +90,13 @@ in stdenv.mkDerivation rec {
     sed -i 's/fprintf(output, shift)/fprintf(output, "%s", shift)/g' ./ThirdParty/libxml2/vtklibxml2/xpath.c
   '';
 
-  enableParallelBuilding = true;
-
   meta = with lib; {
     description = "Open source libraries for 3D computer graphics, image processing and visualization";
     homepage = "https://www.vtk.org/";
     license = licenses.bsd3;
     maintainers = with maintainers; [ knedlsepp tfmoraes lheckemann ];
     platforms = with platforms; unix;
+    # /nix/store/xxxxxxx-apple-framework-Security/Library/Frameworks/Security.framework/Headers/Authorization.h:192:7: error: variably modified 'bytes' at file scope
+    broken = stdenv.isDarwin && (lib.versions.major majorVersion == "7" || lib.versions.major majorVersion == "8");
   };
 }

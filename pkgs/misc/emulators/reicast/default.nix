@@ -1,9 +1,9 @@
-{ stdenv
+{ lib, stdenv
 , fetchFromGitHub
 , cmake
 , pkg-config
 , curl
-, alsaLib
+, alsa-lib
 , libGLU
 , libX11
 , libevdev
@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ cmake pkg-config ];
   buildInputs = [
     curl
-    alsaLib
+    alsa-lib
     libGLU
     libX11
     libevdev
@@ -42,7 +42,7 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://reicast.com/";
     description = "A multi-platform Sega Dreamcast emulator";
     license = with licenses; [ bsd3 gpl2Only lgpl2Only ];

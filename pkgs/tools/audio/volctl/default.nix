@@ -1,14 +1,14 @@
-{ stdenv, python3Packages, fetchFromGitHub, wrapGAppsHook, gobject-introspection, libpulseaudio, glib, gtk3, pango, xorg }:
+{ lib, python3Packages, fetchFromGitHub, wrapGAppsHook, gobject-introspection, libpulseaudio, glib, gtk3, pango, xorg }:
 
 python3Packages.buildPythonApplication rec {
   pname = "volctl";
-  version = "0.8.0";
+  version = "0.8.2";
 
   src = fetchFromGitHub {
     owner = "buzz";
     repo = pname;
     rev = "v${version}";
-    sha256 = "02scfscf4mdrphzrd7cbwbhpig9bhvaws8qk4zc81z8vvf3mcfv2";
+    sha256 = "1cx27j83pz2qffnzb85fbl1x6pp3irv1kbw7g1hri7kaw6ky4xiz";
   };
 
   postPatch = ''
@@ -46,7 +46,7 @@ python3Packages.buildPythonApplication rec {
     gappsWrapperArgs+=(--prefix LD_LIBRARY_PATH : "${libpulseaudio}/lib")
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "PulseAudio enabled volume control featuring per-app sliders";
     homepage = "https://buzz.github.io/volctl/";
     license = licenses.gpl2;

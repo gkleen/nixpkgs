@@ -9,13 +9,13 @@
 
 mkDerivation rec {
   pname = "moolticute";
-  version = "0.44.21";
+  version = "0.52.0";
 
   src = fetchFromGitHub {
     owner = "mooltipass";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1m3iy2v8mimyb25xisr7i4ga6qlggv1i2aji9qfgagns7ffp53nf";
+    sha256 = "sha256-6o0Tf6qBxCEOvfSuEP2Qz72T9Oexp95knRCtwImlpsA=";
   };
 
   outputs = [ "out" "udev" ];

@@ -1,8 +1,9 @@
-{ stdenv, removeReferencesTo, pkgsBuildBuild, pkgsBuildHost, pkgsBuildTarget
+{ lib, stdenv, removeReferencesTo, pkgsBuildBuild, pkgsBuildHost, pkgsBuildTarget
 , llvmShared, llvmSharedForBuild, llvmSharedForHost, llvmSharedForTarget
 , fetchurl, file, python3
 , darwin, cmake, rust, rustPlatform
-, pkgconfig, openssl
+, pkg-config, openssl
+, libiconv
 , which, libffi
 , withBundledLLVM ? false
 , enableRustcDev ? true
@@ -12,7 +13,7 @@
 }:
 
 let
-  inherit (stdenv.lib) optionals optional optionalString concatStringsSep;
+  inherit (lib) optionals optional optionalString concatStringsSep;
   inherit (darwin.apple_sdk.frameworks) Security;
 in stdenv.mkDerivation rec {
   pname = "rustc";
@@ -88,9 +89,9 @@ in stdenv.mkDerivation rec {
     "${setTarget}.cxx=${cxxForTarget}"
   ] ++ optionals (!withBundledLLVM) [
     "--enable-llvm-link-shared"
-    "${setBuild}.llvm-config=${llvmSharedForBuild}/bin/llvm-config"
-    "${setHost}.llvm-config=${llvmSharedForHost}/bin/llvm-config"
-    "${setTarget}.llvm-config=${llvmSharedForTarget}/bin/llvm-config"
+    "${setBuild}.llvm-config=${llvmSharedForBuild.dev}/bin/llvm-config"
+    "${setHost}.llvm-config=${llvmSharedForHost.dev}/bin/llvm-config"
+    "${setTarget}.llvm-config=${llvmSharedForTarget.dev}/bin/llvm-config"
   ] ++ optionals (stdenv.isLinux && !stdenv.targetPlatform.isRedox) [
     "--enable-profiler" # build libprofiler_builtins
   ] ++ optionals stdenv.buildPlatform.isMusl [
@@ -117,7 +118,7 @@ in stdenv.mkDerivation rec {
   postPatch = ''
     patchShebangs src/etc
 
-    ${optionalString (!withBundledLLVM) ''rm -rf src/llvm''}
+    ${optionalString (!withBundledLLVM) "rm -rf src/llvm"}
 
     # Fix the configure script to not require curl as we won't use it
     sed -i configure \
@@ -133,17 +134,17 @@ in stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     file python3 rustPlatform.rust.rustc cmake
-    which libffi removeReferencesTo pkgconfig
+    which libffi removeReferencesTo pkg-config
   ];
 
   buildInputs = [ openssl ]
-    ++ optional stdenv.isDarwin Security
+    ++ optionals stdenv.isDarwin [ libiconv Security ]
     ++ optional (!withBundledLLVM) llvmShared;
 
   outputs = [ "out" "man" "doc" ];
   setOutputFlags = false;
 
-  postInstall = stdenv.lib.optionalString enableRustcDev ''
+  postInstall = lib.optionalString enableRustcDev ''
     # install rustc-dev components. Necessary to build rls, clippy...
     python x.py dist rustc-dev
     tar xf build/dist/rustc-dev*tar.gz
@@ -158,6 +159,9 @@ in stdenv.mkDerivation rec {
     # remove references to llvm-config in lib/rustlib/x86_64-unknown-linux-gnu/codegen-backends/librustc_codegen_llvm-llvm.so
     # and thus a transitive dependency on ncurses
     find $out/lib -name "*.so" -type f -exec remove-references-to -t ${llvmShared} '{}' '+'
+
+    # remove uninstall script that doesn't really make sense for Nix.
+    rm $out/lib/rustlib/uninstall.sh
   '';
 
   configurePlatforms = [];
@@ -172,7 +176,7 @@ in stdenv.mkDerivation rec {
 
   passthru.llvm = llvmShared;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://www.rust-lang.org/";
     description = "A safe, concurrent, practical language";
     maintainers = with maintainers; [ madjar cstrahan globin havvy ];

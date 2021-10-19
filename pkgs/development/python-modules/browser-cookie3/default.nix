@@ -2,11 +2,11 @@
 
 buildPythonPackage rec {
   pname = "browser-cookie3";
-  version = "0.11.4";
+  version = "0.12.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "3d140c6b651dbd8b8555aca6472557fcfda4dd93afc26ea3a200be922a843e2c";
+    sha256 = "72c1e6aa6a98adab3a6797b889664bdbfddc287474dd8e774da37a854ec32185";
   };
 
   disabled = !isPy3k;

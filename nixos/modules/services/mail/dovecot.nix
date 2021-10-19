@@ -405,7 +405,7 @@ in
         };
     } // optionalAttrs (cfg.createMailUser && cfg.mailUser != null) {
       ${cfg.mailUser} =
-        { description = "Virtual Mail User"; } // optionalAttrs (cfg.mailGroup != null)
+        { description = "Virtual Mail User"; isSystemUser = true; } // optionalAttrs (cfg.mailGroup != null)
           { group = cfg.mailGroup; };
     };
 
@@ -429,6 +429,7 @@ in
 
       startLimitIntervalSec = 60;  # 1 min
       serviceConfig = {
+        Type = "notify";
         ExecStart = "${dovecotPkg}/sbin/dovecot -F";
         ExecReload = "${dovecotPkg}/sbin/doveadm reload";
         Restart = "on-failure";
@@ -463,14 +464,10 @@ in
     environment.systemPackages = [ dovecotPkg ];
 
     warnings = mkIf (any isList options.services.dovecot2.mailboxes.definitions) [
-      "Declaring `services.dovecot2.mailboxes' as a list is deprecated and will break eval in 21.03! See the release notes for more info for migration."
+      "Declaring `services.dovecot2.mailboxes' as a list is deprecated and will break eval in 21.05! See the release notes for more info for migration."
     ];
 
     assertions = [
-      {
-        assertion = intersectLists cfg.protocols [ "pop3" "imap" ] != [];
-        message = "dovecot needs at least one of the IMAP or POP3 listeners enabled";
-      }
       {
         assertion = (cfg.sslServerCert == null) == (cfg.sslServerKey == null)
         && (cfg.sslCACert != null -> !(cfg.sslServerCert == null || cfg.sslServerKey == null));

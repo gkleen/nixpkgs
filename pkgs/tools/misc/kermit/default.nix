@@ -1,7 +1,8 @@
-{ stdenv, fetchurl, ncurses, glibc }:
+{ lib, stdenv, fetchurl, ncurses, glibc }:
 
 stdenv.mkDerivation {
-  name = "kermit-9.0.302";
+  pname = "kermit";
+  version = "9.0.302";
 
   src = fetchurl {
     url = "ftp://ftp.kermitproject.org/kermit/archives/cku302.tar.gz";
@@ -29,8 +30,8 @@ stdenv.mkDerivation {
     make -f makefile install
   '';
 
-  meta = with stdenv.lib; {
-    homepage = "http://www.kermitproject.org/ck90.html";
+  meta = with lib; {
+    homepage = "https://www.kermitproject.org/ck90.html";
     description = "Portable Scriptable Network and Serial Communication Software";
     license = licenses.bsd3;
     maintainers = with maintainers; [ pSub ];

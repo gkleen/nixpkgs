@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitLab, pkgconfig, xfce4-dev-tools, hicolor-icon-theme, xfce, wrapGAppsHook }:
+{ lib, stdenv, fetchFromGitLab, pkg-config, xfce4-dev-tools, hicolor-icon-theme, xfce, wrapGAppsHook }:
 
 { category
 , pname
@@ -14,7 +14,7 @@
 
 let
   inherit (builtins) filter getAttr head isList;
-  inherit (stdenv.lib) attrNames concatLists recursiveUpdate zipAttrsWithNames;
+  inherit (lib) attrNames concatLists recursiveUpdate zipAttrsWithNames;
 
   filterAttrNames = f: attrs:
     filter (n: f (getAttr n attrs)) (attrNames attrs);
@@ -25,7 +25,7 @@ let
   template = rec {
     inherit pname version;
 
-    nativeBuildInputs = [ pkgconfig xfce4-dev-tools wrapGAppsHook ];
+    nativeBuildInputs = [ pkg-config xfce4-dev-tools wrapGAppsHook ];
     buildInputs = [ hicolor-icon-theme ];
     configureFlags = [ "--enable-maintainer-mode" ];
 
@@ -46,9 +46,9 @@ let
       versionLister = xfce.gitLister src.meta.homepage;
     };
 
-    meta = with stdenv.lib; {
-      homepage = "https://gitlab.xfce.org/${category}/${pname}/about";
-      license = licenses.gpl2; # some libraries are under LGPLv2+
+    meta = with lib; {
+      homepage = "https://gitlab.xfce.org/${category}/${pname}";
+      license = licenses.gpl2Plus; # some libraries are under LGPLv2+
       platforms = platforms.linux;
     };
   };
@@ -57,3 +57,4 @@ let
 in
 
 stdenv.mkDerivation (recursiveUpdate template publicArgs // concatAttrLists [ template args ])
+# TODO [ AndersonTorres ]: verify if it allows using hash attribute as an option to sha256

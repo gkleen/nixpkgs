@@ -1,22 +1,22 @@
 { buildGoModule
 , fetchFromGitHub
-, stdenv
+, lib
 }:
 
 buildGoModule rec {
   pname = "gau";
-  version = "1.1.0";
+  version = "1.2.0";
 
   src = fetchFromGitHub {
     owner = "lc";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1srbql603vvlxc6p1ibw0982icdq9kcr1iamxlr8bmgldbm8215w";
+    sha256 = "sha256-hUIUDDP9NtMmJXj5GCD/ISUUcx5prKCVVFztff9txoU=";
   };
 
-  vendorSha256 = "17ag2wvaxv2dyx3yx3fvlf36ww4a44660pn4gvpbrwacsan9as5s";
+  vendorSha256 = "sha256-WMoFbqtBMcjTWX51mEMzpgDEAndCElldNqjG27yXd2w=";
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Tool to fetch known URLs";
     longDescription = ''
       getallurls (gau) fetches known URLs from various sources for any

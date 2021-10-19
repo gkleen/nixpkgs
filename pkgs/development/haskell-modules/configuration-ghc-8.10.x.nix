@@ -5,7 +5,7 @@ with haskellLib;
 self: super: {
 
   # This compiler version needs llvm 9.x.
-  llvmPackages = pkgs.llvmPackages_9;
+  llvmPackages = pkgs.lib.dontRecurseIntoAttrs pkgs.llvmPackages_9;
 
   # Disable GHC 8.10.x core libraries.
   array = null;
@@ -42,20 +42,18 @@ self: super: {
   unix = null;
   xhtml = null;
 
-  # The proper 3.2.0.0 release does not compile with ghc-8.10.1, so we take the
-  # hitherto unreleased next version from the '3.2' branch of the upstream git
-  # repository for the time being.
-  cabal-install = assert super.cabal-install.version == "3.2.0.0";
-                  overrideCabal super.cabal-install (drv: {
-    postUnpack = "sourceRoot+=/cabal-install; echo source root reset to $sourceRoot";
-    version = "3.2.0.0-git";
-    editedCabalFile = null;
-    src = pkgs.fetchgit {
-      url = "git://github.com/haskell/cabal.git";
-      rev = "9bd4cc0591616aeae78e17167338371a2542a475";
-      sha256 = "005q1shh7vqgykkp72hhmswmrfpz761x0q0jqfnl3wqim4xd9dg0";
-    };
+  # cabal-install needs more recent versions of Cabal and base16-bytestring.
+  cabal-install = super.cabal-install.overrideScope (self: super: {
+    Cabal = self.Cabal_3_6_1_0;
   });
+
+  # cabal-install-parsers is written for Cabal 3.6
+  cabal-install-parsers = super.cabal-install-parsers.override { Cabal = super.Cabal_3_6_1_0; };
+
+  # older version of cabal-install-parsers for reverse dependencies that use Cabal 3.4
+  cabal-install-parsers_0_4_2 = super.cabal-install-parsers_0_4_2.override {
+    Cabal = self.Cabal_3_4_0_0;
+  };
 
   # Jailbreak to fix the build.
   base-noprelude = doJailbreak super.base-noprelude;
@@ -83,12 +81,6 @@ self: super: {
     sha256 = "0rgzrq0513nlc1vw7nw4km4bcwn4ivxcgi33jly4a7n3c1r32v1f";
   });
 
-  # Version 4.7.2 is broken by the bytestring library shipped by ghc-8.10.3.
-  ListLike = appendPatch super.ListLike (pkgs.fetchpatch {
-    url = "https://gitlab.haskell.org/ghc/head.hackage/-/raw/master/patches/ListLike-4.7.2.patch";
-    sha256 = "1v392a74w0sxyn6x0bqixpmjbgla0i2b5hxzkcn1vaa3gaya7ag4";
-  });
-
   # hnix 0.9.0 does not provide an executable for ghc < 8.10, so define completions here for now.
   hnix = generateOptparseApplicativeCompletion "hnix"
     (overrideCabal super.hnix (drv: {
@@ -96,6 +88,4 @@ self: super: {
       executableHaskellDepends = drv.executableToolDepends or [] ++ [ self.repline ];
     }));
 
-  # Break out of "Cabal < 3.2" constraint.
-  stylish-haskell = doJailbreak super.stylish-haskell;
 }

@@ -1,6 +1,8 @@
 { stdenv
-, docbook_xsl
+, lib
+, docbook-xsl-nons
 , fetchurl
+, fetchpatch
 , glib
 , gobject-introspection
 , gtk-doc
@@ -17,27 +19,25 @@
 
 stdenv.mkDerivation rec {
   pname = "umockdev";
-  version = "0.15.2";
+  version = "0.15.4";
 
-  outputs = [ "bin" "out" "dev" "doc" ];
+  outputs = [ "bin" "out" "dev" "devdoc" ];
 
   src = fetchurl {
     url = "https://github.com/martinpitt/umockdev/releases/download/${version}/${pname}-${version}.tar.xz";
-    sha256 = "19f21qb9ckwvlm7yzpnc0vcp092qbkms2yrafc26b9a63v4imj52";
+    sha256 = "09k8jwvsphd97hcagf0zaf0hwzlzq2r8jfgbmvj55k7ylrg8hjxg";
   };
 
-  mesonFlags = [
-    "-Dgtk_doc=true"
+  patches = [
+    # Fix build with Vala 0.52
+    (fetchpatch {
+      url = "https://github.com/martinpitt/umockdev/commit/a236f0b55fbb6ff50a6429da9d404703d6637d94.patch";
+      sha256 = "sZs9Ove1r7te/a9vmWUmFetLVhyzhHmx7ijhkK/2S5o=";
+    })
   ];
 
-  preCheck = ''
-    patchShebangs tests/test-static-code
-  '';
-
-  buildInputs = [ glib systemd libgudev ];
-
   nativeBuildInputs = [
-    docbook_xsl
+    docbook-xsl-nons
     gobject-introspection
     gtk-doc
     meson
@@ -46,23 +46,27 @@ stdenv.mkDerivation rec {
     vala
   ];
 
-  checkInputs = [ python3 which usbutils ];
+  buildInputs = [
+    glib
+    systemd
+    libgudev
+  ];
 
-  enableParallelBuilding = true;
+  checkInputs = [
+    python3
+    which
+    usbutils
+  ];
 
-  # Test fail with libusb 1.0.24
-  # https://github.com/NixOS/nixpkgs/issues/107420
-  # https://github.com/martinpitt/umockdev/issues/115
-  doCheck = false;
+  mesonFlags = [
+    "-Dgtk_doc=true"
+  ];
 
-  postInstall = ''
-    mkdir -p $doc/share/doc/umockdev/
-    mv docs/reference $doc/share/doc/umockdev/
-  '';
+  doCheck = true;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Mock hardware devices for creating unit tests";
-    license = licenses.lgpl2;
+    license = licenses.lgpl21Plus;
     maintainers = with maintainers; [ flokli ];
     platforms = with platforms; linux;
   };

@@ -17,7 +17,11 @@ let
         inherit sage-src env-locations pynac singular;
         ecl = maxima-ecl.ecl;
         linbox = pkgs.linbox.override { withSage = true; };
-        pkg-config = pkgs.pkgconfig; # not to confuse with pythonPackages.pkgconfig
+        pkg-config = pkgs.pkg-config; # not to confuse with pythonPackages.pkg-config
+      };
+
+      sage_docbuild = self.callPackage ./sage_docbuild.nix {
+        inherit sage-src;
       };
     };
   };
@@ -34,18 +38,20 @@ let
     ];
     language = "sagemath";
     # just one 16x16 logo is available
-    logo32 = "${sage-src}/doc/common/themes/sage/static/sageicon.png";
-    logo64 = "${sage-src}/doc/common/themes/sage/static/sageicon.png";
+    logo32 = "${sage-src}/src/doc/common/themes/sage/static/sageicon.png";
+    logo64 = "${sage-src}/src/doc/common/themes/sage/static/sageicon.png";
   };
+
+  three = callPackage ./threejs-sage.nix { };
 
   # A bash script setting various environment variables to tell sage where
   # the files its looking fore are located. Also see `sage-env`.
   env-locations = callPackage ./env-locations.nix {
     inherit pari_data;
     inherit singular maxima-ecl;
+    inherit three;
     ecl = maxima-ecl.ecl;
     cysignals = python3.pkgs.cysignals;
-    three = nodePackages.three;
     mathjax = nodePackages.mathjax;
   };
 
@@ -53,10 +59,11 @@ let
   # the env-locations file.
   sage-env = callPackage ./sage-env.nix {
     sagelib = python3.pkgs.sagelib;
+    sage_docbuild = python3.pkgs.sage_docbuild;
     inherit env-locations;
     inherit python3 singular palp flint pynac pythonEnv maxima-ecl;
     ecl = maxima-ecl.ecl;
-    pkg-config = pkgs.pkgconfig; # not to confuse with pythonPackages.pkgconfig
+    pkg-config = pkgs.pkg-config; # not to confuse with pythonPackages.pkg-config
   };
 
   # The documentation for sage, building it takes a lot of ram.
@@ -70,8 +77,8 @@ let
     inherit python3 pythonEnv;
     inherit sage-env;
     inherit pynac singular maxima-ecl;
-    pkg-config = pkgs.pkgconfig; # not to confuse with pythonPackages.pkgconfig
-    three = nodePackages.three;
+    inherit three;
+    pkg-config = pkgs.pkg-config; # not to confuse with pythonPackages.pkg-config
   };
 
   # Doesn't actually build anything, just runs sages testsuite. This is a
@@ -86,6 +93,7 @@ let
 
   pythonRuntimeDeps = with python3.pkgs; [
     sagelib
+    sage_docbuild
     cvxopt
     networkx
     service-identity

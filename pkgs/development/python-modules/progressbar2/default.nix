@@ -1,4 +1,4 @@
-{ stdenv
+{ lib
 , python
 , buildPythonPackage
 , fetchPypi
@@ -7,11 +7,11 @@
 
 buildPythonPackage rec {
   pname = "progressbar2";
-  version = "3.53.1";
+  version = "3.53.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "ef72be284e7f2b61ac0894b44165926f13f5d995b2bf3cd8a8dedc6224b255a7";
+    sha256 = "f4e1c2d48e608850c59f793d6e74ccdebbcbaac7ffe917d45e9646ec0d664d6d";
   };
 
   propagatedBuildInputs = [ python-utils ];
@@ -22,7 +22,7 @@ buildPythonPackage rec {
 
   pythonImportsCheck = [ "progressbar" ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://progressbar-2.readthedocs.io/en/latest/";
     description = "Text progressbar library for python";
     license = licenses.bsd3;

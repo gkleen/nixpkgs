@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, bison, flex, postgresql }:
+{ lib, stdenv, fetchFromGitHub, bison, flex, postgresql }:
 
 stdenv.mkDerivation rec {
   pname = "age";
@@ -53,11 +53,11 @@ stdenv.mkDerivation rec {
     '';
   };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A graph database extension for PostgreSQL";
     homepage = "https://github.com/bitnine-oss/AgensGraph-Extension";
     changelog = "https://github.com/bitnine-oss/AgensGraph-Extension/releases/tag/v${version}";
-    maintainers = with maintainers; [ danieldk ];
+    maintainers = with maintainers; [ ];
     platforms = postgresql.meta.platforms;
     license = licenses.asl20;
     broken = versionOlder postgresql.version "11.0";

@@ -1,4 +1,5 @@
-{ stdenv
+{ lib
+, stdenv
 , fetchFromGitHub
 , gtk3
 , breeze-icons
@@ -8,13 +9,13 @@
 
 stdenv.mkDerivation rec {
   pname = "luna-icons";
-  version = "0.9.1";
+  version = "1.4";
 
   src = fetchFromGitHub {
     owner = "darkomarko42";
     repo = pname;
     rev = version;
-    sha256 = "0mz5cayjgsc109nv7kdkn3gn1n79bl3hb773lrzrr0k2zblxg353";
+    sha256 = "sha256-qYFyZT1mLNHBRrX/NX2pmt9P5n8urEK/msQMctSckzE=";
   };
 
   nativeBuildInputs = [
@@ -35,12 +36,6 @@ stdenv.mkDerivation rec {
     mkdir -p $out/share/icons
     cp -a Luna* $out/share/icons
 
-    # remove files with spaces in the name, otherwise
-    # gtk-update-icon-cache fails with the message "The generated cache
-    # was invalid"
-    # https://github.com/darkomarko42/Luna-Icons/issues/2
-    rm "$out/share/icons/Luna/scalable/apps/yast-checkmedia (copia).svg"
-
     for theme in $out/share/icons/*; do
       gtk-update-icon-cache "$theme"
     done
@@ -48,7 +43,7 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Icon pack based on marwaita and papirus icons";
     homepage = "https://github.com/darkomarko42/Luna-Icons";
     license = [ licenses.gpl3Only ];

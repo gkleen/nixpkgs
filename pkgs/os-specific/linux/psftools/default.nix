@@ -1,14 +1,14 @@
-{ stdenv, fetchurl }:
+{ lib, stdenv, fetchurl }:
 stdenv.mkDerivation rec {
   pname = "psftools";
-  version = "1.0.14";
+  version = "1.1.0";
   src = fetchurl {
     url = "https://www.seasip.info/Unix/PSF/${pname}-${version}.tar.gz";
-    sha256 = "17nia5n5rabbh42gz51c8y53rjwddria4j3wvzk8dd0llj7k1y6w";
+    sha256 = "sha256-P9eIHtEXC55C2rXweJ9Vw93tIspjjQ6MCQ44FJDEook=";
   };
   outputs = ["out" "man" "dev" "lib"];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://www.seasip.info/Unix/PSF";
     description = "Conversion tools for .PSF fonts";
     longDescription = ''

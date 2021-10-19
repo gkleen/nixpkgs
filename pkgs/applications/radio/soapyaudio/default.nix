@@ -1,5 +1,5 @@
-{ stdenv, fetchFromGitHub, cmake, pkg-config
-, hamlib, rtaudio, alsaLib, libpulseaudio, libjack2, libusb1, soapysdr
+{ lib, stdenv, fetchFromGitHub, cmake, pkg-config
+, hamlib, rtaudio, alsa-lib, libpulseaudio, libjack2, libusb1, soapysdr
 } :
 
 stdenv.mkDerivation rec {
@@ -14,14 +14,14 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ cmake pkg-config ];
-  buildInputs = [ hamlib rtaudio alsaLib libpulseaudio libjack2 libusb1 soapysdr ];
+  buildInputs = [ hamlib rtaudio alsa-lib libpulseaudio libjack2 libusb1 soapysdr ];
 
   cmakeFlags = [
     "-DSoapySDR_DIR=${soapysdr}/share/cmake/SoapySDR/"
     "-DUSE_HAMLIB=ON"
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://github.com/pothosware/SoapyAudio";
     description = "SoapySDR plugin for amateur radio and audio devices";
     license = licenses.mit;

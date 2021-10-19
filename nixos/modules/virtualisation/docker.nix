@@ -150,18 +150,22 @@ in
 
   config = mkIf cfg.enable (mkMerge [{
       boot.kernelModules = [ "bridge" "veth" ];
+      boot.kernel.sysctl = {
+        "net.ipv4.conf.all.forwarding" = mkOverride 98 true;
+        "net.ipv4.conf.default.forwarding" = mkOverride 98 true;
+      };
       environment.systemPackages = [ cfg.package ]
         ++ optional cfg.enableNvidia pkgs.nvidia-docker;
       users.groups.docker.gid = config.ids.gids.docker;
       systemd.packages = [ cfg.package ];
 
-      # TODO: remove once docker 20.10 is released
-      systemd.enableUnifiedCgroupHierarchy = false;
-
       systemd.services.docker = {
         wantedBy = optional cfg.enableOnBoot "multi-user.target";
+        after = [ "network.target" "docker.socket" ];
+        requires = [ "docker.socket" ];
         environment = proxy_env;
         serviceConfig = {
+          Type = "notify";
           ExecStart = [
             ""
             ''
@@ -215,13 +219,10 @@ in
           message = "Option enableNvidia requires 32bit support libraries";
         }];
     }
-    (mkIf cfg.enableNvidia {
-      environment.etc."nvidia-container-runtime/config.toml".source = "${pkgs.nvidia-docker}/etc/config.toml";
-    })
   ]);
 
   imports = [
-    (mkRemovedOptionModule ["virtualisation" "docker" "socketActivation"] "This option was removed in favor of starting docker at boot")
+    (mkRemovedOptionModule ["virtualisation" "docker" "socketActivation"] "This option was removed and socket activation is now always active")
   ];
 
 }

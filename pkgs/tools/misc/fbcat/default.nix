@@ -1,14 +1,14 @@
-{ stdenv, fetchFromGitHub } :
+{ lib, stdenv, fetchFromGitHub } :
 
 stdenv.mkDerivation rec {
   pname = "fbcat";
-  version = "0.5.1";
+  version = "0.5.2";
 
   src = fetchFromGitHub {
     owner = "jwilk";
     repo = pname;
     rev = version;
-    sha256 = "08y79br4a4cgkjnslw0hw57441ybsapaw7wjdbak19mv9lnl5ll9";
+    sha256 = "sha256-ORzcd8XGy2BfwuPK5UX+K5Z+FYkb+tdg/gHl3zHjvbk=";
   };
 
   # hardcoded because makefile target "install" depends on libxslt dependencies from network
@@ -22,7 +22,7 @@ stdenv.mkDerivation rec {
     install -d $out/share/man/man1
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "http://jwilk.net/software/fbcat";
     description = "Framebuffer screenshot tool";
     license = licenses.gpl2Plus;

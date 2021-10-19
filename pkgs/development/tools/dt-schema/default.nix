@@ -6,19 +6,19 @@
 , jsonschema
 , rfc3987
 , setuptools
-, setuptools_scm
+, setuptools-scm
 }:
 
 buildPythonPackage rec {
   pname = "dtschema";
-  version = "2020.12";
+  version = "2021.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "01de2598075909f2afb2d45277d0358645066f5bbb1770fca5f1d6f399846924";
+    sha256 = "sha256-11eCRY3zptsXI4kAIz3jLrTON4j2QTz/xG7vgUgyVA0=";
   };
 
-  nativeBuildInputs = [ setuptools_scm git ];
+  nativeBuildInputs = [ setuptools-scm git ];
   propagatedBuildInputs = [
     setuptools
     ruamel_yaml

@@ -1,6 +1,6 @@
-{ stdenv, fetchFromGitHub, curl, pythonPackages, glibcLocales }:
+{ lib, fetchFromGitHub, curl, python3Packages, glibcLocales }:
 
-pythonPackages.buildPythonApplication rec {
+python3Packages.buildPythonApplication rec {
   pname = "httpstat";
   version = "1.3.1";
   src = fetchFromGitHub {
@@ -18,7 +18,7 @@ pythonPackages.buildPythonApplication rec {
   meta = {
     description = "curl statistics made simple";
     homepage = "https://github.com/reorx/httpstat";
-    license = stdenv.lib.licenses.mit;
-    maintainers = with stdenv.lib.maintainers; [ nequissimus ];
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ nequissimus ];
   };
 }

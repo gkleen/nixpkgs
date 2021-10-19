@@ -25,10 +25,10 @@ let
 
   graphiteApiConfig = pkgs.writeText "graphite-api.yaml" ''
     search_index: ${dataDir}/index
-    ${optionalString (config.time.timeZone != null) ''time_zone: ${config.time.timeZone}''}
-    ${optionalString (cfg.api.finders != []) ''finders:''}
+    ${optionalString (config.time.timeZone != null) "time_zone: ${config.time.timeZone}"}
+    ${optionalString (cfg.api.finders != []) "finders:"}
     ${concatMapStringsSep "\n" (f: "  - " + f.moduleName) cfg.api.finders}
-    ${optionalString (cfg.api.functions != []) ''functions:''}
+    ${optionalString (cfg.api.functions != []) "functions:"}
     ${concatMapStringsSep "\n" (f: "  - " + f) cfg.api.functions}
     ${cfg.api.extraConfig}
   '';
@@ -561,6 +561,7 @@ in {
      ) {
       users.users.graphite = {
         uid = config.ids.uids.graphite;
+        group = "graphite";
         description = "Graphite daemon user";
         home = dataDir;
       };

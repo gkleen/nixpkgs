@@ -1,4 +1,4 @@
-{ stdenv
+{ lib
 , mkDerivation
 , fetchFromGitHub
 , qmake
@@ -9,29 +9,31 @@
 , qtbase
 , qtdeclarative
 , qtmultimedia
+, qtsvg
+, qttools
 }:
 
 mkDerivation rec {
   pname = "mediaelch";
-  version = "2.8.2";
+  version = "2.8.12";
 
   src = fetchFromGitHub {
     owner = "Komet";
     repo = "MediaElch";
     rev = "v${version}";
-    sha256 = "0y26vfgrdym461lzmm5x3z5ai9ky09vlk3cy4sq6hwlj7mzcz0k7";
+    sha256 = "1gx4m9cf81d0b2nk2rlqm4misz67f5bpkjqx7d1l76rw2pwc6azf";
     fetchSubmodules = true;
   };
 
-  nativeBuildInputs = [ qmake ];
+  nativeBuildInputs = [ qmake qttools ];
 
-  buildInputs = [ curl libmediainfo libzen ffmpeg qtbase qtdeclarative qtmultimedia ];
+  buildInputs = [ curl libmediainfo libzen ffmpeg qtbase qtdeclarative qtmultimedia qtsvg ];
 
   prePatch = ''
     substituteInPlace MediaElch.pro --replace "/usr" "$out"
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://mediaelch.de/mediaelch/";
     description = "Media Manager for Kodi";
     license = licenses.lgpl3Only;

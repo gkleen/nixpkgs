@@ -3,13 +3,13 @@
 
 stdenv.mkDerivation rec {
   pname = "testssl.sh";
-  version = "3.0.2";
+  version = "3.0.5";
 
   src = fetchFromGitHub {
     owner = "drwetter";
     repo = pname;
     rev = version;
-    sha256 = "0vfpj3g3il3imbydx3j8gx1pgzrxi0czcl9jmi749vnkf5mkmh8w";
+    sha256 = "sha256-p2jPpPHtOOmv0CCsXOECgMT9sqa4ZykcJwuGOSkYLaY=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -36,14 +36,14 @@ stdenv.mkDerivation rec {
     wrapProgram $out/bin/testssl.sh --prefix PATH ':' ${lib.makeBinPath buildInputs}
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "CLI tool to check a server's TLS/SSL capabilities";
     longDescription = ''
       CLI tool which checks a server's service on any port for the support of
       TLS/SSL ciphers, protocols as well as recent cryptographic flaws and more.
     '';
     homepage = "https://testssl.sh/";
-    license = licenses.gpl2;
+    license = licenses.gpl2Only;
     maintainers = with maintainers; [ etu ];
   };
 }

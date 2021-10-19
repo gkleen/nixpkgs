@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub }:
+{ lib, stdenv, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
   pname = "clac";
@@ -18,8 +18,7 @@ stdenv.mkDerivation rec {
     cp README* LICENSE "$out/share/doc/${pname}"
   '';
 
-  meta = with stdenv.lib; {
-    inherit version;
+  meta = with lib; {
     description = "Interactive stack-based calculator";
     homepage = "https://github.com/soveran/clac";
     license = licenses.bsd2;

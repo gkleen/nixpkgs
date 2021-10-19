@@ -1,26 +1,26 @@
-{ stdenv, fetchFromGitHub
-, alsaLib, freetype, xorg, curl, libGL, libjack2, gnome3
-, pkgconfig, makeWrapper
+{ lib, stdenv, fetchFromGitHub
+, alsa-lib, freetype, xorg, curl, libGL, libjack2, gnome
+, pkg-config, makeWrapper
 }:
 
 stdenv.mkDerivation rec {
   pname = "helio-workstation";
-  version = "3.3";
+  version = "3.6";
 
   src = fetchFromGitHub {
     owner = "helio-fm";
     repo = pname;
     rev = version;
     fetchSubmodules = true;
-    sha256 = "sha256-meeNqV1jKUwWc7P3p/LicPsbpzpKKFmQ1wP9DuXc9NY=";
+    sha256 = "sha256-qW39g6rQ5VPQ3Hx9NmwLbpZiITnzFZDZlcLkE+pJKPc=";
   };
 
   buildInputs = [
-    alsaLib freetype xorg.libX11 xorg.libXext xorg.libXinerama xorg.libXrandr
-    xorg.libXcursor xorg.libXcomposite curl libGL libjack2 gnome3.zenity
+    alsa-lib freetype xorg.libX11 xorg.libXext xorg.libXinerama xorg.libXrandr
+    xorg.libXcursor xorg.libXcomposite curl libGL libjack2 gnome.zenity
   ];
 
-  nativeBuildInputs = [ pkgconfig makeWrapper ];
+  nativeBuildInputs = [ pkg-config makeWrapper ];
 
   preBuild = ''
     cd Projects/LinuxMakefile
@@ -31,7 +31,7 @@ stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/bin
     install -Dm755 build/Helio $out/bin
-    wrapProgram $out/bin/Helio --prefix PATH ":" ${gnome3.zenity}/bin
+    wrapProgram $out/bin/Helio --prefix PATH ":" ${gnome.zenity}/bin
 
     mkdir -p $out/share
     cp -r ../Deployment/Linux/Debian/x64/usr/share/* $out/share
@@ -39,7 +39,7 @@ stdenv.mkDerivation rec {
       --replace "/usr/bin/helio" "$out/bin/Helio"
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "One music sequencer for all major platforms, both desktop and mobile";
     homepage = "https://helio.fm/";
     license = licenses.gpl3Only;

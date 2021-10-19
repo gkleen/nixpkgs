@@ -165,7 +165,7 @@ in {
 
         baseUrl = mkOption {
           type = types.str;
-          default = "http://localhost/hyperkitty/";
+          default = "http://localhost:18507/archives/";
           description = ''
             Where can Mailman connect to Hyperkitty's internal API, preferably on
             localhost?
@@ -263,7 +263,8 @@ in {
       # settings_local.json is loaded.
       os.environ["SECRET_KEY"] = ""
 
-      from mailman_web.settings import *
+      from mailman_web.settings.base import *
+      from mailman_web.settings.mailman import *
 
       import json
 
@@ -332,6 +333,7 @@ in {
         before = [ "mailman.service" "mailman-web-setup.service" "mailman-uwsgi.service" "hyperkitty.service" ];
         requiredBy = [ "mailman.service" "mailman-web-setup.service" "mailman-uwsgi.service" "hyperkitty.service" ];
         path = with pkgs; [ jq ];
+        serviceConfig.Type = "oneshot";
         script = ''
           mailmanDir=/var/lib/mailman
           mailmanWebDir=/var/lib/mailman-web
@@ -367,7 +369,7 @@ in {
 
       mailman-web-setup = {
         description = "Prepare mailman-web files and database";
-        before = [ "uwsgi.service" "mailman-uwsgi.service" ];
+        before = [ "mailman-uwsgi.service" ];
         requiredBy = [ "mailman-uwsgi.service" ];
         restartTriggers = [ config.environment.etc."mailman3/settings.py".source ];
         script = ''
@@ -390,6 +392,7 @@ in {
           plugins = ["python3"];
           home = pythonEnv;
           module = "mailman_web.wsgi";
+          http = "127.0.0.1:18507";
         };
         uwsgiConfigFile = pkgs.writeText "uwsgi-mailman.json" (builtins.toJSON uwsgiConfig);
       in {
@@ -452,7 +455,7 @@ in {
   };
 
   meta = {
-    maintainers = with lib.maintainers; [ lheckemann ];
+    maintainers = with lib.maintainers; [ lheckemann qyliss ];
     doc = ./mailman.xml;
   };
 

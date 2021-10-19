@@ -1,7 +1,7 @@
-{ stdenv, fetchurl, bundlerEnv, ruby, makeWrapper }:
+{ lib, stdenv, fetchurl, bundlerEnv, ruby, makeWrapper }:
 
 let
-  version = "4.1.1";
+  version = "4.2.2";
   rubyEnv = bundlerEnv {
     name = "redmine-env-${version}";
 
@@ -16,7 +16,7 @@ in
 
     src = fetchurl {
       url = "https://www.redmine.org/releases/${pname}-${version}.tar.gz";
-      sha256 = "1nndy5hz8zvfglxf1f3bsb1pkrfwinfxzkdan1vjs3rkckkszyh5";
+      sha256 = "1xlqf7g5imjmc3as2aajvbrs217jh3qpdvvpsd9mka9rk4kykyz6";
     };
 
     nativeBuildInputs = [ makeWrapper ];
@@ -42,7 +42,7 @@ in
       makeWrapper ${rubyEnv.wrappedRuby}/bin/ruby $out/bin/rdm-mailhandler.rb --add-flags $out/share/redmine/extra/mail_handler/rdm-mailhandler.rb
     '';
 
-    meta = with stdenv.lib; {
+    meta = with lib; {
       homepage = "https://www.redmine.org/";
       platforms = platforms.linux;
       maintainers = [ maintainers.aanderse ];

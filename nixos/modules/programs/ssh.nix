@@ -14,7 +14,7 @@ let
     ''
       #! ${pkgs.runtimeShell} -e
       export DISPLAY="$(systemctl --user show-environment | ${pkgs.gnused}/bin/sed 's/^DISPLAY=\(.*\)/\1/; t; d')"
-      exec ${askPassword}
+      exec ${askPassword} "$@"
     '';
 
   knownHosts = map (h: getAttr h cfg.knownHosts) (attrNames cfg.knownHosts);
@@ -36,7 +36,7 @@ in
       askPassword = mkOption {
         type = types.str;
         default = "${pkgs.x11_ssh_askpass}/libexec/x11-ssh-askpass";
-        description = ''Program used by SSH to ask for passwords.'';
+        description = "Program used by SSH to ask for passwords.";
       };
 
       forwardX11 = mkOption {

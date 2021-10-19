@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub }:
+{ lib, stdenv, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
   pname = "banner";
@@ -11,8 +11,8 @@ stdenv.mkDerivation rec {
     sha256 = "ISSnGzrFSzSj/+KxgeFtaw4H+4Ea5x5S5C8xjcjKWqQ=";
   };
 
-  meta = with stdenv.lib; {
-    homepage = "http://software.cedar-solutions.com/utilities.html";
+  meta = with lib; {
+    homepage = "https://software.cedar-solutions.com/utilities.html";
     description = "Print large banners to ASCII terminals";
     license = licenses.gpl2Only;
 

@@ -1,6 +1,6 @@
-{stdenv, fetchFromGitHub, fuse, bison, flex_2_5_35, openssl, python3, ncurses, readline,
- autoconf, automake, libtool, pkgconfig, zlib, libaio, libxml2, acl, sqlite,
- liburcu, attr, makeWrapper, coreutils, gnused, gnugrep, which,
+{lib, stdenv, fetchFromGitHub, fuse, bison, flex_2_5_35, openssl, python3, ncurses, readline,
+ autoconf, automake, libtool, pkg-config, zlib, libaio, libxml2, acl, sqlite,
+ liburcu, liburing, attr, makeWrapper, coreutils, gnused, gnugrep, which,
  openssh, gawk, findutils, util-linux, lvm2, btrfs-progs, e2fsprogs, xfsprogs, systemd,
  rsync, glibc, rpcsvc-proto, libtirpc
 }:
@@ -15,8 +15,9 @@ let
 
   buildInputs = [
     fuse bison flex_2_5_35 openssl ncurses readline
-    autoconf automake libtool pkgconfig zlib libaio libxml2
+    autoconf automake libtool pkg-config zlib libaio libxml2
     acl sqlite liburcu attr makeWrapper util-linux libtirpc
+    liburing
     (python3.withPackages (pkgs: [
       pkgs.flask
       pkgs.prettytable
@@ -54,13 +55,13 @@ let
   ];
 in stdenv.mkDerivation rec {
   pname = "glusterfs";
-  version = "8.3";
+  version = "9.3";
 
   src = fetchFromGitHub {
     owner = "gluster";
     repo = pname;
     rev = "v${version}";
-    sha256 = "09vvbymiacz2pzwnq6f2dd7g2zszzsivdncz45sh977v3z0n84az";
+    sha256 = "sha256-xV7griN453f63jwX5jTdW0KJdLi14Km7JengbNeh4iI=";
   };
   inherit buildInputs propagatedBuildInputs;
 
@@ -90,7 +91,7 @@ in stdenv.mkDerivation rec {
     '';
 
   configureFlags = [
-    ''--localstatedir=/var''
+    "--localstatedir=/var"
     ];
 
   nativeBuildInputs = [ rpcsvc-proto ];
@@ -111,7 +112,7 @@ in stdenv.mkDerivation rec {
     # It also invokes executable Python scripts in `$out/libexec/glusterfs`, which is why we set up PYTHONPATH accordingly.
     # We set up the paths for the main entry point executables.
 
-    GLUSTER_PATH="${stdenv.lib.makeBinPath runtimePATHdeps}:$out/bin"
+    GLUSTER_PATH="${lib.makeBinPath runtimePATHdeps}:$out/bin"
     GLUSTER_PYTHONPATH="$(toPythonPath $out):$out/libexec/glusterfs"
     GLUSTER_LD_LIBRARY_PATH="$out/lib"
 
@@ -180,7 +181,7 @@ in stdenv.mkDerivation rec {
     rm -r $out/bin/conf.py
     '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Distributed storage system";
     homepage = "https://www.gluster.org";
     license = licenses.lgpl3Plus; # dual licese: choice of lgpl3Plus or gpl2

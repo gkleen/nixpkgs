@@ -39,7 +39,7 @@ let
             if c x then true
             else lib.traceSeqN 1 x false;
       in traceXIfNot isConfig;
-    merge = args: fold (def: mergeConfig def.value) {};
+    merge = args: foldr (def: mergeConfig def.value) {};
   };
 
   overlayType = mkOptionType {
@@ -73,7 +73,7 @@ in
           }
         '';
       type = pkgsType;
-      example = literalExample ''import <nixpkgs> {}'';
+      example = literalExample "import <nixpkgs> {}";
       description = ''
         If set, the pkgs argument to all NixOS modules is the value of
         this option, extended with <code>nixpkgs.overlays</code>, if

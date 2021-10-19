@@ -160,7 +160,7 @@ rec {
   addTestToolDepends = drv: xs: overrideCabal drv (drv: { testToolDepends = (drv.testToolDepends or []) ++ xs; });
 
   addPkgconfigDepend = drv: x: addPkgconfigDepends drv [x];
-  addPkgconfigDepends = drv: xs: overrideCabal drv (drv: { pkgconfigDepends = (drv.pkgconfigDepends or []) ++ xs; });
+  addPkgconfigDepends = drv: xs: overrideCabal drv (drv: { pkg-configDepends = (drv.pkg-configDepends or []) ++ xs; });
 
   addSetupDepend = drv: x: addSetupDepends drv [x];
   addSetupDepends = drv: xs: overrideCabal drv (drv: { setupHaskellDepends = (drv.setupHaskellDepends or []) ++ xs; });
@@ -195,6 +195,16 @@ rec {
 
   appendPatch = drv: x: appendPatches drv [x];
   appendPatches = drv: xs: overrideCabal drv (drv: { patches = (drv.patches or []) ++ xs; });
+
+  /* Set a specific build target instead of compiling all targets in the package.
+   * For example, imagine we have a .cabal file with a library, and 2 executables "dev" and "server".
+   * We can build only "server" and not wait on the compilation of "dev" by using setBuildTarget as follows:
+   *
+   *   setBuildTarget (callCabal2nix "thePackageName" thePackageSrc {}) "server"
+   *
+   */
+  setBuildTargets = drv: xs: overrideCabal drv (drv: { buildTarget = lib.concatStringsSep " " xs; });
+  setBuildTarget = drv: x: setBuildTargets drv [x];
 
   doHyperlinkSource = drv: overrideCabal drv (drv: { hyperlinkSource = true; });
   dontHyperlinkSource = drv: overrideCabal drv (drv: { hyperlinkSource = false; });

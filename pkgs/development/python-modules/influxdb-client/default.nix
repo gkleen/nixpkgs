@@ -14,21 +14,15 @@
 
 buildPythonPackage rec {
   pname = "influxdb-client";
-  version = "1.13.0";
-
-  disabled = pythonOlder "3.6"; # requires python version >=3.6
+  version = "1.21.0";
+  disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "influxdata";
     repo = "influxdb-client-python";
     rev = "v${version}";
-    sha256 = "0g7jhjnag8jx8zbjh6xlqds42alpj87a4dpqc37xqa4ir55m3c2q";
+    sha256 = "081pwd3aa7kbgxqcl1hfi2ny4iapnxkcp9ypsfslr69d0khvfc4s";
   };
-
-  # makes test not reproducible
-  postPatch = ''
-    sed -i -e '/randomize/d' test-requirements.txt
-  '';
 
   propagatedBuildInputs = [
     rx
@@ -43,6 +37,8 @@ buildPythonPackage rec {
 
   # requires influxdb server
   doCheck = false;
+
+  pythonImportsCheck = [ "influxdb_client" ];
 
   meta = with lib; {
     description = "InfluxDB 2.0 Python client library";

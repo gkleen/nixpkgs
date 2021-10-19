@@ -1,25 +1,51 @@
-{ stdenv, fetchurl, which }:
+{ lib, stdenv, fetchurl, fixDarwinDylibNames, which }:
 
 stdenv.mkDerivation rec {
   pname = "lowdown";
-  version = "0.7.5";
+  version = "0.8.6";
 
-  outputs = [ "out" "dev" ];
+  outputs = [ "out" "lib" "dev" "man" ];
 
   src = fetchurl {
     url = "https://kristaps.bsd.lv/lowdown/snapshots/lowdown-${version}.tar.gz";
-    sha512 = "1wfbrydbk0f0blhg5my3m5gw8bspwh3rdg4w4mcalnrwpypzd4zrggc4aj3zm72c5jikx6pnjb2k9w1s075k84f6q8p8chlzb3s4qd2";
+    sha512 = "3lvy23zg0hpixrf06g8hh15h2c9wwa0wa95vh2hp924kdi2akqcp2i313chycx1cmmg379w4v80ha2726ala69zxzk42y6djc8vm3xd";
   };
 
-  nativeBuildInputs = [ which ];
+  nativeBuildInputs = [ which ]
+    ++ lib.optionals stdenv.isDarwin [ fixDarwinDylibNames ];
 
-  configurePhase = ''
-    ./configure PREFIX=''${!outputDev} \
-                BINDIR=''${!outputBin}/bin \
-                MANDIR=''${!outputBin}/share/man
+  preConfigure = lib.optionalString (stdenv.isDarwin && stdenv.isAarch64) ''
+    echo 'HAVE_SANDBOX_INIT=0' > configure.local
   '';
 
-  meta = with stdenv.lib; {
+  configurePhase = ''
+    runHook preConfigure
+    ./configure PREFIX=''${!outputDev} \
+                BINDIR=''${!outputBin}/bin \
+                LIBDIR=''${!outputLib}/lib \
+                MANDIR=''${!outputMan}/share/man
+    runHook postConfigure
+  '';
+
+  # Fix lib extension so that fixDarwinDylibNames detects it
+  postInstall = lib.optionalString stdenv.isDarwin ''
+    mv $lib/lib/liblowdown.{so,dylib}
+  '';
+
+  patches = lib.optional (!stdenv.hostPlatform.isStatic) ./shared.patch;
+
+  doInstallCheck = stdenv.hostPlatform == stdenv.buildPlatform;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    echo '# TEST' > test.md
+    $out/bin/lowdown test.md
+    runHook postInstallCheck
+  '';
+
+  doCheck = stdenv.hostPlatform == stdenv.buildPlatform;
+  checkTarget = "regress";
+
+  meta = with lib; {
     homepage = "https://kristaps.bsd.lv/lowdown/";
     description = "Simple markdown translator";
     license = licenses.isc;
@@ -27,4 +53,3 @@ stdenv.mkDerivation rec {
     platforms = platforms.unix;
   };
 }
-

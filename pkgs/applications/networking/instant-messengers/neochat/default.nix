@@ -1,66 +1,67 @@
 { mkDerivation
-, stdenv
+, lib
 , fetchFromGitLab
 , pkg-config
 , cmake
-, qtbase
-, qttools
-, qtquickcontrols2
-, qtmultimedia
-, qtgraphicaleffects
-, qtkeychain
-, libpulseaudio
-, olm
-, libsecret
 , cmark
 , extra-cmake-modules
+, kconfig
+, kdbusaddons
+, ki18n
 , kirigami2
 , kitemmodels
-, ki18n
 , knotifications
-, kdbusaddons
-, kconfig
-, libquotient
 , kquickimageedit
+, libpulseaudio
+, libquotient
+, libsecret
+, olm
+, qqc2-desktop-style
+, qtgraphicaleffects
+, qtkeychain
+, qtmultimedia
+, qtquickcontrols2
 }:
 
 mkDerivation rec {
   pname = "neochat";
-  version = "v1.0";
+  version = "1.2";
 
   src = fetchFromGitLab {
     domain = "invent.kde.org";
     owner = "network";
     repo = pname;
-    rev = version;
-    sha256 = "1r9n83kvc5v215lzmzh6hyc5q9i3w6znbf508qk0mdwdzxz4zry9";
+    rev = "v${version}";
+    sha256 = "sha256-Kpv7BY/qS0A3xFlYFhz1RRNwQVsyhOTHHGDbWRTTv1I=";
   };
 
   nativeBuildInputs = [ cmake extra-cmake-modules pkg-config ];
 
   buildInputs = [
-    qtkeychain
-    qtquickcontrols2
-    qtmultimedia
-    qtgraphicaleffects
-    olm
-    libsecret
     cmark
+    kconfig
+    kdbusaddons
+    ki18n
     kirigami2
     kitemmodels
-    ki18n
     knotifications
-    kdbusaddons
-    kconfig
-    libquotient
     kquickimageedit
     libpulseaudio
+    libquotient
+    libsecret
+    olm
+    qtgraphicaleffects
+    qtkeychain
+    qtmultimedia
+    qtquickcontrols2
+    qqc2-desktop-style
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A client for matrix, the decentralized communication protocol.";
     homepage = "https://apps.kde.org/en/neochat";
     license = licenses.gpl3Only;
+    maintainers = with maintainers; [ mjlbach peterhoeg ];
     platforms = with platforms; linux;
   };
 }

@@ -1,11 +1,11 @@
-{ stdenv, mkDerivation, fetchFromGitHub
-, pkg-config, cmake, alsaLib, libjack2, dbus, qtbase, qttools, qtx11extras
+{ lib, mkDerivation, fetchFromGitHub
+, pkg-config, cmake, alsa-lib, libjack2, dbus, qtbase, qttools, qtx11extras
 # Enable jack session support
 , jackSession ? false
 }:
 
 mkDerivation rec {
-  version = "0.9.0";
+  version = "0.9.4";
   pname = "qjackctl";
 
   # some dependencies such as killall have to be installed additionally
@@ -13,15 +13,15 @@ mkDerivation rec {
   src = fetchFromGitHub {
     owner = "rncbc";
     repo = "qjackctl";
-    rev = "${pname}_${stdenv.lib.replaceChars ["."] ["_"] version}";
-    sha256 = "044kgwk7pfywad4myza0s2kvfkl21zkqq5wgny7n3c43qlcgs3zr";
+    rev = "${pname}_${lib.replaceChars ["."] ["_"] version}";
+    sha256 = "sha256-eZKrPQ07Z3pF5dArZ4QSclrRCaPHpPb8S5HANLUS9MM=";
   };
 
   buildInputs = [
     qtbase
     qtx11extras
     qttools
-    alsaLib
+    alsa-lib
     libjack2
     dbus
   ];
@@ -36,7 +36,7 @@ mkDerivation rec {
     "-DCONFIG_JACK_SESSION=${toString jackSession}"
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A Qt application to control the JACK sound server daemon";
     homepage = "https://github.com/rncbc/qjackctl";
     license = licenses.gpl2Plus;

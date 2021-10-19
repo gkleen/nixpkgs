@@ -1,26 +1,30 @@
-{ buildGoModule
+{ lib
+, buildGoModule
 , fetchFromGitHub
-, stdenv
 }:
 
 buildGoModule rec {
   pname = "nuclei";
-  version = "2.2.0";
+  version = "2.5.2";
 
   src = fetchFromGitHub {
     owner = "projectdiscovery";
-    repo = "nuclei";
+    repo = pname;
     rev = "v${version}";
-    sha256 = "0xrvza86aczlnb11x58fiqch5g0q6gvpxwsi5dq3akfi95gk3a3x";
+    sha256 = "1rn4qys3af41f40zr4gi23zy9gawbbjddssm95v5a4zyd5xjfr6b";
   };
 
-  vendorSha256 = "1v3ax8l1lgp2vs50gsa2fhdd6bvyfdlkd118akrqmwxahyyyqycv";
+  vendorSha256 = "04q9japkv41127kl0x2268n6j13y22qg1icd783cl40584ajk2am";
 
-  preBuild = ''
-    mv v2/* .
-  '';
+  modRoot = "./v2";
+  subPackages = [
+    "cmd/nuclei/"
+  ];
 
-  meta = with stdenv.lib; {
+  # Test files are not part of the release tarball
+  doCheck = false;
+
+  meta = with lib; {
     description = "Tool for configurable targeted scanning";
     longDescription = ''
       Nuclei is used to send requests across targets based on a template

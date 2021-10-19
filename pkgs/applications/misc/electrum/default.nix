@@ -1,4 +1,5 @@
-{ stdenv
+{ lib
+, stdenv
 , fetchurl
 , fetchFromGitHub
 , wrapQtAppsHook
@@ -19,7 +20,7 @@
 }:
 
 let
-  version = "4.0.9";
+  version = "4.1.5";
 
   libsecp256k1_name =
     if stdenv.isLinux then "libsecp256k1.so.0"
@@ -35,13 +36,27 @@ let
     owner = "spesmilo";
     repo = "electrum";
     rev = version;
-    sha256 = "0cmdyfabllw4wnpqpdxp3l6hjnm0cvkwxn0z8ph4x54sf4zq9iz3";
+    sha256 = "1ps8yaps5kfd7yv7bpdvssbwm6f5qivxcvhwn17cpddc2760a7nk";
 
     extraPostFetch = ''
       mv $out ./all
       mv ./all/electrum/tests $out
     '';
   };
+
+  py = python3.override {
+    packageOverrides = self: super: {
+
+      aiorpcx = super.aiorpcx.overridePythonAttrs (oldAttrs: rec {
+        version = "0.18.7";
+        src = oldAttrs.src.override {
+          inherit version;
+          sha256 = "1rswrspv27x33xa5bnhrkjqzhv0sknv5kd7pl1vidw9d2z4rx2l0";
+        };
+      });
+    };
+  };
+
 in
 
 python3.pkgs.buildPythonApplication {
@@ -50,7 +65,7 @@ python3.pkgs.buildPythonApplication {
 
   src = fetchurl {
     url = "https://download.electrum.org/${version}/Electrum-${version}.tar.gz";
-    sha256 = "1fvjiagi78f32nxgr2rx8jas8hxfvpp1c8fpfcalvykmlhdc2gva";
+    sha256 = "188r4zji985z8pm9b942xhmvv174yndk6jxagxl7ljk03wl2wiwi";
   };
 
   postUnpack = ''
@@ -58,9 +73,14 @@ python3.pkgs.buildPythonApplication {
     cp -ar ${tests} $sourceRoot/electrum/tests
   '';
 
-  nativeBuildInputs = stdenv.lib.optionals enableQt [ wrapQtAppsHook ];
+  prePatch = ''
+    substituteInPlace contrib/requirements/requirements.txt \
+      --replace "dnspython>=2.0,<2.1" "dnspython>=2.0"
+  '';
 
-  propagatedBuildInputs = with python3.pkgs; [
+  nativeBuildInputs = lib.optionals enableQt [ wrapQtAppsHook ];
+
+  propagatedBuildInputs = with py.pkgs; [
     aiohttp
     aiohttp-socks
     aiorpcx
@@ -77,11 +97,14 @@ python3.pkgs.buildPythonApplication {
     requests
     tlslite-ng
     # plugins
+    btchip
     ckcc-protocol
     keepkey
     trezor
-    btchip
-  ] ++ stdenv.lib.optionals enableQt [ pyqt5 qdarkstyle ];
+  ] ++ lib.optionals enableQt [
+    pyqt5
+    qdarkstyle
+  ];
 
   preBuild = ''
     sed -i 's,usr_share = .*,usr_share = "'$out'/share",g' setup.py
@@ -94,7 +117,7 @@ python3.pkgs.buildPythonApplication {
     sed -i '/qdarkstyle/d' contrib/requirements/requirements.txt
   '');
 
-  postInstall = stdenv.lib.optionalString stdenv.isLinux ''
+  postInstall = lib.optionalString stdenv.isLinux ''
     # Despite setting usr_share above, these files are installed under
     # $out/nix ...
     mv $out/${python3.sitePackages}/nix/store"/"*/share $out
@@ -108,11 +131,11 @@ python3.pkgs.buildPythonApplication {
 
   '';
 
-  postFixup = stdenv.lib.optionalString enableQt ''
+  postFixup = lib.optionalString enableQt ''
     wrapQtApp $out/bin/electrum
   '';
 
-  checkInputs = with python3.pkgs; [ pytestCheckHook pycryptodomex ];
+  checkInputs = with python3.pkgs; [ pytestCheckHook pyaes pycryptodomex ];
 
   pytestFlagsArray = [ "electrum/tests" ];
 
@@ -125,7 +148,7 @@ python3.pkgs.buildPythonApplication {
   '';
 
   passthru.updateScript = import ./update.nix {
-    inherit (stdenv) lib;
+    inherit lib;
     inherit
       writeScript
       common-updater-scripts
@@ -139,7 +162,7 @@ python3.pkgs.buildPythonApplication {
     ;
   };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A lightweight Bitcoin wallet";
     longDescription = ''
       An easy-to-use Bitcoin client featuring wallets generated from
@@ -148,8 +171,10 @@ python3.pkgs.buildPythonApplication {
       of the blockchain.
     '';
     homepage = "https://electrum.org/";
+    downloadPage = "https://electrum.org/#download";
+    changelog = "https://github.com/spesmilo/electrum/blob/master/RELEASE-NOTES";
     license = licenses.mit;
     platforms = platforms.all;
-    maintainers = with maintainers; [ ehmry joachifm np prusnak ];
+    maintainers = with maintainers; [ joachifm np prusnak ];
   };
 }

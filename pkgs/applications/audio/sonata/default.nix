@@ -1,5 +1,5 @@
-{ stdenv, fetchFromGitHub, wrapGAppsHook, gettext
-, python3Packages, gnome3, gtk3, glib, gdk-pixbuf, gsettings-desktop-schemas, gobject-introspection }:
+{ lib, fetchFromGitHub, wrapGAppsHook, gettext
+, python3Packages, gnome, gtk3, glib, gdk-pixbuf, gsettings-desktop-schemas, gobject-introspection }:
 
 let
   inherit (python3Packages) buildPythonApplication isPy3k dbus-python pygobject3 mpd2 setuptools;
@@ -24,7 +24,7 @@ in buildPythonApplication rec {
 
   buildInputs = [
     glib
-    gnome3.adwaita-icon-theme
+    gnome.adwaita-icon-theme
     gsettings-desktop-schemas
     gtk3
     gdk-pixbuf
@@ -74,8 +74,8 @@ in buildPythonApplication rec {
        - Available in 24 languages
     '';
     homepage = "https://www.nongnu.org/sonata/";
-    license = stdenv.lib.licenses.gpl3;
-    platforms = stdenv.lib.platforms.linux;
-    maintainers = [ stdenv.lib.maintainers.rvl ];
+    license = lib.licenses.gpl3;
+    platforms = lib.platforms.linux;
+    maintainers = [ lib.maintainers.rvl ];
   };
 }

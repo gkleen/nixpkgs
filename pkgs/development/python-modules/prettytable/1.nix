@@ -1,8 +1,8 @@
-{ stdenv
+{ lib
 , buildPythonPackage
 , fetchPypi
 , glibcLocales
-, setuptools_scm
+, setuptools-scm
 , wcwidth
 }:
 
@@ -15,7 +15,7 @@ buildPythonPackage rec {
     sha256 = "0wcpp1nkicrswb353yn6xd2x535cpif62nw5rgz33c1wj0wzbdvb";
   };
 
-  nativeBuildInputs = [ setuptools_scm ];
+  nativeBuildInputs = [ setuptools-scm ];
   buildInputs = [ glibcLocales ];
 
   propagatedBuildInputs = [ wcwidth ];
@@ -28,7 +28,7 @@ buildPythonPackage rec {
   doCheck = false;
   pythonImportsCheck = [ "prettytable" ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Simple Python library for easily displaying tabular data in a visually appealing ASCII table format";
     homepage = "http://code.google.com/p/prettytable/";
     license = licenses.bsd3;

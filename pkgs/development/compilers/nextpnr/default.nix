@@ -1,34 +1,34 @@
-{ stdenv, fetchFromGitHub, cmake
+{ lib, stdenv, fetchFromGitHub, cmake
 , boost, python3, eigen
 , icestorm, trellis
 , llvmPackages
 
-, enableGui ? true
-, wrapQtAppsHook
-, qtbase
+, enableGui ? false
+, wrapQtAppsHook ? null
+, qtbase ? null
 , OpenGL ? null
 }:
 
 let
   boostPython = boost.override { python = python3; enablePython = true; };
 in
-with stdenv; mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "nextpnr";
-  version = "2020.12.01";
+  version = "2021.08.16";
 
   srcs = [
     (fetchFromGitHub {
       owner  = "YosysHQ";
       repo   = "nextpnr";
-      rev    = "868902fbdf0b476bdccf4d25cbb80ba602d2cc11";
-      sha256 = "1kb5lhixb7f4q800gjyw9xm9ff1yaq3pgna17f5f0bw6b4ds56zc";
+      rev    = "b37d133c43c45862bd5c550b5d7fffaa8c49b968";
+      sha256 = "0qc9d8cay2j5ggn0mgjq484vv7a14na16s9dmp7bqz7r9cn4b98n";
       name   = "nextpnr";
     })
     (fetchFromGitHub {
       owner  = "YosysHQ";
       repo   = "nextpnr-tests";
-      rev    = "8f93e7e0f897b1b5da469919c9a43ba28b623b2a";
-      sha256 = "0zpd0w49k9l7rs3wmi2v8z5s4l4lad5rprs5l83w13667himpzyc";
+      rev    = "ccc61e5ec7cc04410462ec3196ad467354787afb";
+      sha256 = "09a0bhrphr3rsppryrfak4rhziyj8k3s17kgb0vgm0abjiz0jgam";
       name   = "nextpnr-tests";
     })
   ];
@@ -43,19 +43,18 @@ with stdenv; mkDerivation rec {
     ++ (lib.optional enableGui qtbase)
     ++ (lib.optional stdenv.cc.isClang llvmPackages.openmp);
 
-  enableParallelBuilding = true;
   cmakeFlags =
     [ "-DCURRENT_GIT_VERSION=${lib.substring 0 7 (lib.elemAt srcs 0).rev}"
       "-DARCH=generic;ice40;ecp5"
       "-DBUILD_TESTS=ON"
-      "-DICEBOX_ROOT=${icestorm}/share/icebox"
+      "-DICESTORM_INSTALL_PREFIX=${icestorm}"
       "-DTRELLIS_INSTALL_PREFIX=${trellis}"
       "-DTRELLIS_LIBDIR=${trellis}/lib/trellis"
       "-DUSE_OPENMP=ON"
       # warning: high RAM usage
-      "-DSERIALIZE_CHIPDB=OFF"
+      "-DSERIALIZE_CHIPDBS=OFF"
     ]
-    ++ (lib.optional (!enableGui) "-DBUILD_GUI=OFF")
+    ++ (lib.optional enableGui "-DBUILD_GUI=ON")
     ++ (lib.optional (enableGui && stdenv.isDarwin)
         "-DOPENGL_INCLUDE_DIR=${OpenGL}/Library/Frameworks");
 
