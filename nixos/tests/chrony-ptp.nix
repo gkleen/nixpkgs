@@ -1,4 +1,4 @@
-{ ...
+{ lib, ...
 }:
 
 {
@@ -23,4 +23,8 @@
     qemuGuest.wait_for_unit('multi-user.target')
     qemuGuest.succeed('systemctl is-active chronyd.service')
   '';
+
+  meta = {
+    maintainers = with lib.maintainers; [ gkleen ];
+  };
 }
