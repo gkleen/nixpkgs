@@ -96,6 +96,9 @@ let
             php
             composer
             composerLock
+            composerNoDev
+            composerNoPlugins
+            composerNoScripts
             composerStrictValidation
             dontCheckForBrokenSymlinks
             ;
