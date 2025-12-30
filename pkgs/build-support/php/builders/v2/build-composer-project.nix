@@ -9,14 +9,14 @@ let
   buildComposerProjectOverride =
     finalAttrs:
     {
-      php ? finalAttrs.php or toplevel.php,
-      composer ? finalAttrs.php.packages.composer or toplevel.php.packages.composer,
-      composerLock ? finalAttrs.composerLock or null,
-      vendorHash ? finalAttrs.vendorHash or "",
+      php ? toplevel.php,
+      composer ? toplevel.php.packages.composer,
+      composerLock ? null,
+      vendorHash ? "",
       composerNoDev ? true,
       composerNoPlugins ? true,
       composerNoScripts ? true,
-      composerStrictValidation ? finalAttrs.composerStrictValidation or true,
+      composerStrictValidation ? true,
       buildInputs ? [ ],
       nativeBuildInputs ? [ ],
       strictDeps ? true,
