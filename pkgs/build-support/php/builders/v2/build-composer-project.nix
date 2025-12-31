@@ -10,7 +10,7 @@ let
     finalAttrs:
     {
       php ? toplevel.php,
-      composer ? toplevel.php.packages.composer,
+      composer ? php.packages.composer,
       composerLock ? null,
       vendorHash ? "",
       composerNoDev ? true,
