@@ -57,6 +57,20 @@ composerInstallBuildHook() {
   cp -r "${composerVendor}/${COMPOSER_VENDOR_DIR}" .
   chmod -R +w "${COMPOSER_VENDOR_DIR}"
 
+  mapfile -t installer_paths < <(jq -r -c 'try((.extra."installer-paths") | keys[])' composer.json)
+  for installer_path in "${installer_paths[@]}"; do
+    # Remove everything after {$name} placeholder
+    installer_path="${installer_path/\{\$name\}*/}"
+    if [[ -e "${composerVendor}/${installer_path}" ]]; then
+      echo -e "\e[32mRestoring custom installer path: ${installer_path}\e[0m"
+      mkdir -p "$(dirname "${installer_path}")"
+      cp -ar "${composerVendor}/${installer_path}" "${installer_path}"
+      # Strip out the git repositories
+      find "${installer_path}" -name .git -type d -prune -print -exec rm -rf {} ";" || true
+      chmod -R +w "${installer_path}"
+    fi
+  done
+
   echo -e "\e[32mGenerating optimized autoloader and restoring 'bin' directory...\e[0m"
   COMPOSER_DISABLE_NETWORK=1 composer \
     "${composerFlags[@]}" \
