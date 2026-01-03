@@ -71,13 +71,17 @@ composerInstallBuildHook() {
     fi
   done
 
-  echo -e "\e[32mGenerating optimized autoloader and restoring 'bin' directory...\e[0m"
-  COMPOSER_DISABLE_NETWORK=1 composer \
-    "${composerFlags[@]}" \
-    --no-interaction \
-    --no-progress \
-    --optimize-autoloader \
-    install
+  # Run this only if composer.lock is available.
+  # e.g., php-codesniffer doesn't need a composer.lock file.
+  if [[ -f "composer.lock" ]]; then
+    echo -e "\e[32mEnsuring Composer dependencies are locked to 'composer.lock'...\e[0m"
+    composer \
+      --no-cache \
+      --no-interaction \
+      --no-progress \
+      "${composerFlags[@]}" \
+      install
+  fi
 
   echo "Finished phase: composerInstallBuildHook"
 }
